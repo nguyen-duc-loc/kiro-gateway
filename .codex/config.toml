@@ -1,0 +1,4 @@
+[mcp_servers.gopls]
+command = "/Users/nguyenducloc/go/bin/gopls"
+args = ["mcp"]
+cwd = "/Users/nguyenducloc/kiro-gateway"

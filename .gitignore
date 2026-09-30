@@ -1,0 +1,9 @@
+/bin/
+/kiro-gateway
+*.test
+coverage.out
+.env
+.env.*
+*.key
+*.pem
+.DS_Store
