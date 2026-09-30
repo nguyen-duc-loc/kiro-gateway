@@ -1,0 +1,33 @@
+#!/bin/sh
+set -eu
+
+cd "$(dirname "$0")/.."
+
+# Keep local checks and CI on the exact version recorded by the module.
+export GOTOOLCHAIN=local
+export GOWORK=off
+required_version=$(awk '$1 == "go" { print $2; exit }' go.mod)
+actual_version=$(go env GOVERSION)
+if [ "$actual_version" != "go$required_version" ]; then
+    printf 'Go %s is required by go.mod, found %s.\n' "$required_version" "$actual_version" >&2
+    exit 1
+fi
+
+# The race detector needs cgo and a working C compiler.
+export CGO_ENABLED=1
+go_root=$(go env GOROOT)
+
+printf 'Checking Go formatting...\n'
+unformatted=$("$go_root/bin/gofmt" -l cmd internal)
+if [ -n "$unformatted" ]; then
+    printf 'Formatting differs in:\n%s\nRun gofmt -w cmd internal, then check again.\n' "$unformatted" >&2
+    exit 1
+fi
+
+printf 'Running go vet...\n'
+go vet -mod=readonly ./...
+printf 'Building all packages...\n'
+go build -mod=readonly ./...
+printf 'Running tests with the race detector...\n'
+go test -mod=readonly -race ./...
+printf 'All checks passed.\n'

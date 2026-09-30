@@ -13,6 +13,7 @@ Source: [scope](docs/scope/scope.md). Claude Code owns conversation and tool exe
 
 You can build with `rtk proxy go build -o bin/kiro-gateway ./cmd/kiro-gateway`, inspect the version with `rtk proxy go run ./cmd/kiro-gateway version`, and serve with `rtk proxy go run ./cmd/kiro-gateway serve` after setting `KIRO_GATEWAY_TOKEN` in the environment.
 You can format with `rtk proxy gofmt -w cmd internal`, check with `rtk proxy go vet ./...`, compile all packages with `rtk proxy go build ./...`, and test with `rtk proxy go test -race ./...`.
+You can run all checks with `rtk proxy ./scripts/check` and enable the commit hook in each clone with `rtk proxy git config --local core.hooksPath .githooks`.
 
 ## Rules
 
@@ -25,7 +26,7 @@ You can format with `rtk proxy gofmt -w cmd internal`, check with `rtk proxy go 
 
 ## Tooling
 
-Selected: `gofmt`, `go vet`, and Go compilation before each commit; unit and integration tests with the race detector as the testing gate. Basic CI should run formatting checks, vet, compilation, and tests on pushes and pull requests. These commands and tests exist; automatic hooks and CI are pending `/develop tooling`. Formatting checks should fail on differences. The tooling task owns the repeatable check command and pinned setup.
+Selected: `scripts/check` checks formatting without changing files, runs `go vet`, compiles all packages, and runs unit and integration tests with the race detector. It requires the exact Go version in `go.mod` and a C compiler, disables automatic toolchain downloads and surrounding Go workspaces, and uses `-mod=readonly`. The optional `.githooks/pre-commit` runs the same checks on the working tree. GitHub Actions runs them on pushes and pull requests using `macos-15` and actions pinned to commit hashes in `.github/workflows/check.yml`. Include any Go source directories added outside `cmd` and `internal` in the formatting step. See `README.md` for setup.
 
 ## Git
 

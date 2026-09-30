@@ -24,7 +24,7 @@ Your stated priorities are Claude Code as the coding agent, Kiro as the source o
 | # | Feature | Phase | Status |
 |---|---------|-------|--------|
 | 1 | Stack and architecture | Foundation | done |
-| 2 | Coding standards and tooling | Foundation | planned |
+| 2 | Coding standards and tooling | Foundation | in-progress |
 | 3 | Local configuration and credential data model | Foundation | planned |
 | 4 | First real Claude Code coding loop | Slice 1 | planned |
 | 5 | Sign in and credential renewal | Slice 2 | planned |
@@ -55,13 +55,15 @@ Choose the project structure and runtime, then scaffold the smallest runnable CL
 
 **Code:** `cmd/kiro-gateway`, `internal/cli`, and `internal/gateway`. Build and operation instructions are in `README.md`.
 
-### 2. Coding standards and tooling · planned
+### 2. Coding standards and tooling · in-progress
 
 Capture conventions from the actual scaffold, then install the checks that keep later contributions consistent. Keep the initial development setup small.
 
 **Done when:** project instructions reflect the real code; formatting, static checks, and continuous integration run from a clean checkout; contributors have a repeatable development command.
 
-- [ ] Capture conventions and tooling: `/audit`
+- [x] Capture conventions and tooling: `/audit`
+
+**Code:** `scripts/check`, `.githooks/pre-commit`, and `.github/workflows/check.yml`. Setup and conventions are in `README.md` and `AGENTS.md`. Local checks pass; hosted CI execution is pending publication to GitHub.
 
 ### 3. Local configuration and credential data model · planned · needs a decision · GA
 
