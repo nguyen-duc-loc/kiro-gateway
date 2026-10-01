@@ -108,14 +108,14 @@ Connect an authenticated Kiro account to a local gateway and complete a small re
     - [x] Build the combined token and selected profile snapshot with synthetic verification: `/develop first real Claude Code coding loop: selected profile snapshot only` (AC-1, AC-2, AC-6, AC-8, AC-9).
     - [x] Complete the limited candidate contract and concrete request plan from evidence and the approved instruction and completion limitations.
   - [x] Complete the safeguards and present the exact plan and clean code commit for live review (AC-1, AC-2, AC-3, AC-5, AC-6, AC-8).
-  - [x] After approval and explicit launch, run the bounded cases and record evidence or the unresolved contract (AC-2 through AC-8). One dispatch attempt stopped inconclusively; five dependent cases remained unrun as required.
+  - [x] After approval and explicit launch, run the bounded cases and record evidence or the unresolved contract (AC-2 through AC-8). All six cases were observed at `4fd0b70773ca6bdba87d73be1ac6c07ab8d77659`, with verdict `limited_candidate_observed`; no replay or additional attempt occurred.
 - [ ] Verify the feasibility milestone: `/check verify first real Claude Code coding loop: feasibility milestone only`
 - [ ] Test the feasibility milestone: `/test first real Claude Code coding loop: feasibility milestone only`
 - [ ] Review the feasibility milestone (fresh model): `/check review first real Claude Code coding loop: feasibility milestone only`
 - [ ] Document the feasibility milestone: `/document changelog first real Claude Code coding loop: feasibility milestone only`
 - [ ] Design it (spec): `/architect first real Claude Code coding loop`
 
-**Code:** The test only limited harness is built in `internal/kiro`, with bounded error classification and local configuration/session setup. The operator confirmed native success with Opus 5.5. After approving explicit relinking and the exact Opus mapping, the gateway comparison passed local validation but also received HTTP 403 with `access_denied` on its first request. Five dependent cases were unrun. The allowed evidence is in spec 0003's verification record; no raw response or account data was retained and no retry occurred. Matching the model did not resolve the denial. The feasibility build records `needs_evidence`, not compatibility. Tracing the native authentication and request path, independent GA checks, and the full Claude Code bridge remain pending.
+**Code:** The test only harness in `internal/kiro` and combined snapshot reader in `internal/credentials` have positive six case live evidence for the requested Opus 5.5 mapping. The final run used the reference request baseline, metadata extension tolerance, and reasoning discard only for independent failure checks. It observed streamed text, tool call, matching result, followup, cancellation, and the 256 byte interruption in one run. The verdict is `limited_candidate_observed`, with explicit instruction, completion, model identity, usage, and token control limits. Sanitized evidence is in spec 0003's verification record. Repository checks pass. Independent GA checks and full bridge design and implementation remain pending; feature 4 is not complete.
 
 ## Slice 2: Keep access working
 

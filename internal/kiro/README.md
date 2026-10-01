@@ -2,7 +2,9 @@
 
 This directory contains test code only. Nothing here is linked into the gateway.
 The comparison plan selects `claude-opus-5.5` as both the saved mapping
-and requested model. It is prepared for review, not approved for a live run.
+and requested model. The approved run at `4fd0b70` observed all six cases with
+verdict `limited_candidate_observed`. That run is complete; further live
+launches require separate review.
 
 On October 1, 2026 you accepted two limitations for this experiment only:
 

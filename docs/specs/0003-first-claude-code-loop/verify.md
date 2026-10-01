@@ -1,8 +1,8 @@
 # Verify: First loop protocol feasibility, spec 0003
 
-Four separately approved dispatch attempts have occurred, with no decoded inference events. The latest Opus comparison also received HTTP 403 and the recognized service error class `access_denied`; it remains inconclusive. This file contains the verification plan and the launch records below; it does not claim independent verification passed. The full Claude Code coding loop remains a later gate in the same scope feature.
+The approved run at `4fd0b70773ca6bdba87d73be1ac6c07ab8d77659` observed all six live cases and returned `limited_candidate_observed` on October 1, 2026. The launch records below retain both the successful bounded proof and its preceding investigations. This is builder evidence; it does not claim independent GA verification or full Claude Code compatibility.
 
-The accepted profile amendment adds AC-9 and the profile cases below. Its local implementation is complete. Builder checks cover synthetic profile and wire cases; independent verification and live compatibility remain pending. The limited experiment amendment permits explicit user context instructions and tentative EOF continuation only.
+The final candidate uses the fixed combined token and profile snapshot, the reference request baseline, bounded metadata extension handling, and reasoning discard only in independent failure cases. Instructions remain translated into user context and EOF completion remains tentative. Model identity and token usage are unverified, and no upstream token cap is requested.
 
 ## Local checks before live review
 
@@ -584,6 +584,34 @@ The run consumed its approval and did not retry. Standing permission for the exi
 
 The prepared correction discards bounded reasoning objects only in the independent failure cases, preserving the text trigger and byte cutoff. Local regression and race checks passed and the tagged live entry point compiled and skipped while disabled. Its plan SHA 256 is `21d76d39ca83de75df9dbefcbeae8e43c016e856a1ebc3bab9b83c47936cf4f6`; the correction has not run live yet.
 
+## Approved six case proof passed, October 1, 2026
+
+You approved one bounded run at clean commit `4fd0b70773ca6bdba87d73be1ac6c07ab8d77659` and plan SHA 256 `21d76d39ca83de75df9dbefcbeae8e43c016e856a1ebc3bab9b83c47936cf4f6`. Standing setup confirmed the session was already linked, verified the exact Opus mapping under lock, and passed configuration validation. The temporary helper was removed before launch.
+
+| Run metadata | Observed value |
+|---|---|
+| Local run ID | `2d18b2f6-ad2d-465d-b81f-5b5af4146612` |
+| Started | `2026-10-01T14:45:33.478676Z` |
+| Platform and baseline | `darwin/arm64`, Claude Code `2.1.286`, Kiro CLI `2.8.0` |
+| Requested model | `claude-opus-5.5` |
+| Destination | `https://runtime.us-east-1.kiro.dev:443/generateAssistantResponse` |
+| Attempts and HTTP outcomes | Six, all HTTP 200 |
+| Verdict and elapsed time | `limited_candidate_observed`, 19969 milliseconds |
+| Peak reservation | 3867910 bytes |
+
+| Case | Outcome | Allowed observations |
+|---|---|---|
+| Text | `observed` | 695 bytes, two text events, incremental and marker true |
+| Tool | `observed` | 1359 bytes, five tool events, valid arguments and matching tool name and ID true |
+| Result | `observed` | 578 bytes, one text event, marker true |
+| Followup | `observed` | 576 bytes, one text event, marker true |
+| Cancellation | `observed` | 2666 bytes, 13 discarded reasoning events, one text event, cancellation trigger and cleanup true |
+| Interruption | `observed` | Exactly 256 bytes, two complete discarded reasoning events, zero text events, cutoff trigger and cleanup true |
+
+The first four cases each retained one fixed metadata diagnostic (`metadataEvent`, `event`, `unlisted`, `string`) and reached tentative completion. Cancellation and interruption reported no tentative completion and did not contribute to history. All six completed cleanup, had instruction placement true, and reported controls requested false. Distinct system role preservation was false. Model identity, token usage, authoritative completion, and output token limit remained unknown.
+
+No raw conversation, tool arguments, tool IDs, unknown metadata names or values, reasoning payload, credential, account metadata, or device fingerprint was retained. No seventh attempt, retry, renewal, fallback, or source adoption during the run occurred. The live test passed. This is the completed bounded feasibility proof and builder evidence, not independent GA verification or a completed Claude Code bridge.
+
 ## Later Claude Code acceptance gate
 
-After `/architect` completes the bridge design, the original scope still needs a real Claude Code `2.1.285` session against the gateway using the recorded available Sonnet model. Claude Code must read and fix a disposable Go bug, execute its file and shell tools under normal permissions, return results, finish a follow up user turn, and demonstrate cancellation and incomplete stream handling. Record Kiro CLI `2.8.0`, the actual access path, and every instruction or model control difference. None of that is claimed by this feasibility checklist.
+After `/architect` completes the bridge design, the original scope still needs a real Claude Code session against the implemented local API, using the model and client baseline selected for that milestone. This feasibility proof requested Opus 5.5 and recorded Claude Code `2.1.286` and Kiro CLI `2.8.0`, but did not run Claude Code through a gateway inference endpoint. The later task must read and fix a disposable Go bug, execute Claude Code file and shell tools under normal permissions, return results, finish a followup user turn, and demonstrate cancellation and incomplete stream handling. Record exact versions, the access path, and every instruction or model control difference. That full coding task remains unverified.
