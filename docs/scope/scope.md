@@ -25,7 +25,7 @@ Your stated priorities are Claude Code as the coding agent, Kiro as the source o
 |---|---------|-------|--------|
 | 1 | Stack and architecture | Foundation | done |
 | 2 | Coding standards and tooling | Foundation | in-progress |
-| 3 | Local configuration and credential data model | Foundation | planned |
+| 3 | Local configuration and credential data model | Foundation | in-progress |
 | 4 | First real Claude Code coding loop | Slice 1 | planned |
 | 5 | Sign in and credential renewal | Slice 2 | planned |
 | 6 | Long conversations and model selection | Slice 3 | planned |
@@ -65,13 +65,23 @@ Capture conventions from the actual scaffold, then install the checks that keep 
 
 **Code:** `scripts/check`, `.githooks/pre-commit`, and `.github/workflows/check.yml`. Setup and conventions are in `README.md` and `AGENTS.md`. Local checks pass; hosted CI execution is pending publication to GitHub.
 
-### 3. Local configuration and credential data model · planned · needs a decision · GA
+### 3. Local configuration and credential data model · in-progress · GA
 
 Define how settings, credential references, model mappings, and diagnostic records relate and persist. Keep secret storage separate from ordinary configuration and make retention explicit.
 
 **Done when:** the model supports one account, settings upgrades, removal of saved credentials, and bounded diagnostic retention; secrets and conversation contents are excluded from routine logs; persistent conversation storage has an explicit need before being added.
 
-- [ ] Design it (spec): `/architect local configuration and credential data model`
+**Spec:** [0002. Local configuration and credential data model](../specs/0002-local-configuration-credentials/index.md)
+
+- [x] Design it (spec): `/architect local configuration and credential data model`
+- [ ] Build it: `/develop local configuration and credential data model`
+  - [ ] Save and validate settings through the authenticated health server, including private storage and process locking (AC-1, AC-2, AC-5, AC-6, AC-8).
+  - [ ] Capture and forget the selected Kiro session, with exact fingerprints and atomic model mapping cleanup (AC-3, AC-4, AC-5, AC-6, AC-8, AC-9).
+  - [ ] Complete explicit upgrade, failure recovery, and restart behavior (AC-2, AC-6, AC-7, AC-8).
+- [ ] Verify it: `/check verify local configuration and credential data model`
+- [ ] Test it: `/test local configuration and credential data model`
+- [ ] Review it (fresh model): `/check review local configuration and credential data model`
+- [ ] Document it: `/document changelog local configuration and credential data model`
 
 ## Slice 1: Prove the coding loop
 
