@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "status": "needs_evidence",
+  "client_mapping": "claude-sonnet-5",
+  "target_model": "claude-sonnet-5",
+  "baseline": {
+    "claude_code": "2.1.285",
+    "kiro_cli": "2.8.0"
+  },
+  "destination": null,
+  "region_rule": null,
+  "authentication": null,
+  "request_schema": null,
+  "controls": null,
+  "completion": null,
+  "cases": [],
+  "missing_contract": [
+    "destination",
+    "region_rule",
+    "authentication",
+    "request_schema",
+    "controls",
+    "completion",
+    "cases"
+  ],
+  "offline_framing": "amazon_eventstream",
+  "offline_event_labels": ["assistantResponseEvent", "toolUseEvent"],
+  "sources": [
+    {
+      "id": "operator_model_selection",
+      "reference": "Conversation on 2026-10-01",
+      "finding": "The operator confirmed claude-sonnet-5 as both the saved mapping key and the requested model ID. Saved configuration and model availability have not been inspected."
+    },
+    {
+      "id": "installed_artifact",
+      "reference": "/Applications/Kiro CLI.app/Contents/MacOS/kiro-cli-chat",
+      "sha256": "2118bd89d96830a4f0e0884e4f4071fb94e4b6036c757126afe9e3f80c9d90c6",
+      "finding": "Static strings include q and runtime service hosts. Instruction and stop reason strings occur in other protocol and UI contexts. They do not establish the inference destination, instruction mapping, or completion contract."
+    },
+    {
+      "id": "historical_client",
+      "reference": "https://github.com/aws/amazon-q-developer-cli/blob/main/crates/chat-cli/src/api_client/mod.rs",
+      "finding": "The historical client installs a bearer token resolver and supplies optional profile metadata. This is not a current Kiro CLI contract."
+    },
+    {
+      "id": "historical_endpoints",
+      "reference": "https://github.com/aws/amazon-q-developer-cli/blob/main/crates/chat-cli/src/api_client/endpoints.rs",
+      "finding": "Historical endpoint selection uses profile ARN region with a default US endpoint. It does not justify routing from the selected credential region. Reading profile metadata would require another architecture decision."
+    },
+    {
+      "id": "historical_events",
+      "reference": "https://github.com/aws/amazon-q-developer-cli/blob/main/crates/amzn-codewhisperer-streaming-client/src/event_stream_serde.rs",
+      "finding": "Historical event names justify invented local framing fixtures only. A complete event or tool stop does not prove completion of a model turn."
+    },
+    {
+      "id": "eventstream_framing",
+      "reference": "https://smithy.io/2.0/aws/amazon-eventstream.html",
+      "finding": "The offline reader validates both CRC32 checksums and bounded lengths. This generic framing contract does not supply a model completion signal."
+    }
+  ]
+}

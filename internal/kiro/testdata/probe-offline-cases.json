@@ -1,0 +1,118 @@
+{
+  "purpose": "Invented local transport fixtures. The completion event and request instruction field are not Kiro protocol claims.",
+  "cutoff_bytes": 256,
+  "cases": [
+    {
+      "id": "text",
+      "events": [
+        {
+          "name": "assistantResponseEvent",
+          "payload": {
+            "content": "PROBE_"
+          }
+        },
+        {
+          "name": "assistantResponseEvent",
+          "payload": {
+            "content": "MARKER"
+          }
+        },
+        {
+          "name": "probeFixtureComplete",
+          "payload": {
+            "complete": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "tool",
+      "events": [
+        {
+          "name": "toolUseEvent",
+          "payload": {
+            "toolUseId": "fixture-tool-17",
+            "name": "probe_lookup",
+            "input": "{\"key\":"
+          }
+        },
+        {
+          "name": "toolUseEvent",
+          "payload": {
+            "toolUseId": "fixture-tool-17",
+            "input": "\"alpha\"}",
+            "stop": true
+          }
+        },
+        {
+          "name": "probeFixtureComplete",
+          "payload": {
+            "complete": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "result",
+      "events": [
+        {
+          "name": "assistantResponseEvent",
+          "payload": {
+            "content": "probe-value-alpha"
+          }
+        },
+        {
+          "name": "probeFixtureComplete",
+          "payload": {
+            "complete": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "followup",
+      "events": [
+        {
+          "name": "assistantResponseEvent",
+          "payload": {
+            "content": "probe-followup"
+          }
+        },
+        {
+          "name": "probeFixtureComplete",
+          "payload": {
+            "complete": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "cancel",
+      "events": [
+        {
+          "name": "assistantResponseEvent",
+          "payload": {
+            "content": "synthetic stream kept open until cancellation"
+          }
+        }
+      ]
+    },
+    {
+      "id": "interrupt",
+      "events": [
+        {
+          "name": "assistantResponseEvent",
+          "payload": {
+            "content": "synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic synthetic "
+          }
+        },
+        {
+          "name": "probeFixtureComplete",
+          "payload": {
+            "complete": true
+          }
+        }
+      ]
+    }
+  ]
+}

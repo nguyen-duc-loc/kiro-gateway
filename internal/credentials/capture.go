@@ -4,6 +4,7 @@ package credentials
 import (
 	"context"
 	"crypto/sha256"
+	"crypto/subtle"
 	"database/sql"
 	"encoding/hex"
 	"encoding/json"
@@ -31,6 +32,7 @@ var (
 	ErrBusy     = errors.New("saved IAM Identity Center source is busy; wait for Kiro CLI, then retry")
 	ErrTimeout  = errors.New("session capture timed out; retry when the local source is available")
 	ErrCanceled = errors.New("session capture canceled; retry when ready")
+	ErrChanged  = errors.New("saved IAM Identity Center snapshot has changed; link again before inference")
 )
 
 // Reader reads only the fixed source in Home. Now is an injectable wall clock.
@@ -43,58 +45,129 @@ type Reader struct {
 }
 
 // Capture returns only a reference. Tokens and record fields remain local.
-func (r Reader) Capture(parent context.Context) (reference config.Session, result error) {
+func (r Reader) Capture(parent context.Context) (config.Session, error) {
+	captured, err := r.readSnapshot(parent)
+	return captured.reference, err
+}
+
+// Snapshot holds validated credential material in memory. It must not be logged
+// or persisted. Its fields are private to prevent accidental JSON serialization.
+type Snapshot struct {
+	accessToken string
+	region      string
+	expiresAt   time.Time
+}
+
+// AccessToken returns the token from the validated snapshot for request signing.
+func (s Snapshot) AccessToken() string { return s.accessToken }
+
+// Region returns the region from the same validated record as AccessToken.
+func (s Snapshot) Region() string { return s.region }
+
+// ExpiresAt returns the expiry from the validated record.
+func (s Snapshot) ExpiresAt() time.Time { return s.expiresAt }
+
+// String prevents ordinary formatting from revealing credential material.
+func (s Snapshot) String() string { return "[credential snapshot]" }
+
+// GoString also protects Go syntax formatting of a snapshot.
+func (s Snapshot) GoString() string { return s.String() }
+
+type capturedSnapshot struct {
+	reference config.Session
+	snapshot  Snapshot
+}
+
+// ReadSnapshot reads once and returns credential material only when those exact
+// bytes match expected. It uses Capture's source validation and transaction.
+// Callers own the returned value and must discard it after the attempt.
+func (r Reader) ReadSnapshot(ctx context.Context, expected config.Session) (Snapshot, error) {
+	d := config.Default()
+	d.Session = &expected
+	if d.Validate() != nil {
+		return Snapshot{}, ErrChanged
+	}
+	captured, err := r.readSnapshot(ctx)
+	if err != nil {
+		return Snapshot{}, err
+	}
+	if subtle.ConstantTimeCompare([]byte(captured.reference.Fingerprint), []byte(expected.Fingerprint)) != 1 {
+		return Snapshot{}, ErrChanged
+	}
+	return captured.snapshot, nil
+}
+
+func (r Reader) readSnapshot(parent context.Context) (captured capturedSnapshot, result error) {
 	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
 	defer cancel()
 	defer func() {
 		if ctx.Err() != nil {
 			result = sanitize(ctx, ctx.Err())
-			reference = config.Session{}
+			captured = capturedSnapshot{}
 		}
 	}()
 	if ctx.Err() != nil {
-		return config.Session{}, sanitize(ctx, ctx.Err())
+		return capturedSnapshot{}, sanitize(ctx, ctx.Err())
 	}
 	path, err := sourcePath(r.Home)
 	if err != nil {
-		return config.Session{}, ErrSource
+		return capturedSnapshot{}, ErrSource
 	}
 	u := url.URL{Scheme: "file", Path: path}
 	q := url.Values{"mode": {"ro"}, "_query_only": {"1"}, "_busy_timeout": {"1000"}}
 	u.RawQuery = q.Encode()
 	db, err := sql.Open("sqlite3", u.String())
 	if err != nil {
-		return config.Session{}, sanitize(ctx, err)
+		return capturedSnapshot{}, sanitize(ctx, err)
 	}
 	defer db.Close()
 	db.SetMaxOpenConns(1)
 	db.SetMaxIdleConns(1)
 	tx, err := db.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})
 	if err != nil {
-		return config.Session{}, sanitize(ctx, err)
+		return capturedSnapshot{}, sanitize(ctx, err)
 	}
 	defer tx.Rollback()
 	if err := checkSchema(ctx, tx); err != nil {
-		return config.Session{}, sanitize(ctx, err)
+		return capturedSnapshot{}, sanitize(ctx, err)
 	}
 	value, err := readValue(ctx, tx, r.afterMetadata)
 	if err != nil {
-		return config.Session{}, sanitize(ctx, err)
+		return capturedSnapshot{}, sanitize(ctx, err)
 	}
 	now := time.Now
 	if r.Now != nil {
 		now = r.Now
 	}
 	if err := validateRecord(value, now()); err != nil {
-		return config.Session{}, err
+		return capturedSnapshot{}, err
 	}
 	if err := tx.Commit(); err != nil {
-		return config.Session{}, sanitize(ctx, err)
+		return capturedSnapshot{}, sanitize(ctx, err)
 	}
 	h := sha256.New()
 	h.Write([]byte("kiro-gateway/" + config.Source + "\x00"))
 	h.Write(value)
-	return config.Session{Source: config.Source, Fingerprint: hex.EncodeToString(h.Sum(nil))}, nil
+	// Decode only the already validated bytes, never reread the source for a token.
+	var fields map[string]json.RawMessage
+	if json.Unmarshal(value, &fields) != nil {
+		return capturedSnapshot{}, ErrRecord
+	}
+	// Use exact member names just as validateRecord does. Struct decoding would
+	// accept case variants among otherwise ignored fields and could overwrite a
+	// validated token or region with a different member from the same record.
+	var accessToken, region, expiry string
+	if json.Unmarshal(fields["access_token"], &accessToken) != nil || json.Unmarshal(fields["region"], &region) != nil || json.Unmarshal(fields["expires_at"], &expiry) != nil {
+		return capturedSnapshot{}, ErrRecord
+	}
+	expiresAt, err := time.Parse(time.RFC3339, expiry)
+	if err != nil {
+		return capturedSnapshot{}, ErrRecord
+	}
+	return capturedSnapshot{
+		reference: config.Session{Source: config.Source, Fingerprint: hex.EncodeToString(h.Sum(nil))},
+		snapshot:  Snapshot{accessToken: accessToken, region: region, expiresAt: expiresAt},
+	}, nil
 }
 
 func sourcePath(home string) (string, error) {

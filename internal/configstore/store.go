@@ -38,14 +38,27 @@ type Store struct {
 // Open creates private paths only when exclusive is true and acquires the lock
 // before any configuration read. A readonly absent directory remains absent.
 func Open(home string, exclusive bool) (*Store, error) {
+	return open(home, exclusive, exclusive)
+}
+
+// OpenExisting locks an existing store without creating paths or a lock file.
+// It is intended for operations that must not initialize missing configuration.
+func OpenExisting(home string) (*Store, error) {
+	return open(home, true, false)
+}
+
+func open(home string, exclusive, create bool) (*Store, error) {
 	r, err := safepath.Home(home)
 	if err != nil {
 		return nil, ErrUnsafe
 	}
 	for _, part := range []string{".config", "kiro-gateway"} {
-		next, err := safepath.Child(r, part, exclusive, part == "kiro-gateway")
+		next, err := safepath.Child(r, part, create, part == "kiro-gateway")
 		r.Close()
 		if err != nil {
+			if exclusive && !create && errors.Is(err, os.ErrNotExist) {
+				return nil, ErrMissing
+			}
 			if !exclusive && errors.Is(err, os.ErrNotExist) {
 				return &Store{}, nil
 			}
@@ -55,7 +68,11 @@ func Open(home string, exclusive bool) (*Store, error) {
 	}
 	s := &Store{root: r}
 	if exclusive {
-		s.lock, err = safepath.File(r, ".lock", os.O_CREATE|os.O_RDWR, true)
+		flags := os.O_RDWR
+		if create {
+			flags |= os.O_CREATE
+		}
+		s.lock, err = safepath.File(r, ".lock", flags, true)
 		if err != nil {
 			s.Close()
 			return nil, ErrUnsafe

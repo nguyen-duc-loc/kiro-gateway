@@ -100,6 +100,8 @@ Connect an authenticated Kiro account to a local gateway and complete a small re
 - [x] Plan the feasibility milestone: `/architect first real Claude Code coding loop`
 - [ ] Build the feasibility milestone only: `/develop first real Claude Code coding loop: feasibility milestone only`
   - [ ] Prepare the concrete experiment and prove one offline path through the harness (AC-1, AC-2, AC-5, AC-6, AC-7, AC-8).
+    - [x] Complete the six case synthetic harness, including exact snapshot selection, tool result continuation, local failure controls, and passing repository checks.
+    - [ ] Complete the current upstream contract and the concrete live request plan from evidence.
   - [ ] Complete the safeguards and present the exact plan and clean code commit for live review (AC-1, AC-2, AC-3, AC-5, AC-6, AC-8).
   - [ ] After approval and explicit launch, run the bounded cases and record evidence or the unresolved contract (AC-2 through AC-8).
 - [ ] Verify the feasibility milestone: `/check verify first real Claude Code coding loop: feasibility milestone only`
@@ -107,6 +109,8 @@ Connect an authenticated Kiro account to a local gateway and complete a small re
 - [ ] Review the feasibility milestone (fresh model): `/check review first real Claude Code coding loop: feasibility milestone only`
 - [ ] Document the feasibility milestone: `/document changelog first real Claude Code coding loop: feasibility milestone only`
 - [ ] Design it (spec): `/architect first real Claude Code coding loop`
+
+**Code:** The six case offline feasibility harness is in `internal/kiro`, with exact snapshot reads in `internal/credentials` and existing store locking in `internal/configstore`. Synthetic checks cover tool continuation, budgets, cancellation, interruption, code and baseline drift, and output filtering. The incomplete candidate plan records `claude-sonnet-5` and the remaining protocol evidence gaps. No live dispatcher or live result exists; the preparation milestone remains unchecked until its concrete contract is complete.
 
 ## Slice 2: Keep access working
 
