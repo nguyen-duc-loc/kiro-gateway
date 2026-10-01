@@ -245,6 +245,11 @@
       "id": "historical_tool_shapes",
       "reference": "https://github.com/aws/amazon-q-developer-cli/tree/main/crates/amzn-codewhisperer-streaming-client/src/types",
       "finding": "ToolSpecification, UserInputMessage, ToolUseEvent, ToolResult and MeteringEvent supply candidate shapes. Current serializer observations support tool context and continuation. Exact remote behavior is a hypothesis tested by this limited plan."
+    },
+    {
+      "id": "error_discriminator_sources",
+      "reference": "https://smithy.io/2.0/aws/protocols/aws-json-1_0-protocol.html#operation-error-serialization",
+      "finding": "The protocol names X-Amzn-Errortype and JSON code or __type as error discriminators, with colon and hash normalization. The installed parser at 0x10085a5a4 reads the header. The plan classifies only fixed types; raw values and messages are never output."
     }
   ],
   "request_examples": [
@@ -716,6 +721,36 @@
       "server_error",
       "other"
     ],
-    "error_body_policy": "never_read_or_output"
+    "error_body_policy": "bounded_json_error_type_only",
+    "error_body_limit": 16384,
+    "error_type_header": "X-Amzn-Errortype",
+    "error_type_body_fields": [
+      "code",
+      "__type"
+    ],
+    "known_error_types": {
+      "AccessDeniedError": "access_denied",
+      "AccessDeniedException": "access_denied",
+      "MissingAuthenticationTokenException": "missing_authentication_token",
+      "InternalServerError": "internal_server_error",
+      "ServiceQuotaExceededError": "service_quota_exceeded",
+      "ThrottlingError": "throttling",
+      "ServiceUnavailableException": "service_unavailable"
+    },
+    "error_type_fallbacks": [
+      "absent",
+      "unknown",
+      "ambiguous",
+      "unparseable",
+      "oversized",
+      "unavailable"
+    ],
+    "error_response_formats": [
+      "json",
+      "html",
+      "other",
+      "absent",
+      "ambiguous"
+    ]
   }
 }

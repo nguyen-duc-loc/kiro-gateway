@@ -233,6 +233,14 @@ No error body, raw headers, upstream request ID, or raw error text was retained.
 
 The bounded feasibility build has produced an explicit unresolved outcome. The candidate is not supported, and a 403 alone does not contradict the instruction or tool protocol assertions, so the verdict remains `needs_evidence`, not `candidate_rejected`. Full Claude Code compatibility remains unproven. The next investigation should establish why the selected token, profile, model, and operation were denied before proposing another inference run. Repeating the same request without new evidence is not recommended. Independent GA verification and review remain pending.
 
+## Prepared error discriminator observation
+
+The authorization research and static addresses are recorded in `rationale.md`. No live request or account read was made during that investigation. It did not prove a cause for the recorded 403 and did not justify changing the outbound operation or authentication headers.
+
+The next local candidate retains the same six requests, model, destinations, source rules, and stop conditions. It adds finite `service_error` and `error_response_format` observations from the protocol's named error discriminator, preferring the header and permitting a bounded JSON inspection only if the header is absent. Raw values, namespaces, suffixes, messages, and bodies remain unprinted and unpersisted. Unknown, duplicate, conflicting, malformed, oversized, or unreadable inputs yield fixed labels and never a success assertion or replay.
+
+Synthetic tests cover header precedence without a body read, decorated type names, unknown private sentinels, duplicate headers and JSON keys, conflicting discriminators, malformed values, non JSON responses, oversized bodies, read failures, and HTTP 403 with private message and account fields. The run remains inconclusive after one rejected request. All new data comes from invented fixtures. This candidate awaits review of its changed diagnostic policy before live use.
+
 ## Later Claude Code acceptance gate
 
 After `/architect` completes the bridge design, the original scope still needs a real Claude Code `2.1.285` session against the gateway using the recorded available Sonnet model. Claude Code must read and fix a disposable Go bug, execute its file and shell tools under normal permissions, return results, finish a follow up user turn, and demonstrate cancellation and incomplete stream handling. Record Kiro CLI `2.8.0`, the actual access path, and every instruction or model control difference. None of that is claimed by this feasibility checklist.

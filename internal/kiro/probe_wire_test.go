@@ -161,19 +161,21 @@ type wireAssertions struct {
 	OutputWithinLimit   *bool `json:"output_within_limit"`
 }
 type wireCaseResult struct {
-	FailureStage     string         `json:"failure_stage,omitempty"`
-	TransportFailure string         `json:"transport_failure,omitempty"`
-	HTTPStatus       string         `json:"http_status_category,omitempty"`
-	ID               string         `json:"case"`
-	Status           string         `json:"status"`
-	Cause            string         `json:"cause,omitempty"`
-	Attempt          int            `json:"attempt"`
-	ReceivedBytes    int64          `json:"received_bytes"`
-	TextEvents       int            `json:"text_events"`
-	ToolEvents       int            `json:"tool_events"`
-	UnknownEvents    int            `json:"unknown_event_count"`
-	UnknownFields    int            `json:"unknown_field_count"`
-	Assertions       wireAssertions `json:"assertions"`
+	ServiceError        string         `json:"service_error,omitempty"`
+	ErrorResponseFormat string         `json:"error_response_format,omitempty"`
+	FailureStage        string         `json:"failure_stage,omitempty"`
+	TransportFailure    string         `json:"transport_failure,omitempty"`
+	HTTPStatus          string         `json:"http_status_category,omitempty"`
+	ID                  string         `json:"case"`
+	Status              string         `json:"status"`
+	Cause               string         `json:"cause,omitempty"`
+	Attempt             int            `json:"attempt"`
+	ReceivedBytes       int64          `json:"received_bytes"`
+	TextEvents          int            `json:"text_events"`
+	ToolEvents          int            `json:"tool_events"`
+	UnknownEvents       int            `json:"unknown_event_count"`
+	UnknownFields       int            `json:"unknown_field_count"`
+	Assertions          wireAssertions `json:"assertions"`
 }
 type wireRunResult struct {
 	Cases                       [6]wireCaseResult `json:"cases"`
@@ -392,7 +394,7 @@ func runWireCases(p *protocolProbe, conversationID string, memoryLimit int64) (o
 		out.Cases[0].Status, out.Cases[0].Cause = "inconclusive", "plan_invalid"
 		return out
 	}
-	if err := memory.reserve((256 << 10) + probeSourceAllowance); err != nil {
+	if err := memory.reserve((256 << 10) + probeSourceAllowance + probeErrorScratch); err != nil {
 		out.Cases[0].Status, out.Cases[0].Cause = "inconclusive", err.Error()
 		return out
 	}
@@ -462,6 +464,7 @@ func runWireCases(p *protocolProbe, conversationID string, memoryLimit int64) (o
 			return probeReadError(decodeErr)
 		})
 		memory.release(4 * probeMaxRequest)
+		c.ServiceError, c.ErrorResponseFormat = result.ServiceError, result.ErrorResponseFormat
 		c.FailureStage, c.TransportFailure, c.HTTPStatus = result.FailureStage, result.TransportFailure, result.HTTPStatus
 		if c.FailureStage == "" {
 			c.FailureStage = "stream"

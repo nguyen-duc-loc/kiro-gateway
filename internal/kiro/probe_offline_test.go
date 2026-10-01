@@ -43,19 +43,21 @@ var defaultProbeLimits = probeLimits{10 * time.Minute, 2 * time.Minute, 30 * tim
 // Output is built only from fixed labels and local counts. Payloads, tokens,
 // references, raw errors and upstream header values have no output field.
 type probeObservation struct {
-	FailureStage     string `json:"failure_stage,omitempty"`
-	TransportFailure string `json:"transport_failure,omitempty"`
-	HTTPStatus       string `json:"http_status_category,omitempty"`
-	Outcome          string `json:"outcome"`
-	Cause            string `json:"cause"`
-	Attempts         int    `json:"attempts"`
-	ReceivedBytes    int64  `json:"received_bytes"`
-	TextEvents       int    `json:"text_events"`
-	ToolEvents       int    `json:"tool_events"`
-	UnknownEvents    int    `json:"unknown_events"`
-	Completion       *bool  `json:"observed_completion"`
-	CleanupCompleted *bool  `json:"completed_cleanup"`
-	CleanupMillis    int64  `json:"cleanup_millis"`
+	ServiceError        string `json:"service_error,omitempty"`
+	ErrorResponseFormat string `json:"error_response_format,omitempty"`
+	FailureStage        string `json:"failure_stage,omitempty"`
+	TransportFailure    string `json:"transport_failure,omitempty"`
+	HTTPStatus          string `json:"http_status_category,omitempty"`
+	Outcome             string `json:"outcome"`
+	Cause               string `json:"cause"`
+	Attempts            int    `json:"attempts"`
+	ReceivedBytes       int64  `json:"received_bytes"`
+	TextEvents          int    `json:"text_events"`
+	ToolEvents          int    `json:"tool_events"`
+	UnknownEvents       int    `json:"unknown_events"`
+	Completion          *bool  `json:"observed_completion"`
+	CleanupCompleted    *bool  `json:"completed_cleanup"`
+	CleanupMillis       int64  `json:"cleanup_millis"`
 }
 
 // snapshotReader belongs to the consuming boundary. The adapter must validate
@@ -310,6 +312,12 @@ func (p *protocolProbe) exchangeBuilt(build func(credentials.ProfileSnapshot) (s
 	result.HTTPStatus = probeHTTPLabel(resp.StatusCode)
 	result.FailureStage = "http_status"
 	if resp.StatusCode != http.StatusOK {
+		if p.wire {
+			result.ServiceError, result.ErrorResponseFormat, result.ReceivedBytes = probeServiceError(resp.Header, resp.Body)
+			if ctx.Err() != nil {
+				return fail(probeContextError(ctx, ctx.Err()))
+			}
+		}
 		return fail(errNeedsEvidence)
 	}
 	result.FailureStage = "response_headers"

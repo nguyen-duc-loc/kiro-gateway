@@ -78,11 +78,23 @@ The output record adds only fixed transformation and completion labels, nullable
 
 ### Diagnostic refinement
 
-The latest run's fixed `needs_evidence` category could not distinguish `http.Client.Do` failure from a non 200 response. The approved diagnostic plan adds three optional fixed labels per case: `failure_stage`, `transport_failure`, and `http_status_category`. You approved this change for the diagnostic launch at `b2490a92125e147b53a2eb6615ce17d952c61eea`; that launch stopped on credential expiry and does not authorize another run.
+The first dispatch run's fixed `needs_evidence` category could not distinguish `http.Client.Do` failure from a non 200 response. The approved diagnostic plan adds three optional fixed labels per case: `failure_stage`, `transport_failure`, and `http_status_category`. You approved this change for the diagnostic launch at `b2490a92125e147b53a2eb6615ce17d952c61eea`; that launch stopped on credential expiry and does not authorize another run.
 
 `failure_stage` comes from the local execution branch: `pre_dispatch`, `source`, `request_build`, `transport`, `http_status`, `response_headers`, `stream`, or `cleanup`. `transport_failure` comes from fixed dial branches (`dns`, `connect`, `destination_policy`), a TLS handshake completion callback (`tls`), a timeout type check (`timeout`), or `other`. HTTP response codes map locally to `ok`, `bad_request`, `unauthorized`, `forbidden`, `not_found`, `throttled`, `redirect`, `server_error`, or `other`. No raw status text, IP addresses, certificates, header values, request errors, or response bodies enter these labels.
 
-The runner does not read error response bodies. A non 200 response stays inconclusive and stops the sequence; a diagnostic label never makes an assertion observed or authorizes a retry. Code validates the plan's exact label sets. The inference requests, source selection, role and completion limitations, and all existing budgets stay unchanged.
+That approved revision did not read error response bodies. The prepared extension below changes only the bounded diagnostic read. A non 200 response stays inconclusive and stops the sequence; a diagnostic label never makes an assertion observed or authorizes a retry. Code validates the plan's exact label sets. The inference requests, source selection, role and completion limitations, and all existing budgets stay unchanged.
+
+### Prepared error discriminator diagnostic
+
+The authorization investigation identified named error discriminator sources in the installed decoder and the AWS JSON protocol. The next candidate keeps outbound requests unchanged and adds only `service_error` and `error_response_format` labels on non 200 responses. It is prepared for review, not approved for a live run.
+
+Inspect `Content-Type` only to classify the response as `json`, `html`, `other`, `absent`, or `ambiguous`. Use exactly one `X-Amzn-Errortype` header of at most 256 visible ASCII bytes when present. Normalize the error type by removing the first colon and everything after it, then retaining the part after the first hash. Match only the finite input to output map in the plan. Empty, oversized, malformed, duplicate, or conflicting discriminators cannot produce a recognized label. An unrecognized spelling is `unknown`, never copied into output.
+
+If that header is absent and content type is JSON (`application/json`, `application/x-amz-json-1.0`, or `application/x-amz-json-1.1`), read at most 16385 bytes to detect a body over the 16 KiB limit. Parse only a valid bounded JSON object without duplicate members. Read only the exact `code` and `__type` string members for classification. If both exist, their normalized values must agree. Other members, including `message`, are discarded and never emitted. Non JSON bodies stay unread. Read failures or an oversized body produce fixed diagnostic labels and never authorize replay. Existing request deadlines and transport limits cover this inspection. Reserve a fixed allowance of 64 times the body bound plus 64 KiB before the sequence to cover parser scratch and byte copies within the 16 MiB run budget.
+
+Known labels are `access_denied`, `missing_authentication_token`, `internal_server_error`, `service_quota_exceeded`, `throttling`, and `service_unavailable`, plus `absent`, `unknown`, `ambiguous`, `unparseable`, `oversized`, and `unavailable`. The exact type spellings and mapping are frozen in the plan. These are reported error classes, not proof of a particular missing permission or successful authentication. The result stays inconclusive and the sequence stops at the same non 200 response. No raw error message, body, header, namespace, or suffix is printed or saved.
+
+This proposal supersedes `never_read_or_output` only in a newly reviewed diagnostic plan. Its exact policy name is `bounded_json_error_type_only`. The previously completed runs and their unread error bodies are unchanged; they cannot be retroactively classified.
 
 ### Current live disposition
 
@@ -205,7 +217,7 @@ The harness emits only the following observation fields. Every variable label co
 | Measurements | Locally measured received bytes, retained bytes, argument bytes, event counts, request counts, and durations, checked against the experiment's resource bounds. Do not copy unvalidated numeric metadata from an upstream response. |
 | Assertions | Boolean or null results for marker match, instruction placement, distinct system role preservation, controls requested, output within limit, valid arguments, matching tool name and ID, matching model identity, usage presence, observed completion, tentative completion, reached injection trigger, and completed cleanup. Null means not established. Terminal and transformation labels must match the reviewed plan's finite list; otherwise record `unknown`. |
 | Outcome | The fixed case status, run verdict, and failure category defined in this spec. |
-| Failure diagnostics | Only the three finite label sets defined in the diagnostic refinement above, derived from local execution branches, TLS completion, and the numeric HTTP status. Error response bodies remain unread. |
+| Failure diagnostics | The three approved stage label sets, plus the prepared finite service error and response format labels above. The proposed JSON read is capped and retains no raw data; it requires a new exact plan review. |
 
 stdout may contain the run summary and these structured observations. stderr is limited to fixed progress and failure categories, case labels, attempt indices, and local durations. Do not use arbitrary response text, raw tool names or IDs, arguments, result contents, upstream request IDs, raw model strings, unknown field names, or raw errors in either stream. Usage presence and a validated comparison against the requested output limit can be recorded; token counts are not emitted.
 

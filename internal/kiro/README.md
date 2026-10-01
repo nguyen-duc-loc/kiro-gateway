@@ -165,3 +165,14 @@ Local source validation passed, but remote authorization and model acceptance
 remain unproven. Five dependent cases were unrun. No raw error body or headers
 were retained, and no retry occurred. The current disposition is `needs_evidence`;
 further authorization evidence should precede another inference proposal.
+
+The authorization investigation found that normal saved token mode omits
+`TokenType`, while the CLI adds user agent and opt out metadata. No evidence
+establishes those differences as the cause of the 403, and the inspected connector
+does not rewrite the operation URI. The next prepared diagnostic uses the named
+AWS error discriminator: one bounded `X-Amzn-Errortype` header, or, if absent,
+`code` or `__type` from at most 16 KiB of JSON. It may read one additional byte to
+detect an oversized body. It emits only allowlisted classes and fixed fallback
+labels. No error message, account value, raw header, or body is saved or printed.
+This replaces the former policy of leaving every error body unread only after a
+new exact plan review. No live request was made during research or local tests.

@@ -5,6 +5,7 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"errors"
+	"io"
 	"net"
 	"net/http"
 	"net/netip"
@@ -80,5 +81,93 @@ func TestWireTLSFailureIsDistinctFromHTTPRejection(t *testing.T) {
 	c := got.Cases[0]
 	if c.FailureStage != "transport" || c.TransportFailure != "tls" || c.HTTPStatus != "" || got.Attempts != 1 || c.Assertions.Completion != nil {
 		t.Errorf("wire untrusted TLS = %+v, want transport/tls, no HTTP status and no completion", c)
+	}
+}
+
+func TestServiceErrorDiscriminatorIsBoundedAndAllowlisted(t *testing.T) {
+	for _, tc := range []struct {
+		name, header, body, want string
+	}{
+		{name: "header preferred", header: "AccessDeniedError", body: "unread sentinel", want: "access_denied"},
+		{name: "decorated header", header: "sentinel.namespace#AccessDeniedError:sentinel-suffix", want: "access_denied"},
+		{name: "unknown header", header: "sentinel-private-code", want: "unknown"},
+		{name: "control suffix", header: "AccessDeniedError:\nsentinel", want: "unknown"},
+		{name: "large header", header: strings.Repeat("x", 257), want: "unknown"},
+		{name: "body type", body: `{"__type":"AccessDeniedError","message":"sentinel-private-message"}`, want: "access_denied"},
+		{name: "body route error", body: `{"code":"MissingAuthenticationTokenException"}`, want: "missing_authentication_token"},
+		{name: "body unknown", body: `{"code":"sentinel-code"}`, want: "unknown"},
+		{name: "body both", body: `{"code":"AccessDeniedError","__type":"ns#AccessDeniedError"}`, want: "access_denied"},
+		{name: "body conflict", body: `{"code":"AccessDeniedError","__type":"ThrottlingError"}`, want: "ambiguous"},
+		{name: "duplicate", body: `{"code":"AccessDeniedError","code":"ThrottlingError"}`, want: "unparseable"},
+		{name: "nested duplicate", body: `{"code":"AccessDeniedError","unused":{"a":1,"a":2}}`, want: "unparseable"},
+		{name: "wrong type", body: `{"code":123}`, want: "unparseable"},
+		{name: "null type", body: `{"__type":null}`, want: "unparseable"},
+		{name: "message only", body: `{"message":"sentinel-private-message"}`, want: "absent"},
+		{name: "array", body: `[]`, want: "unparseable"},
+		{name: "oversized", body: strings.Repeat("x", probeErrorBodyLimit+100), want: "oversized"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			h := http.Header{"Content-Type": []string{"application/json"}}
+			if tc.header != "" {
+				h.Set("X-Amzn-Errortype", tc.header)
+			}
+			r := strings.NewReader(tc.body)
+			got, format, n := probeServiceError(h, r)
+			if got != tc.want || format != "json" || n > probeErrorBodyLimit+1 {
+				t.Errorf("probeServiceError(%s) label=%s format=%s bytes=%d, want %s/json within bound", tc.name, got, format, n, tc.want)
+			}
+			if tc.header != "" && (n != 0 || r.Len() != len(tc.body)) {
+				t.Error("header classification unnecessarily read body")
+			}
+			if strings.Contains(got, "sentinel") {
+				t.Error("service error classifier leaked input")
+			}
+		})
+	}
+}
+
+func TestServiceErrorRejectsAmbiguousHeadersWithoutReadingBody(t *testing.T) {
+	for _, h := range []http.Header{
+		{"Content-Type": []string{"application/json"}, "X-Amzn-Errortype": []string{"AccessDeniedError", "AccessDeniedError"}},
+		{"Content-Type": []string{"application/json", "application/json"}},
+		{"Content-Type": []string{"text/html"}},
+	} {
+		r := strings.NewReader("sentinel-private-body")
+		_, _, n := probeServiceError(h, r)
+		if n != 0 || r.Len() != len("sentinel-private-body") {
+			t.Error("ambiguous or non JSON response body was read")
+		}
+	}
+}
+
+type diagnosticFailedReader struct{}
+
+func (diagnosticFailedReader) Read([]byte) (int, error) {
+	return 0, errors.New("sentinel-private-read-error")
+}
+
+func TestServiceErrorReadFailureIsSanitized(t *testing.T) {
+	label, _, n := probeServiceError(http.Header{"Content-Type": []string{"application/json"}}, diagnosticFailedReader{})
+	if label != "unavailable" || n != 0 {
+		t.Errorf("probeServiceError(read failure)=%s/%d, want unavailable/0", label, n)
+	}
+}
+
+func TestWireJSONDenialRemainsInconclusiveWithoutLeaking(t *testing.T) {
+	home, _ := probeHome(t)
+	p := localWireProbe(t, home, func(w http.ResponseWriter, r *http.Request) {
+		io.Copy(io.Discard, r.Body)
+		w.Header().Set("Content-Type", "application/x-amz-json-1.0")
+		w.WriteHeader(http.StatusForbidden)
+		w.Write([]byte(`{"__type":"AccessDeniedError","message":"sentinel-account-message","account":"sentinel-account"}`))
+	})
+	got := runWireCases(p, wireTestID, probeMaxRetained)
+	c := got.Cases[0]
+	if got.Attempts != 1 || got.Verdict != "needs_evidence" || c.ServiceError != "access_denied" || c.ErrorResponseFormat != "json" || c.FailureStage != "http_status" || c.ReceivedBytes == 0 || got.Cases[1].Status != "unrun" {
+		t.Errorf("wire JSON denial=%+v, want one inconclusive denial with error class and dependent case unrun", got)
+	}
+	b, _ := json.Marshal(got)
+	if strings.Contains(string(b), "sentinel") {
+		t.Error("wire error diagnostics leaked response fields")
 	}
 }
