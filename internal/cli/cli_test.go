@@ -81,6 +81,7 @@ func TestRun_InvalidArguments(t *testing.T) {
 
 // covers: AC-2, AC-3. Startup requires only the separate gateway credential.
 func TestRun_MissingGatewayCredential(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
 	var stdout, stderr bytes.Buffer
 	var keys []string
 	err := cli.Run(context.Background(), []string{"serve"}, func(key string) string { keys = append(keys, key); return "" }, &stdout, &stderr, "dev")

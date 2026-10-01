@@ -32,6 +32,7 @@ func TestExecutable(t *testing.T) {
 	if output, err := build.CombinedOutput(); err != nil {
 		t.Fatalf("build: %v\n%s", err, output)
 	}
+	t.Run("saved settings and process locking", func(t *testing.T) { testSavedSettings(t, binary) })
 
 	// covers: AC-1, AC-3. Test the real entry point and its OS exit status.
 	for _, tc := range []struct {

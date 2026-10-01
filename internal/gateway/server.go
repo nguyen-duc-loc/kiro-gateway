@@ -16,6 +16,8 @@ import (
 	"sync/atomic"
 	"syscall"
 	"time"
+
+	"kiro-gateway/internal/config"
 )
 
 const shutdownTimeout = 5 * time.Second
@@ -24,7 +26,7 @@ const shutdownTimeout = 5 * time.Second
 // It never obtains Kiro credentials or starts an upstream request.
 func Run(ctx context.Context, listen, token, version string, logger *slog.Logger) error {
 	address, err := netip.ParseAddrPort(listen)
-	if err != nil || !address.Addr().Is4() || !address.Addr().IsLoopback() {
+	if err != nil || !config.ValidListen(listen) {
 		return errors.New("--listen must be a numeric IPv4 loopback address and port, such as 127.0.0.1:8787")
 	}
 	if len(token) < 32 {
