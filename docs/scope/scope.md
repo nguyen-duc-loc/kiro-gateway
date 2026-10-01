@@ -103,7 +103,7 @@ Connect an authenticated Kiro account to a local gateway and complete a small re
 - [ ] Build the feasibility milestone only: `/develop first real Claude Code coding loop: feasibility milestone only`
   - [ ] Prepare the concrete experiment and prove one offline path through the harness (AC-1, AC-2, AC-5, AC-6, AC-7, AC-8, AC-9).
     - [x] Complete the six case synthetic harness, including exact snapshot selection, tool result continuation, local failure controls, and passing repository checks.
-    - [ ] Build the combined token and selected profile snapshot with synthetic verification: `/develop first real Claude Code coding loop: selected profile snapshot only` (AC-1, AC-2, AC-6, AC-8, AC-9).
+    - [x] Build the combined token and selected profile snapshot with synthetic verification: `/develop first real Claude Code coding loop: selected profile snapshot only` (AC-1, AC-2, AC-6, AC-8, AC-9).
     - [ ] Complete the current upstream contract and the concrete live request plan from evidence.
   - [ ] Complete the safeguards and present the exact plan and clean code commit for live review (AC-1, AC-2, AC-3, AC-5, AC-6, AC-8).
   - [ ] After approval and explicit launch, run the bounded cases and record evidence or the unresolved contract (AC-2 through AC-8).
@@ -113,7 +113,7 @@ Connect an authenticated Kiro account to a local gateway and complete a small re
 - [ ] Document the feasibility milestone: `/document changelog first real Claude Code coding loop: feasibility milestone only`
 - [ ] Design it (spec): `/architect first real Claude Code coding loop`
 
-**Code:** The six case offline feasibility harness is in `internal/kiro`, with exact snapshot reads in `internal/credentials` and existing store locking in `internal/configstore`. Synthetic checks cover tool continuation, budgets, cancellation, interruption, code and baseline drift, and output filtering. The incomplete candidate plan records `claude-sonnet-5`, the distinction between profile and Identity Center regions, and the installed metadata decoder's identifier fields. Destination, authentication, distinct system instructions, controls, and completion still need evidence. No live dispatcher or live result exists; the preparation milestone remains unchecked until its concrete contract is complete.
+**Code:** The six case offline feasibility harness is in `internal/kiro`, with combined token and selected profile snapshots in `internal/credentials/profile.go` and existing store locking in `internal/configstore`. The harness selects a synthetic destination from the profile ARN region and pins the exact profile bytes for each run. Synthetic checks cover profile validation, concurrent SQLite writers, changed profiles, tool continuation, budgets, cancellation, interruption, code and baseline drift, and output filtering. Repository checks pass, including the race detector. The incomplete candidate plan records `claude-sonnet-5` and the installed metadata decoder's identifier fields. Destination and authentication, distinct system instructions, controls, and completion still need new evidence. No live dispatcher or live result exists; the preparation milestone remains unchecked until its concrete contract is complete.
 
 ## Slice 2: Keep access working
 

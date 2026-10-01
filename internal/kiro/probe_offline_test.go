@@ -2,6 +2,8 @@ package kiro
 
 import (
 	"context"
+	"crypto/sha256"
+	"crypto/subtle"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/binary"
@@ -22,12 +24,13 @@ import (
 )
 
 const (
-	probeMaxRequest  = 64 << 10
-	probeMaxHeaders  = 16 << 10
-	probeMaxResponse = 8 << 20
-	probeMaxAttempts = 6
-	probeMaxRetained = 16 << 20
-	probeMaxEvent    = 64 << 10
+	probeMaxRequest      = 64 << 10
+	probeMaxHeaders      = 16 << 10
+	probeMaxResponse     = 8 << 20
+	probeMaxAttempts     = 6
+	probeMaxRetained     = 16 << 20
+	probeMaxEvent        = 64 << 10
+	probeSourceAllowance = 32 * config.MaxBytes
 )
 
 type probeLimits struct{ run, request, idle time.Duration }
@@ -52,33 +55,59 @@ type probeObservation struct {
 // snapshotReader belongs to the consuming boundary. The adapter must validate
 // and return one snapshot; Capture followed by another token read is not valid.
 type snapshotReader interface {
-	ReadSnapshot(context.Context, config.Session) (credentials.Snapshot, error)
+	ReadProfileSnapshot(context.Context, config.Session) (credentials.ProfileSnapshot, error)
 }
 
 // offlineProbe owns one locked config snapshot. It is deliberately restricted
 // to TLS on numeric IPv4 loopback, with a fixture body rather than a Kiro schema.
 // There is no path from TestProtocolProbe to this local fixture runner.
 type offlineProbe struct {
-	ctx       context.Context
-	cancel    context.CancelFunc
-	store     *configstore.Store
-	reference config.Session
-	reader    snapshotReader
-	endpoint  *url.URL
-	roots     *x509.CertPool
-	limits    probeLimits
-	attempts  int
-	stopped   bool
+	ctx           context.Context
+	cancel        context.CancelFunc
+	store         *configstore.Store
+	reference     config.Session
+	reader        snapshotReader
+	endpoint      *url.URL
+	destinations  map[string]*url.URL
+	profileDigest [sha256.Size]byte
+	profilePinned bool
+	roots         *x509.CertPool
+	limits        probeLimits
+	attempts      int
+	stopped       bool
 }
 
 func openOfflineProbe(parent context.Context, home, endpoint string, roots *x509.CertPool, limits probeLimits) (*offlineProbe, error) {
+	return openRegionalOfflineProbe(parent, home, map[string]string{"us-east-1": endpoint, "eu-central-1": endpoint}, roots, limits)
+}
+
+func offlineDestination(endpoint string) (*url.URL, error) {
 	u, err := url.Parse(endpoint)
 	if err != nil || u.Scheme != "https" || u.User != nil || u.RawQuery != "" || u.Fragment != "" || u.Path != "/probe" || u.RawPath != "" {
 		return nil, errPlanInvalid
 	}
 	addr, err := netip.ParseAddrPort(u.Host)
-	if err != nil || !addr.Addr().Is4() || !addr.Addr().IsLoopback() || addr.Port() == 0 || roots == nil {
+	if err != nil || !addr.Addr().Is4() || !addr.Addr().IsLoopback() || addr.Port() == 0 {
 		return nil, errPlanInvalid
+	}
+	return u, nil
+}
+
+func openRegionalOfflineProbe(parent context.Context, home string, endpoints map[string]string, roots *x509.CertPool, limits probeLimits) (*offlineProbe, error) {
+	if len(endpoints) == 0 || len(endpoints) > 2 || roots == nil {
+		return nil, errPlanInvalid
+	}
+	// Copy and validate the entire finite fixture map before any source access.
+	destinations := make(map[string]*url.URL, len(endpoints))
+	for region, endpoint := range endpoints {
+		if region != "us-east-1" && region != "eu-central-1" {
+			return nil, errPlanInvalid
+		}
+		u, err := offlineDestination(endpoint)
+		if err != nil {
+			return nil, err
+		}
+		destinations[region] = u
 	}
 	if limits.run <= 0 || limits.run > defaultProbeLimits.run || limits.request <= 0 || limits.request > defaultProbeLimits.request || limits.idle <= 0 || limits.idle > defaultProbeLimits.idle {
 		return nil, errPlanInvalid
@@ -97,7 +126,7 @@ func openOfflineProbe(parent context.Context, home, endpoint string, roots *x509
 	}
 	ctx, cancel := context.WithTimeout(parent, limits.run)
 	return &offlineProbe{ctx: ctx, cancel: cancel, store: store, reference: *d.Session,
-		reader: credentials.Reader{Home: home}, endpoint: u, roots: roots.Clone(), limits: limits}, nil
+		reader: credentials.Reader{Home: home}, destinations: destinations, roots: roots.Clone(), limits: limits}, nil
 }
 
 func (p *offlineProbe) close() {
@@ -157,11 +186,15 @@ func (p *offlineProbe) exchange(body string, consume probeStreamConsumer) (resul
 			outcome = errTimedOut
 		}
 	}()
-	snapshot, err := p.reader.ReadSnapshot(ctx, p.reference)
+	selected, err := p.reader.ReadProfileSnapshot(ctx, p.reference)
 	if err != nil {
 		switch {
 		case errors.Is(err, credentials.ErrChanged):
 			return fail(errSessionChanged)
+		case errors.Is(err, credentials.ErrProfileInvalid):
+			return fail(errProfileInvalid)
+		case errors.Is(err, credentials.ErrProfileUnsupported):
+			return fail(errProfileUnsupported)
 		case errors.Is(err, credentials.ErrExpired):
 			return fail(errExpired)
 		case errors.Is(err, credentials.ErrCanceled):
@@ -172,11 +205,18 @@ func (p *offlineProbe) exchange(body string, consume probeStreamConsumer) (resul
 			return fail(errSource)
 		}
 	}
-	// Only this invented region is allowed in local fixtures. It has no external
-	// destination mapping and cannot be used as a live sign in region rule.
-	if snapshot.Region() != "synthetic-region" {
-		return fail(errNeedsEvidence)
+	digest := selected.ProfileDigest()
+	if p.profilePinned && subtle.ConstantTimeCompare(digest[:], p.profileDigest[:]) != 1 {
+		return fail(errProfileChanged)
 	}
+	if !p.profilePinned {
+		endpoint, ok := p.destinations[selected.ProfileRegion()]
+		if !ok {
+			return fail(errPlanInvalid)
+		}
+		p.profileDigest, p.profilePinned, p.endpoint = digest, true, endpoint
+	}
+	snapshot := selected.Credential()
 	if !snapshot.ExpiresAt().After(time.Now()) {
 		return fail(errExpired)
 	}
@@ -280,7 +320,7 @@ func probeContextError(ctx context.Context, err error) error {
 // The generic framing path never infers completion. The synthetic case decoder
 // supplies its own explicitly invented completion event through visit.
 func observeProbeFrames(input io.Reader, out *probeObservation) error {
-	err := walkProbeFrames(input, out, &probeMemory{limit: probeMaxRetained}, nil)
+	err := walkProbeFrames(input, out, &probeMemory{limit: probeMaxRetained, used: probeSourceAllowance}, nil)
 	return probeReadError(err)
 }
 

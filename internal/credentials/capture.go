@@ -41,7 +41,8 @@ type Reader struct {
 	Home string
 	Now  func() time.Time
 	// Test hook observes the boundary between the size query and value query.
-	afterMetadata func()
+	afterMetadata        func()
+	afterProfileMetadata func()
 }
 
 // Capture returns only a reference. Tokens and record fields remain local.
@@ -76,6 +77,7 @@ func (s Snapshot) GoString() string { return s.String() }
 type capturedSnapshot struct {
 	reference config.Session
 	snapshot  Snapshot
+	profile   profileSnapshot
 }
 
 // ReadSnapshot reads once and returns credential material only when those exact
@@ -98,6 +100,12 @@ func (r Reader) ReadSnapshot(ctx context.Context, expected config.Session) (Snap
 }
 
 func (r Reader) readSnapshot(parent context.Context) (captured capturedSnapshot, result error) {
+	return r.readSelected(parent, nil)
+}
+
+// A nonnil expected reference selects the combined feasibility read. Ordinary
+// capture and ReadSnapshot never inspect the profile table.
+func (r Reader) readSelected(parent context.Context, expected *config.Session) (captured capturedSnapshot, result error) {
 	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
 	defer cancel()
 	defer func() {
@@ -128,10 +136,10 @@ func (r Reader) readSnapshot(parent context.Context) (captured capturedSnapshot,
 		return capturedSnapshot{}, sanitize(ctx, err)
 	}
 	defer tx.Rollback()
-	if err := checkSchema(ctx, tx); err != nil {
+	if err := checkSchema(ctx, tx, false); err != nil {
 		return capturedSnapshot{}, sanitize(ctx, err)
 	}
-	value, err := readValue(ctx, tx, r.afterMetadata)
+	value, err := readValue(ctx, tx, false, r.afterMetadata)
 	if err != nil {
 		return capturedSnapshot{}, sanitize(ctx, err)
 	}
@@ -141,9 +149,6 @@ func (r Reader) readSnapshot(parent context.Context) (captured capturedSnapshot,
 	}
 	if err := validateRecord(value, now()); err != nil {
 		return capturedSnapshot{}, err
-	}
-	if err := tx.Commit(); err != nil {
-		return capturedSnapshot{}, sanitize(ctx, err)
 	}
 	h := sha256.New()
 	h.Write([]byte("kiro-gateway/" + config.Source + "\x00"))
@@ -164,10 +169,30 @@ func (r Reader) readSnapshot(parent context.Context) (captured capturedSnapshot,
 	if err != nil {
 		return capturedSnapshot{}, ErrRecord
 	}
-	return capturedSnapshot{
+	captured = capturedSnapshot{
 		reference: config.Session{Source: config.Source, Fingerprint: hex.EncodeToString(h.Sum(nil))},
 		snapshot:  Snapshot{accessToken: accessToken, region: region, expiresAt: expiresAt},
-	}, nil
+	}
+	if expected != nil {
+		if subtle.ConstantTimeCompare([]byte(captured.reference.Fingerprint), []byte(expected.Fingerprint)) != 1 {
+			return capturedSnapshot{}, ErrChanged
+		}
+		if err := checkSchema(ctx, tx, true); err != nil {
+			return capturedSnapshot{}, sanitize(ctx, err)
+		}
+		profile, err := readValue(ctx, tx, true, r.afterProfileMetadata)
+		if err != nil {
+			return capturedSnapshot{}, sanitize(ctx, err)
+		}
+		captured.profile, err = parseProfile(profile)
+		if err != nil {
+			return capturedSnapshot{}, err
+		}
+	}
+	if err := tx.Commit(); err != nil {
+		return capturedSnapshot{}, sanitize(ctx, err)
+	}
+	return captured, nil
 }
 
 func sourcePath(home string) (string, error) {
@@ -192,17 +217,21 @@ func sourcePath(home string) (string, error) {
 	return filepath.Join(r.Name(), "data.sqlite3"), nil
 }
 
-func checkSchema(ctx context.Context, tx *sql.Tx) error {
+func checkSchema(ctx context.Context, tx *sql.Tx, profile bool) error {
+	table, list, info := "auth_kv", `PRAGMA main.table_list('auth_kv')`, `PRAGMA main.table_xinfo('auth_kv')`
+	if profile {
+		table, list, info = "state", `PRAGMA main.table_list('state')`, `PRAGMA main.table_xinfo('state')`
+	}
 	// A direct PRAGMA cannot be shadowed by a source table named pragma_table_list.
 	var schema, name, kind string
 	var columns, withoutRowID, strict int
-	if err := tx.QueryRowContext(ctx, `PRAGMA main.table_list('auth_kv')`).Scan(&schema, &name, &kind, &columns, &withoutRowID, &strict); err != nil {
+	if err := tx.QueryRowContext(ctx, list).Scan(&schema, &name, &kind, &columns, &withoutRowID, &strict); err != nil {
 		return err
 	}
-	if schema != "main" || name != "auth_kv" || kind != "table" {
+	if schema != "main" || name != table || kind != "table" {
 		return ErrSource
 	}
-	rows, err := tx.QueryContext(ctx, `PRAGMA main.table_xinfo('auth_kv')`)
+	rows, err := tx.QueryContext(ctx, info)
 	if err != nil {
 		return err
 	}
@@ -238,10 +267,18 @@ func checkSchema(ctx context.Context, tx *sql.Tx) error {
 	return nil
 }
 
-func readValue(ctx context.Context, tx *sql.Tx, afterMetadata func()) ([]byte, error) {
+func readValue(ctx context.Context, tx *sql.Tx, profile bool, afterMetadata func()) ([]byte, error) {
+	key, invalid := selectedKey, ErrRecord
+	metadataQuery := `SELECT typeof(value), length(CAST(value AS BLOB)) FROM main.auth_kv WHERE key COLLATE BINARY = ? LIMIT 2`
+	valueQuery := `SELECT value FROM main.auth_kv WHERE key COLLATE BINARY = ? LIMIT 1`
+	if profile {
+		key, invalid = selectedProfileKey, ErrProfileInvalid
+		metadataQuery = `SELECT typeof(value), length(CAST(value AS BLOB)) FROM main.state WHERE key COLLATE BINARY = ? LIMIT 2`
+		valueQuery = `SELECT value FROM main.state WHERE key COLLATE BINARY = ? LIMIT 1`
+	}
 	// Size and type are checked before scanning the credential value into Go.
 	// BINARY prevents a source column collation from selecting a different key.
-	rows, err := tx.QueryContext(ctx, `SELECT typeof(value), length(CAST(value AS BLOB)) FROM main.auth_kv WHERE key COLLATE BINARY = ? LIMIT 2`, selectedKey)
+	rows, err := tx.QueryContext(ctx, metadataQuery, key)
 	if err != nil {
 		return nil, err
 	}
@@ -264,13 +301,13 @@ func readValue(ctx context.Context, tx *sql.Tx, afterMetadata func()) ([]byte, e
 		return nil, closeErr
 	}
 	if count != 1 || kind != "text" || !size.Valid || size.Int64 < 1 || size.Int64 > config.MaxBytes {
-		return nil, ErrRecord
+		return nil, invalid
 	}
 	if afterMetadata != nil {
 		afterMetadata()
 	}
 	var data []byte
-	if err := tx.QueryRowContext(ctx, `SELECT value FROM main.auth_kv WHERE key COLLATE BINARY = ? LIMIT 1`, selectedKey).Scan(&data); err != nil {
+	if err := tx.QueryRowContext(ctx, valueQuery, key).Scan(&data); err != nil {
 		return nil, err
 	}
 	return data, nil
@@ -315,6 +352,9 @@ func sanitize(ctx context.Context, err error) error {
 	}
 	if errors.Is(err, ErrRecord) {
 		return ErrRecord
+	}
+	if errors.Is(err, ErrProfileInvalid) {
+		return ErrProfileInvalid
 	}
 	var sqliteErr sqlite3.Error
 	if errors.As(err, &sqliteErr) && (sqliteErr.Code == sqlite3.ErrBusy || sqliteErr.Code == sqlite3.ErrLocked) {

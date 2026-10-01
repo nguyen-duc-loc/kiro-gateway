@@ -25,6 +25,7 @@ import (
 )
 
 const probeSyntheticRecord = `{"access_token":"sentinel-token","expires_at":"2099-01-01T00:00:00Z","region":"synthetic-region","start_url":"https://sentinel-account.example/start"}`
+const probeSyntheticProfile = `{"arn":"arn:aws:codewhisperer:us-east-1:000000000000:profile/sentinel-profile","profileName":"sentinel-name"}`
 const probeSyntheticBody = `{"fixture":"text","model":"claude-sonnet-5"}`
 
 func probeHome(t *testing.T) (string, *sql.DB) {
@@ -44,6 +45,12 @@ func probeHome(t *testing.T) (string, *sql.DB) {
 		t.Fatal(err)
 	}
 	if _, err = db.Exec(`INSERT INTO auth_kv VALUES(?,?)`, "kirocli:odic:token", probeSyntheticRecord); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = db.Exec(`CREATE TABLE state(key TEXT PRIMARY KEY,value TEXT)`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = db.Exec(`INSERT INTO state VALUES(?,?)`, "api.codewhisperer.profile", probeSyntheticProfile); err != nil {
 		t.Fatal(err)
 	}
 	if err = os.Chmod(path, 0600); err != nil {

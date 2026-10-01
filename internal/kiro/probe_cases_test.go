@@ -362,8 +362,10 @@ func runFixtureCases(p *offlineProbe, memoryLimit int64) (out probeFixtureResult
 		return out
 	}
 	// Fixed allowance for result records, turn objects, history descriptors,
-	// fixture literals, and credential material; payload work reserves separately.
-	if err := memory.reserve(256 << 10); err != nil {
+	// fixture literals, and both bounded account records, including source byte
+	// copies and decoded strings. Payload work reserves separately. The source
+	// allowance is conservative and retained throughout all six attempts.
+	if err := memory.reserve((256 << 10) + probeSourceAllowance); err != nil {
 		out.Cases[0].Status, out.Cases[0].Cause = "inconclusive", err.Error()
 		return out
 	}

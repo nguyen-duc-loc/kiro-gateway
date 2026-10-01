@@ -259,9 +259,9 @@ type countingSnapshots struct {
 	reads  int
 }
 
-func (s *countingSnapshots) ReadSnapshot(ctx context.Context, ref config.Session) (credentials.Snapshot, error) {
+func (s *countingSnapshots) ReadProfileSnapshot(ctx context.Context, ref config.Session) (credentials.ProfileSnapshot, error) {
 	s.reads++
-	return s.reader.ReadSnapshot(ctx, ref)
+	return s.reader.ReadProfileSnapshot(ctx, ref)
 }
 
 func TestFixtureReadsOneSnapshotPerAttempt(t *testing.T) {

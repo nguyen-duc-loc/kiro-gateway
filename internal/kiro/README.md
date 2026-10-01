@@ -18,15 +18,17 @@ The installed message metadata decoder recognizes `conversationId` and
 `utteranceId`, then skips other keys. That decoder does not establish successful
 turn completion. The [official region documentation](https://kiro.dev/docs/enterprise/supported-regions/)
 also distinguishes the Kiro profile region used for inference from the Identity
-Center region. The current credential snapshot cannot establish that profile
-region. Agent prompt and headless output documentation describe CLI behavior,
+Center region. A token alone cannot establish that profile region. The accepted
+profile amendment now reads the fixed selected profile alongside the token.
+Agent prompt and headless output documentation describe CLI behavior,
 without supplying the missing runtime wire contract for the 2.8.0 baseline.
 The candidate plan records these sources and their limits.
 
 Preparation remains `needs_evidence`. Continuing requires evidence of the exact
 destination and authentication path, distinct system instruction placement,
-generation controls, and positive turn completion. Reading another profile source
-or changing instruction roles requires `/architect` to extend the decision first.
+generation controls, and positive turn completion. Reading sources beyond the
+accepted token and selected profile, or changing instruction roles, requires
+`/architect` to extend the decision first.
 The live dispatcher and live case bodies remain unimplemented because their
 required inputs are unresolved.
 
@@ -61,9 +63,19 @@ remain unknown when absent and are reduced to booleans when present.
 
 The request path holds an existing configuration lock without creating missing
 settings. It freezes model selection and the session reference, then reads one
-fresh validated credential snapshot per attempt. Manual settings edits cannot
-adopt a changed credential for the active run. The token is selected from the same
-bytes as the checked fingerprint.
+fresh combined token and selected profile snapshot per attempt. Both fixed rows
+share one SQLite connection, transaction, and five second deadline. Manual
+settings edits cannot adopt a changed credential for the active run. The token
+is selected from the same bytes as the checked fingerprint.
+
+The profile reader validates the exact ARN and one string valued `profileName`
+or `profile_name`, then discards the name. The ARN region selects a destination
+from a frozen synthetic map. Every map entry is restricted to local TLS. The
+first valid profile digest is pinned for the run; even whitespace or ignored
+field changes stop a later attempt before dispatch. A new run can select a new
+profile without changing the saved token reference. Profile values and digests
+have no output or settings field. Ordinary `Capture` and `ReadSnapshot` still
+read only the token record.
 
 Transport is restricted to numeric IPv4 loopback TLS with explicit fixture trust.
 It ignores environment proxies, rejects redirects, and disables connection reuse,
@@ -77,6 +89,8 @@ frame headers are capped at 16 KiB. The synthetic decoder additionally caps each
 event payload at 64 KiB. It checks both EventStream CRC32 values and lengths before
 allocation. A 16 MiB reservation budget covers retained history, argument copies,
 encoded requests, observations, and conservative decoder scratch allowances.
+It reserves an additional 2 MiB for both bounded account records and their
+temporary byte and string copies.
 `peak_reserved_bytes` reports that reservation, not the process heap size. Raw
 payloads, credentials, tool IDs, arguments, unknown spellings, and error text have
 no summary output field.
@@ -92,9 +106,9 @@ client commands or operator state.
 
 The following work remains before a live review:
 
-1. Establish the current IAM Identity Center destination, region rule, and token
-   scheme without adding an unapproved credential source. Historical endpoint
-   selection uses profile metadata, not simply the token record region.
+1. Establish the current IAM Identity Center destination and token scheme
+   without adding an unapproved credential source. The profile region source
+   is implemented, but the live destination and authentication trace is pending.
 2. Establish instruction placement, requested model controls, and positive model
    turn completion from current evidence. The fixture fields cannot fill these
    gaps. The evidence and missing fields are in `testdata/probe-plan.json`.

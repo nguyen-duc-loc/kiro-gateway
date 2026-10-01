@@ -20,18 +20,21 @@ const probeModel = "claude-sonnet-5"
 const probeInstructionPolicy = "preserve_distinct_system_role"
 
 var (
-	errPlanInvalid    = errors.New("plan_invalid")
-	errNeedsEvidence  = errors.New("needs_evidence")
-	errCodeChanged    = errors.New("code_changed")
-	errConfiguration  = errors.New("configuration_invalid")
-	errSessionChanged = errors.New("session_changed")
-	errExpired        = errors.New("credential_expired")
-	errSource         = errors.New("source_unavailable")
-	errCanceled       = errors.New("canceled")
-	errTimedOut       = errors.New("timed_out")
-	errBudget         = errors.New("budget_exhausted")
-	errIncomplete     = errors.New("stream_incomplete")
-	errContract       = errors.New("contract_mismatch")
+	errPlanInvalid        = errors.New("plan_invalid")
+	errNeedsEvidence      = errors.New("needs_evidence")
+	errCodeChanged        = errors.New("code_changed")
+	errConfiguration      = errors.New("configuration_invalid")
+	errSessionChanged     = errors.New("session_changed")
+	errProfileChanged     = errors.New("profile_changed")
+	errProfileInvalid     = errors.New("profile_invalid")
+	errProfileUnsupported = errors.New("profile_unsupported")
+	errExpired            = errors.New("credential_expired")
+	errSource             = errors.New("source_unavailable")
+	errCanceled           = errors.New("canceled")
+	errTimedOut           = errors.New("timed_out")
+	errBudget             = errors.New("budget_exhausted")
+	errIncomplete         = errors.New("stream_incomplete")
+	errContract           = errors.New("contract_mismatch")
 )
 
 // This is an incomplete preparation artifact, not an executable request schema.
