@@ -74,14 +74,16 @@ Define how settings, credential references, model mappings, and diagnostic recor
 **Spec:** [0002. Local configuration and credential data model](../specs/0002-local-configuration-credentials/index.md)
 
 - [x] Design it (spec): `/architect local configuration and credential data model`
-- [ ] Build it: `/develop local configuration and credential data model`
-  - [ ] Save and validate settings through the authenticated health server, including private storage and process locking (AC-1, AC-2, AC-5, AC-6, AC-8).
-  - [ ] Capture and forget the selected Kiro session, with exact fingerprints and atomic model mapping cleanup (AC-3, AC-4, AC-5, AC-6, AC-8, AC-9).
-  - [ ] Complete explicit upgrade, failure recovery, and restart behavior (AC-2, AC-6, AC-7, AC-8).
+- [x] Build it: `/develop local configuration and credential data model`
+  - [x] Save and validate settings through the authenticated health server, including private storage and process locking (AC-1, AC-2, AC-5, AC-6, AC-8).
+  - [x] Capture and forget the selected Kiro session, with exact fingerprints and atomic model mapping cleanup (AC-3, AC-4, AC-5, AC-6, AC-8, AC-9).
+  - [x] Complete explicit upgrade, failure recovery, and restart behavior (AC-2, AC-6, AC-7, AC-8).
 - [ ] Verify it: `/check verify local configuration and credential data model`
 - [ ] Test it: `/test local configuration and credential data model`
 - [ ] Review it (fresh model): `/check review local configuration and credential data model`
 - [ ] Document it: `/document changelog local configuration and credential data model`
+
+**Code:** `internal/config`, `internal/configstore`, `internal/credentials`, and `internal/cli`, with shared validation in `internal/jsonobject` and `internal/safepath`. Builder checks pass; the [verification checklist](../specs/0002-local-configuration-credentials/verify.md) records the next pass.
 
 ## Slice 1: Prove the coding loop
 

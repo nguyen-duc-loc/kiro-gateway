@@ -2,10 +2,10 @@
 
 The foundation is a foreground Go executable for macOS. It provides authenticated process health. Kiro inference and Claude Code compatibility are pending the first live coding loop.
 
-You can build with the Go 1.27.1 toolchain:
+You can build with the Go 1.27.1 toolchain and the Xcode Command Line Tools C compiler:
 
 ```sh
-go build -o bin/kiro-gateway ./cmd/kiro-gateway
+CGO_ENABLED=1 go build -o bin/kiro-gateway ./cmd/kiro-gateway
 ./bin/kiro-gateway version
 ```
 
@@ -18,7 +18,7 @@ export KIRO_GATEWAY_TOKEN="$(openssl rand -hex 32)"
 
 `KIRO_GATEWAY_TOKEN` is required and must contain at least 32 visible ASCII characters without spaces. It is a local gateway credential, separate from your Kiro account. The server accepts it only from the environment. It does not read or change Kiro credentials.
 
-`serve --listen 127.0.0.1:8787` sets the listener. The default is `127.0.0.1:8787`. Only numeric IPv4 addresses in `127.0.0.0/8` are accepted. Port `0` selects an available port, and startup output reports the actual address.
+`serve --listen 127.0.0.1:8787` overrides the saved listener for one run. Without a flag, the saved `listen` setting applies, or `127.0.0.1:8787` if it is absent. Only numeric IPv4 addresses in `127.0.0.0/8` are accepted. Port `0` selects an available port, and startup output reports the actual address. An invalid saved file blocks startup even with a valid flag.
 
 From a shell with the same credential, you can check process health:
 
@@ -37,13 +37,63 @@ You can inject a release version when building:
 go build -ldflags '-X main.version=0.1.0' -o bin/kiro-gateway ./cmd/kiro-gateway
 ```
 
-The code is split between `cmd/kiro-gateway` for process entry, `internal/cli` for commands, and `internal/gateway` for local HTTP and lifecycle. The bridge, Kiro adapter, and credential provider will be added with their working slices. The module uses the local name `kiro-gateway` until a public repository is chosen.
+The code is split between `cmd/kiro-gateway` for process entry, `internal/cli` for commands, and `internal/gateway` for local HTTP and lifecycle. `internal/config` holds settings and session transitions, `internal/configstore` owns file storage and locking, and `internal/credentials` captures the selected Kiro record. The bridge and inference adapter remain future work. The module uses the local name `kiro-gateway` until a public repository is chosen.
 
 The [architecture spec](docs/specs/0001-stack-architecture/index.md) records the boundaries and the required live tool loop evidence. The [scope](docs/scope/scope.md) tracks verification and the later slices.
 
+## Saved settings and session references
+
+You can create and check your settings with:
+
+```sh
+./bin/kiro-gateway config init
+./bin/kiro-gateway config check
+```
+
+The only settings file is `~/.config/kiro-gateway/config.json`. Its initial contents are:
+
+```json
+{
+  "schema_version": 1,
+  "listen": "127.0.0.1:8787",
+  "session": null,
+  "models": {}
+}
+```
+
+Stop the gateway before editing this JSON file or running commands that change settings. Finish any manual edits before running a mutation. Each command uses a process lock, and a running server holds that lock until shutdown. Manual editors do not participate in it. Edits take effect after restart. Neither the working directory nor `XDG_CONFIG_HOME` changes the saved location.
+
+You can select the existing IAM Identity Center record after signing in through Kiro CLI:
+
+```sh
+./bin/kiro-gateway account link
+```
+
+Link reads only `~/Library/Application Support/kiro-cli/data.sqlite3`, table `auth_kv`, key `kirocli:odic:token` (the spelling `odic` is intentional). It reads an existing unexpired record without refreshing or changing it, then saves only its source identifier and SHA 256 fingerprint. This private source contract was observed in Kiro CLI 2.8.0 and can change. A saved reference identifies exact bytes, not a person, verified account, available model, or working inference connection.
+
+When linked, you may add up to 32 exact client name to upstream ID entries in `models`. Names and IDs must contain 1 to 256 visible ASCII bytes without spaces. Several client names may point to one ID. Empty mappings are valid. Mappings require a session reference and do not establish upstream availability.
+
+Repeating link with the same record preserves the file exactly. Any change to the record, including token renewal or JSON whitespace, produces a different fingerprint. Linking that changed record clears every model mapping. There is no automatic account switch or credential renewal.
+
+You can remove the reference and all mappings with:
+
+```sh
+./bin/kiro-gateway account forget
+```
+
+Forget is safe to repeat and leaves Kiro CLI credentials intact. It does not log you out of Kiro or remove editor backups. The gateway keeps no settings history, credential copies, conversation files, telemetry, or diagnostic files. Routine diagnostics go to stderr with zero gateway managed retention. Output redirected by your shell is outside that retention policy.
+
+`config upgrade` explicitly checks an existing file. Version 1 is already current and remains byte for byte unchanged. Unknown versions fail without modification. Startup never upgrades or repairs settings. Files larger than 64 KiB, unknown or duplicate members, invalid UTF 8, and invalid field values are rejected without echoing their contents.
+
+The gateway creates its directory with mode `0700`, and `config.json` and the stable `.lock` file with mode `0600`. Existing paths must belong to your user, use those permissions or narrower access, and contain no appended symlinks. Parent directories must prevent other users from replacing these paths. Unsafe paths fail without automatic permission repair. The source directories and database must belong to your user and must not be writable by other users. The home directory itself is resolved to its canonical location.
+
+Initialization never overwrites an existing file. Mutations install a complete file atomically. Failures before installation preserve the old file. If an error says the save outcome is uncertain, you can run `config check` and inspect the saved settings before retrying. A terminated process releases the lock automatically; the empty `.lock` file may remain. Later successful mutations remove recognizable private temporary files left by interrupted writes.
+
+The [configuration spec](docs/specs/0002-local-configuration-credentials/index.md) records the complete model and safety contract. Tests use synthetic databases and isolated homes, including real process locking and health requests. They do not read your Kiro credentials or prove live inference compatibility.
+
 ## Development
 
-You need Git, the exact Go version in `go.mod` (currently 1.27.1), and a C compiler for the race detector. On macOS, the Xcode Command Line Tools provide the compiler. There are no additional runtime dependencies or required credentials for the checks.
+You need Git, the exact Go version in `go.mod` (currently 1.27.1), and a C compiler for the SQLite adapter and race detector. On macOS, the Xcode Command Line Tools provide the compiler. The module pins `github.com/mattn/go-sqlite3` at `v1.14.50` and uses its bundled SQLite with cgo enabled. Do not use the `libsqlite3` build tag. No external SQLite executable or live credentials are required. The first build downloads the pinned Go module.
 
 From a clean checkout, you can run every check with:
 
@@ -65,4 +115,4 @@ This replaces the clone's hook directory setting. If you already use custom hook
 
 When using the project's agent shell, prefix these commands with `rtk proxy`, for example `rtk proxy ./scripts/check`. RTK is optional for contributors and CI.
 
-The [GitHub Actions workflow](.github/workflows/check.yml) runs the same command on pushes and pull requests using `macos-15`. It reads the Go version from `go.mod`. Actions are pinned to commit hashes, repository access is limited to reading, and dependency caching is disabled because this module has no `go.sum`. You can update the action hashes and their version comments together when upgrading. The runner label fixes the macOS generation, but GitHub updates the image over time.
+The [GitHub Actions workflow](.github/workflows/check.yml) runs the same command on pushes and pull requests using `macos-15`. It reads the Go version from `go.mod`. Actions are pinned to commit hashes, repository access is limited to reading, and dependency caching is disabled. You can update the action hashes and their version comments together when upgrading. The runner label fixes the macOS generation, but GitHub updates the image over time.
