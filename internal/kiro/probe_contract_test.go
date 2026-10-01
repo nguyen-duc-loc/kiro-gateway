@@ -10,7 +10,7 @@ import (
 func wirePlanParts() map[string]any {
 	return map[string]any{
 		"diagnostics":    probeDiagnosticPolicy(),
-		"destination":    map[string]any{"scheme": "https", "port": 443, "method": "POST", "path": "/", "content_type": wireContentType, "target": wireTarget, "accept": "application/vnd.amazon.eventstream"},
+		"destination":    map[string]any{"scheme": "https", "port": 443, "method": "POST", "path": "/generateAssistantResponse", "content_type": wireContentType, "target": wireTarget, "accept": "application/vnd.amazon.eventstream"},
 		"region_rule":    wireDestinations(),
 		"authentication": map[string]string{"header": "Authorization", "scheme": "Bearer", "token_source": "selected_snapshot.access_token", "profile_source": "selected_snapshot.profile_arn"},
 		"request_schema": map[string]any{

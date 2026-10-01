@@ -9,8 +9,8 @@ import (
 
 func wireDestinations() map[string]string {
 	return map[string]string{
-		"us-east-1":    "https://runtime.us-east-1.kiro.dev:443/",
-		"eu-central-1": "https://runtime.eu-central-1.kiro.dev:443/",
+		"us-east-1":    "https://runtime.us-east-1.kiro.dev:443/generateAssistantResponse",
+		"eu-central-1": "https://runtime.eu-central-1.kiro.dev:443/generateAssistantResponse",
 	}
 }
 

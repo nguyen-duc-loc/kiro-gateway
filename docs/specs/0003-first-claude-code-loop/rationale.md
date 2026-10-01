@@ -352,3 +352,30 @@ After the two header values and bounded comparison were presented, you instructe
 One run at clean commit `5c6e8c6fc2221e9194c7945f6caf1309556c24db`, plan digest `eecbd193c8aec5ab93ce6ed3c77d33a0160a7f6af7980070ade6c2f66b6b621d`, received HTTP 403 with `access_denied` on its first request. The summary is recorded in `verify.md`. Five dependent cases were unrun; no retry or credential mutation followed. The older target was not sent again because its prior denial already supplies that side of the comparison.
 
 The target change alone was insufficient to resolve the denial for this snapshot and model. This does not prove that the two operation targets are equivalent or that the bundled agent would fail. The native callback's token and profile selection are still not established as equal to the fixed gateway source. Static tracing of that callback is the next focused investigation before proposing broader account access or another inference experiment. No raw error text was retained or inferred from the byte count.
+
+## Reference gateway comparison and native profile trace
+
+You asked to continue and supplied `https://github.com/jwadow/kiro-gateway` as a reference. Public source was fetched without authentication and pinned to commit `a5292ca04c7c6231e0b47673ac3f981f5a706e1e`. Only selected Python files, tests, and migration history were inspected. No reference code was executed, installed, or copied into the gateway. The installed CLI was inspected through file disassembly without starting its process. No credentials, account configuration, or conversations were read, and no inference was sent during this research.
+
+### What the reference actually does
+
+| Area | Source and comparison |
+|---|---|
+| HTTP path | Both Anthropic dispatch branches explicitly append `/generateAssistantResponse` to the runtime host. Our completed runs used `/`. See [the dispatch code](https://github.com/jwadow/kiro-gateway/blob/a5292ca04c7c6231e0b47673ac3f981f5a706e1e/kiro/routes_anthropic.py#L720). |
+| Operation and headers | It uses `application/x-amz-json-1.0` and `AmazonCodeWhispererStreamingService.GenerateAssistantResponse`. It also supplies IDE identity strings, an opt out value, agent mode, and SDK metadata. These other differences are not proven requirements and are not adopted. See [the header builder](https://github.com/jwadow/kiro-gateway/blob/a5292ca04c7c6231e0b47673ac3f981f5a706e1e/kiro/utils.py#L61). |
+| Credential selection | Its SQLite reader searches social, current OIDC, then legacy OIDC token keys. It also reads device registration for refresh. A token's profile ARN takes precedence, with the state profile as fallback; region is derived from the state ARN. Our fixed OIDC record and same transaction profile read remain unchanged. See [the reader](https://github.com/jwadow/kiro-gateway/blob/a5292ca04c7c6231e0b47673ac3f981f5a706e1e/kiro/auth.py#L248). |
+| 403 handling | It forces token refresh and retries after 403. Its unit test mocks a 403 followed by 200 and verifies that refresh is invoked. This proves intended retry behavior, not that expiry caused our denial or that renewal would resolve it. See [the client](https://github.com/jwadow/kiro-gateway/blob/a5292ca04c7c6231e0b47673ac3f981f5a706e1e/kiro/http_client.py#L241) and [the test](https://github.com/jwadow/kiro-gateway/blob/a5292ca04c7c6231e0b47673ac3f981f5a706e1e/tests/unit/test_http_client.py#L218). |
+
+The README's claim that SSO does not need a profile ARN is stale relative to its executable route code. The [runtime migration commit](https://github.com/jwadow/kiro-gateway/commit/07d24fc706fce3a40c39a2579bc0dcfdbe238e42) adds state profile loading and profile inclusion for all authentication types. A [followup commit](https://github.com/jwadow/kiro-gateway/commit/90d0509b9ce5aa3f725214ec4e5342673cf7e50e) applies this to another dispatch branch. These establish what the reference changed; they do not independently prove AWS requirements or successful compatibility with the operator's account.
+
+### Native callback findings
+
+The installed callback handlers at `0x101a65f3c` and `0x10279e428` include provider specific coordinated refresh branches for Builder ID, social, and external IdP tokens. This pass did not fully establish branch precedence or which branch served the supplied native session. Do not infer it from the presence of symbols alone.
+
+The callback calls `profile_arn_from_db` at `0x1027503c4`, which calls `Database::get_auth_profile` at `0x1022fb854`. That method passes the 25 byte constant `api.codewhisperer.profile` from `0x11b85f55e` to `get_entry` at call site `0x1022fb88c`, then decodes the record. This is the same named state profile key our harness reads. It narrows the source uncertainty for that branch without proving equal runtime values, selected provider, or token bytes. No broader account scan is justified by this trace.
+
+### Prepared next experiment
+
+Use the reference's explicit `/generateAssistantResponse` path with its older operation target, retaining our existing model, frozen session reference, profile source, controls, six synthetic cases, strict bounds, and no replay policy. This changes only the path relative to the first Opus candidate at `d1fdd1a`, and both path and target relative to the most recent candidate at `5c6e8c6`. It is not an automatic fallback. The allowlist accepts only the two exact regional URLs with this path and rejects root, alternate path, encoded path, query, and fragment variants. Synthetic wire checks exercise the exact request URI and header pair using local TLS servers.
+
+This is evidence from a separate implementation, not proof that the installed native client uses this path or that it will resolve 403. It is stronger support for a path comparison than an unused schema annotation. Copying the reference's credential search or automatic refresh would change account boundaries and obscure this comparison. The recommendation is to test this bounded path candidate first after a separate live review. Current work prepares that concrete candidate only; the prior live approval is consumed.

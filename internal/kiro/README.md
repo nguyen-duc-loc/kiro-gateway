@@ -24,23 +24,25 @@ examples, fields, limits, assertions, and provenance. The code checks the plan
 against its implemented contract. Placeholders in the examples stand for the
 random local conversation ID, selected profile ARN, and observed tool ID.
 
-The current binary trace connects the streaming operation to these candidates:
+The prepared reference comparison uses these fixed destinations:
 
 | Profile region | Destination |
 |---|---|
-| `us-east-1` | `https://runtime.us-east-1.kiro.dev:443/` |
-| `eu-central-1` | `https://runtime.eu-central-1.kiro.dev:443/` |
+| `us-east-1` | `https://runtime.us-east-1.kiro.dev:443/generateAssistantResponse` |
+| `eu-central-1` | `https://runtime.eu-central-1.kiro.dev:443/generateAssistantResponse` |
 
 Each request is POST with `application/x-amz-json-1.0` and
-`X-Amz-Target: KiroRuntimeService.GenerateAssistantResponse`.
+`X-Amz-Target: AmazonCodeWhispererStreamingService.GenerateAssistantResponse`.
 Bearer authentication and `profileArn` come from the same fresh combined snapshot.
 The request carries `max_tokens: 1024` and `thinking.type: disabled` through
 `additionalModelRequestFields`. Optional output usage is validated and reduced to
 a boolean comparison with the requested limit. Missing usage stays unknown.
-The bundled ACP agent supplies this operation target. Earlier runs using
-`AmazonCodeWhispererStreamingService.GenerateAssistantResponse` were denied.
-The controlled comparison with the new target also received HTTP 403 and
-`access_denied`; inference compatibility remains unproven.
+The path and header pair comes from `jwadow/kiro-gateway` at commit
+`a5292ca04c7c6231e0b47673ac3f981f5a706e1e`, inspected as source only.
+Earlier root path requests using either operation target were denied. This
+prepared path has no live result and requires a new run review. The reference
+project's refresh, retries, credential fallback, and identity headers are not
+part of this candidate. See the spec rationale for evidence and limitations.
 
 | Attempt | Assertion or trigger |
 |---|---|

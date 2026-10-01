@@ -45,6 +45,10 @@ func localWireProbe(t *testing.T, home string, handler http.HandlerFunc) *protoc
 	s, roots := probeServer(t, handler)
 	p := localProbe(t, t.Context(), home, s, roots, defaultProbeLimits)
 	p.wire = true
+	// Keep the validated fixture hosts while exercising the candidate's wire path.
+	for _, destination := range p.destinations {
+		destination.Path = "/generateAssistantResponse"
+	}
 	return p
 }
 
@@ -53,8 +57,11 @@ func assertWireRequest(t *testing.T, r *http.Request, index int) {
 	if r.Method != "POST" || r.Header.Get("Authorization") != "Bearer sentinel-token" || r.Header.Get("Content-Type") != wireContentType || r.Header.Get("X-Amz-Target") != wireTarget || r.Header.Get("Accept") != "application/vnd.amazon.eventstream" {
 		t.Error("wire request headers do not match the candidate contract")
 	}
-	if got := r.Header.Get("X-Amz-Target"); got != "KiroRuntimeService.GenerateAssistantResponse" {
-		t.Errorf("wire request X-Amz-Target = %q, want bundled agent target KiroRuntimeService.GenerateAssistantResponse", got)
+	if got := r.Header.Get("X-Amz-Target"); got != "AmazonCodeWhispererStreamingService.GenerateAssistantResponse" {
+		t.Errorf("wire request X-Amz-Target = %q, want reference target AmazonCodeWhispererStreamingService.GenerateAssistantResponse", got)
+	}
+	if got := r.URL.RequestURI(); got != "/generateAssistantResponse" {
+		t.Errorf("wire request URI = %q, want /generateAssistantResponse", got)
 	}
 	b, err := io.ReadAll(io.LimitReader(r.Body, probeMaxRequest+1))
 	if err != nil || len(b) > probeMaxRequest {
@@ -285,6 +292,25 @@ func TestWirePlanRejectsContractAndExampleDrift(t *testing.T) {
 		h := sha256.Sum256(changed)
 		if _, err := readProbePlan(bytes.NewReader(changed), hex.EncodeToString(h[:])); !errors.Is(err, errPlanInvalid) {
 			t.Errorf("readProbePlan(drift %q) error=%v, want plan_invalid", pair[0], err)
+		}
+	}
+}
+
+func TestWireDestinationRequiresExactOperationPath(t *testing.T) {
+	for _, endpoint := range wireDestinations() {
+		u, err := wireDestination(endpoint)
+		if err != nil || u == nil {
+			t.Errorf("wireDestination(%q) = %v, %v, want valid operation URL", endpoint, u, err)
+			continue
+		}
+		if got := u.RequestURI(); got != "/generateAssistantResponse" {
+			t.Errorf("wireDestination(%q) URI = %q, want /generateAssistantResponse", endpoint, got)
+		}
+		for _, path := range []string{"/", "/generateAssistantResponse/", "/generateAssistantResponse?next=other", "/generateAssistantResponse#fragment", "/%67enerateAssistantResponse"} {
+			raw := "https://" + u.Host + path
+			if _, err := wireDestination(raw); !errors.Is(err, errPlanInvalid) {
+				t.Errorf("wireDestination(%q) error = %v, want plan_invalid", raw, err)
+			}
 		}
 	}
 }

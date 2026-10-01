@@ -12,14 +12,14 @@
     "scheme": "https",
     "port": 443,
     "method": "POST",
-    "path": "/",
+    "path": "/generateAssistantResponse",
     "content_type": "application/x-amz-json-1.0",
-    "target": "KiroRuntimeService.GenerateAssistantResponse",
+    "target": "AmazonCodeWhispererStreamingService.GenerateAssistantResponse",
     "accept": "application/vnd.amazon.eventstream"
   },
   "region_rule": {
-    "us-east-1": "https://runtime.us-east-1.kiro.dev:443/",
-    "eu-central-1": "https://runtime.eu-central-1.kiro.dev:443/"
+    "us-east-1": "https://runtime.us-east-1.kiro.dev:443/generateAssistantResponse",
+    "eu-central-1": "https://runtime.eu-central-1.kiro.dev:443/generateAssistantResponse"
   },
   "authentication": {
     "header": "Authorization",
@@ -266,6 +266,11 @@
       "reference": "Installed @kiro/agent 0.3.234 dist/server/acp-server.js, runtime settings lines 143951 to 143962 and serializer lines 137498 to 137504; rationale.md records the call chain",
       "sha256": "233e4dec77cd538e35b691d1fd0e12ca64a7c90d720c4dbf6979f21b4c45482f",
       "finding": "The bundled ACP factory uses a bearer KiroRuntimeClient with AwsJson1_0Protocol and serviceTarget KiroRuntimeService. Its serializer emits root POST and X-Amz-Target KiroRuntimeService.GenerateAssistantResponse. This replaces the older target only; schema path annotations and the differing neighboring standalone package are not the selected serializer. Native session engine and remote acceptance remain unproven."
+    },
+    {
+      "id": "reference_gateway_operation_path",
+      "reference": "https://github.com/jwadow/kiro-gateway/blob/a5292ca04c7c6231e0b47673ac3f981f5a706e1e/kiro/routes_anthropic.py#L720",
+      "finding": "This reference dispatches to /generateAssistantResponse at the runtime host. Its utils.py lines 81 to 82 use application/x-amz-json-1.0 and AmazonCodeWhispererStreamingService.GenerateAssistantResponse. This candidate adopts that path and header pair, retaining the fixed account source and all prior budgets. It does not adopt refresh, retries, credential fallback, client identity headers, or account discovery. Remote support remains unproven."
     }
   ],
   "request_examples": [

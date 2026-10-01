@@ -330,6 +330,12 @@ You instructed, "yes, test them", after reviewing the two operation header value
 
 The header change did not resolve the denial. The previous old target result remains the historical comparison, not a repeated request in this run. This does not establish native credential equivalence or identify the failed service rule. No renewal, relink, mapping change, native client launch, second request, or raw response retention occurred. This one run authorization is consumed.
 
+## Prepared reference path comparison, October 1, 2026
+
+The requested source review of `jwadow/kiro-gateway` is recorded in `rationale.md`, pinned to commit `a5292ca04c7c6231e0b47673ac3f981f5a706e1e`. Its explicit dispatch path supplies a new candidate: `/generateAssistantResponse` with `AmazonCodeWhispererStreamingService.GenerateAssistantResponse`. The prepared plan SHA 256 is `9c5f55aebe373d20ec46334faf97e0f380aceaf2bf673bd398373f99baf17b31`. Synthetic bodies, exact Opus mapping, account source, controls, diagnostic output, and budgets are unchanged.
+
+`scripts/check` passed formatting, vet, compilation, and all tests with the race detector. Existing six case tests assert the new request URI and operation header against local TLS servers. The destination checks reject root path, trailing slash, encoded path, query, and fragment variants. The tagged live entry point compiled and skipped with `KIRO_GATEWAY_LIVE_PROBE=0`. No reference application code, account access, refresh, or inference ran during preparation. This changed destination still needs one concrete live approval; the prior run's permission is consumed.
+
 ## Later Claude Code acceptance gate
 
 After `/architect` completes the bridge design, the original scope still needs a real Claude Code `2.1.285` session against the gateway using the recorded available Sonnet model. Claude Code must read and fix a disposable Go bug, execute its file and shell tools under normal permissions, return results, finish a follow up user turn, and demonstrate cancellation and incomplete stream handling. Record Kiro CLI `2.8.0`, the actual access path, and every instruction or model control difference. None of that is claimed by this feasibility checklist.
