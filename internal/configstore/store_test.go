@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"kiro-gateway/internal/config"
@@ -21,6 +22,73 @@ func newStore(t *testing.T) (*Store, string) {
 	return s, filepath.Join(home, ".config", "kiro-gateway", "config.json")
 }
 
+// covers: spec 0002 AC-2, AC-5, AC-6. Rejected documents leave the linked state intact.
+func TestSaveInvalidDocumentPreservesLinkedSettings(t *testing.T) {
+	s, path := newStore(t)
+	d := config.Default()
+	d.Session = &config.Session{Source: config.Source, Fingerprint: strings.Repeat("a", 64)}
+	d.Models["Opus"] = "exact-model"
+	if err := s.Save(d, true); err != nil {
+		t.Fatalf("Save(linked fixture) error = %v, want nil", err)
+	}
+	before, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("ReadFile(saved fixture) error = %v, want nil", err)
+	}
+	d.Session = nil
+	if err := s.Save(d, false); !errors.Is(err, config.ErrInvalid) {
+		t.Errorf("Save(mappings without session) error = %v, want ErrInvalid", err)
+	}
+	after, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("ReadFile(after rejected save) error = %v, want nil", err)
+	}
+	if !bytes.Equal(after, before) {
+		t.Errorf("Save(invalid document) saved bytes = %q, want %q", after, before)
+	}
+	entries, err := os.ReadDir(filepath.Dir(path))
+	if err != nil {
+		t.Fatalf("ReadDir(after rejected save) error = %v, want nil", err)
+	}
+	for _, entry := range entries {
+		if entry.Name() != "config.json" && entry.Name() != ".lock" {
+			t.Errorf("Save(invalid document) left file %q, want only config.json and .lock", entry.Name())
+		}
+	}
+}
+
+// covers: spec 0002 AC-6. Replacement and cleanup must preserve the lock inode.
+func TestSaveAndCleanupKeepStableLock(t *testing.T) {
+	s, path := newStore(t)
+	lockPath := filepath.Join(filepath.Dir(path), ".lock")
+	before, err := os.Stat(lockPath)
+	if err != nil {
+		t.Fatalf("Stat(initial lock) error = %v, want nil", err)
+	}
+	d := config.Default()
+	if err := s.Save(d, true); err != nil {
+		t.Fatalf("Save(initial document) error = %v, want nil", err)
+	}
+	d.Listen = "127.0.0.1:0"
+	if err := s.Save(d, false); err != nil {
+		t.Fatalf("Save(replacement) error = %v, want nil", err)
+	}
+	if err := s.Cleanup(); err != nil {
+		t.Fatalf("Cleanup(after replacement) error = %v, want nil", err)
+	}
+	if err := s.Close(); err != nil {
+		t.Fatalf("Close(after replacement) error = %v, want nil", err)
+	}
+	after, err := os.Stat(lockPath)
+	if err != nil {
+		t.Fatalf("Stat(released lock) error = %v, want nil", err)
+	}
+	if !os.SameFile(before, after) || after.Size() != 0 {
+		t.Errorf("Save/Cleanup/Close lock = same file %t, size %d, want true, 0", os.SameFile(before, after), after.Size())
+	}
+}
+
+// covers: spec 0002 AC-2, AC-6.
 func TestAbsentReadonlyAndAtomicInitialization(t *testing.T) {
 	home := t.TempDir()
 	s, err := Open(home, false)
@@ -63,6 +131,7 @@ func TestAbsentReadonlyAndAtomicInitialization(t *testing.T) {
 	}
 }
 
+// covers: spec 0002 AC-6, AC-8.
 func TestFailureBeforeAndAfterInstallation(t *testing.T) {
 	for _, initialize := range []bool{true, false} {
 		for _, stage := range []string{"write", "file_sync", "install", "installed", "unlink", "directory_sync"} {
@@ -109,6 +178,7 @@ func TestFailureBeforeAndAfterInstallation(t *testing.T) {
 	}
 }
 
+// covers: spec 0002 AC-6.
 func TestInitCannotOverwriteCompetingCreation(t *testing.T) {
 	s, path := newStore(t)
 	const competing = "editor-owned sentinel"
@@ -127,6 +197,7 @@ func TestInitCannotOverwriteCompetingCreation(t *testing.T) {
 	}
 }
 
+// covers: spec 0002 AC-6.
 func TestCleanupOfInterruptedWrite(t *testing.T) {
 	s, path := newStore(t)
 	dir := filepath.Dir(path)
@@ -157,6 +228,7 @@ func TestCleanupOfInterruptedWrite(t *testing.T) {
 	}
 }
 
+// covers: spec 0002 AC-6.
 func TestProcessLockExcludesAndReleases(t *testing.T) {
 	s, path := newStore(t)
 	home := filepath.Dir(filepath.Dir(filepath.Dir(path)))
@@ -179,6 +251,7 @@ func TestProcessLockExcludesAndReleases(t *testing.T) {
 	}
 }
 
+// covers: spec 0002 AC-6.
 func TestRejectUnsafeFilesAndParents(t *testing.T) {
 	for _, target := range []string{"config.json", ".lock", "kiro-gateway", ".config"} {
 		for _, kind := range []string{"permissions", "symlink", "relative symlink"} {

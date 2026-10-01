@@ -15,6 +15,7 @@ import (
 )
 
 // testSavedSettings uses separate real processes and a single isolated home.
+// covers: spec 0002 AC-1, AC-2, AC-6, AC-7, AC-9.
 func testSavedSettings(t *testing.T, binary string) {
 	t.Helper()
 	home := t.TempDir()

@@ -14,6 +14,7 @@ import (
 
 	"kiro-gateway/internal/config"
 	"kiro-gateway/internal/configstore"
+	"kiro-gateway/internal/credentials"
 )
 
 func command(t *testing.T, home string, args ...string) (string, string, error) {
@@ -23,6 +24,101 @@ func command(t *testing.T, home string, args ...string) (string, string, error) 
 	return out.String(), logs.String(), err
 }
 
+// covers: spec 0002 AC-3, AC-4, AC-5, AC-6, AC-8.
+func TestFailedRelinkPreservesReferenceAndMappings(t *testing.T) {
+	home := t.TempDir()
+	if _, _, err := command(t, home, "config", "init"); err != nil {
+		t.Fatalf("config init error = %v, want nil", err)
+	}
+	d := config.Default()
+	d.Listen = "127.9.8.7:0"
+	d.Session = &config.Session{Source: config.Source, Fingerprint: strings.Repeat("a", 64)}
+	d.Models = map[string]string{"Opus": "exact-model", "opus": "exact-model"}
+	before, err := config.Encode(d)
+	if err != nil {
+		t.Fatalf("Encode(linked fixture) error = %v, want nil", err)
+	}
+	before = append(before, ' ', '\n')
+	path := filepath.Join(home, ".config", "kiro-gateway", "config.json")
+	if err := os.WriteFile(path, before, 0600); err != nil {
+		t.Fatalf("WriteFile(linked fixture) error = %v, want nil", err)
+	}
+	// An absent source must not prevent checking or forgetting a saved reference.
+	out, logs, err := command(t, home, "account", "link")
+	if !errors.Is(err, credentials.ErrSource) {
+		t.Errorf("account link(missing source) error = %v, want ErrSource", err)
+	}
+	if out != "" || !strings.Contains(logs, "error_category=source_unavailable") {
+		t.Errorf("account link(missing source) output = %q, logs = %q, want no success output and source_unavailable category", out, logs)
+	}
+	after, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("ReadFile(after failed relink) error = %v, want nil", err)
+	}
+	if !bytes.Equal(after, before) {
+		t.Errorf("account link(missing source) settings = %q, want %q", after, before)
+	}
+	if _, _, err := command(t, home, "config", "check"); err != nil {
+		t.Errorf("config check(linked with missing source) error = %v, want nil", err)
+	}
+	forgetOut, forgetLogs, err := command(t, home, "account", "forget")
+	if err != nil {
+		t.Fatalf("account forget(missing source) error = %v, want nil", err)
+	}
+	for _, sentinel := range []string{d.Session.Fingerprint, "exact-model", home} {
+		if strings.Contains(out+logs+forgetOut+forgetLogs, sentinel) {
+			t.Errorf("link/forget output contains %q, want sanitized diagnostics", sentinel)
+		}
+	}
+	after, err = os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("ReadFile(after forget) error = %v, want nil", err)
+	}
+	got, err := config.Parse(after)
+	if err != nil {
+		t.Fatalf("Parse(after forget) error = %v, want nil", err)
+	}
+	if got.Session != nil || len(got.Models) != 0 || got.Listen != d.Listen {
+		t.Errorf("account forget(missing source) document = %+v, want no reference or mappings and listen %q", got, d.Listen)
+	}
+}
+
+// covers: spec 0002 AC-2, AC-7. Unsupported versions fail without a rewrite.
+func TestUpgradeRefusesMissingAndUnknownVersions(t *testing.T) {
+	t.Run("missing", func(t *testing.T) {
+		home := t.TempDir()
+		out, _, err := command(t, home, "config", "upgrade")
+		if !errors.Is(err, configstore.ErrMissing) || out != "" {
+			t.Errorf("config upgrade(missing) = %q, %v, want empty output, ErrMissing", out, err)
+		}
+		path := filepath.Join(home, ".config", "kiro-gateway", "config.json")
+		if _, err := os.Stat(path); !errors.Is(err, os.ErrNotExist) {
+			t.Errorf("Stat(after refused upgrade) error = %v, want ErrNotExist", err)
+		}
+	})
+	for _, input := range []string{`{"schema_version":0}`, `{"schema_version":2}`} {
+		t.Run(input, func(t *testing.T) {
+			home := t.TempDir()
+			if _, _, err := command(t, home, "config", "init"); err != nil {
+				t.Fatalf("config init error = %v, want nil", err)
+			}
+			path := filepath.Join(home, ".config", "kiro-gateway", "config.json")
+			if err := os.WriteFile(path, []byte(input), 0600); err != nil {
+				t.Fatalf("WriteFile(unknown version) error = %v, want nil", err)
+			}
+			out, _, err := command(t, home, "config", "upgrade")
+			if !errors.Is(err, config.ErrVersion) || out != "" {
+				t.Errorf("config upgrade(%s) = %q, %v, want empty output, ErrVersion", input, out, err)
+			}
+			got, err := os.ReadFile(path)
+			if err != nil || string(got) != input {
+				t.Errorf("ReadFile(after refused upgrade) = %q, %v, want %q, nil", got, err, input)
+			}
+		})
+	}
+}
+
+// covers: spec 0002 AC-2, AC-3, AC-4, AC-5, AC-8.
 func TestLocalCommandsAndRemoval(t *testing.T) {
 	home := t.TempDir()
 	path := filepath.Join(home, ".config", "kiro-gateway", "config.json")
@@ -173,6 +269,7 @@ func TestLocalCommandsAndRemoval(t *testing.T) {
 	}
 }
 
+// covers: spec 0002 AC-3, AC-6, AC-7, AC-8.
 func TestFailedCaptureAndUnsupportedVersionPreserveSettings(t *testing.T) {
 	home := t.TempDir()
 	if _, _, err := command(t, home, "config", "init"); err != nil {
@@ -206,6 +303,7 @@ func TestFailedCaptureAndUnsupportedVersionPreserveSettings(t *testing.T) {
 	}
 }
 
+// covers: spec 0002 AC-2, AC-8.
 func TestLocalHelpAndArgumentsDoNotOpenSettings(t *testing.T) {
 	for _, args := range [][]string{{"config", "--help"}, {"config", "init", "--help"}, {"account", "link", "--help"}, {"version"}, {"help"}} {
 		var out bytes.Buffer

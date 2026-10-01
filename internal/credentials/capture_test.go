@@ -5,7 +5,9 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -49,11 +51,100 @@ func fixture(t *testing.T, schema, mode string) (Reader, *sql.DB, string) {
 	return Reader{Home: home, Now: func() time.Time { return time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC) }}, db, path
 }
 
+// covers: spec 0002 AC-3, AC-9. Expiry uses the injected clock on every capture.
+func TestCaptureExpiryBoundary(t *testing.T) {
+	r, _, _ := fixture(t, `CREATE TABLE auth_kv(key TEXT PRIMARY KEY,value TEXT)`, "delete")
+	expiry := time.Date(2030, 1, 1, 0, 0, 0, 0, time.UTC)
+	for _, offset := range []time.Duration{-time.Nanosecond, 0, time.Nanosecond} {
+		t.Run(offset.String(), func(t *testing.T) {
+			r.Now = func() time.Time { return expiry.Add(offset) }
+			got, err := r.Capture(t.Context())
+			if offset < 0 {
+				want := config.Session{Source: config.Source, Fingerprint: expectedFingerprint(record)}
+				if err != nil || got != want {
+					t.Errorf("Capture(before expiry) = %+v, %v, want %+v, nil", got, err, want)
+				}
+			} else if !errors.Is(err, ErrExpired) || got != (config.Session{}) {
+				t.Errorf("Capture(expiry offset %v) = %+v, %v, want empty reference, ErrExpired", offset, got, err)
+			}
+		})
+	}
+}
+
+// covers: spec 0002 AC-3, AC-9. SQLite byte length, not rune count, bounds capture.
+func TestCaptureRecordSizeBoundary(t *testing.T) {
+	for _, size := range []int{config.MaxBytes, config.MaxBytes + 1} {
+		t.Run(fmt.Sprint(size), func(t *testing.T) {
+			r, db, _ := fixture(t, `CREATE TABLE auth_kv(key TEXT PRIMARY KEY,value TEXT)`, "delete")
+			base := strings.Replace(record, `"unused":true`, `"unused":"é"`, 1)
+			data := base + strings.Repeat(" ", size-len(base))
+			if _, err := db.Exec(`UPDATE auth_kv SET value=? WHERE key=?`, data, selectedKey); err != nil {
+				t.Fatalf("UPDATE(size %d) error = %v, want nil", size, err)
+			}
+			got, err := r.Capture(t.Context())
+			if size == config.MaxBytes {
+				want := config.Session{Source: config.Source, Fingerprint: expectedFingerprint(data)}
+				if err != nil || got != want {
+					t.Errorf("Capture(%d bytes) = %+v, %v, want %+v, nil", size, got, err, want)
+				}
+			} else if !errors.Is(err, ErrRecord) || got != (config.Session{}) {
+				t.Errorf("Capture(%d bytes) = %+v, %v, want empty reference, ErrRecord", size, got, err)
+			}
+		})
+	}
+}
+
+// covers: spec 0002 AC-3, AC-8. Other rows cannot supply missing selected metadata.
+func TestCaptureDoesNotCombineRecords(t *testing.T) {
+	r, db, _ := fixture(t, `CREATE TABLE auth_kv(key TEXT PRIMARY KEY,value TEXT)`, "wal")
+	if _, err := db.Exec(`INSERT INTO auth_kv(key,value) VALUES(?,?)`, "other-login", record); err != nil {
+		t.Fatalf("INSERT(decoy) error = %v, want nil", err)
+	}
+	for _, field := range []string{"access_token", "expires_at", "region", "start_url"} {
+		t.Run(field, func(t *testing.T) {
+			var fields map[string]json.RawMessage
+			if err := json.Unmarshal([]byte(record), &fields); err != nil {
+				t.Fatalf("Unmarshal(fixture) error = %v, want nil", err)
+			}
+			delete(fields, field)
+			data, err := json.Marshal(fields)
+			if err != nil {
+				t.Fatalf("Marshal(fixture without %s) error = %v, want nil", field, err)
+			}
+			if _, err := db.Exec(`UPDATE auth_kv SET value=? WHERE key=?`, string(data), selectedKey); err != nil {
+				t.Fatalf("UPDATE(selected row) error = %v, want nil", err)
+			}
+			got, err := r.Capture(t.Context())
+			if !errors.Is(err, ErrRecord) || got != (config.Session{}) {
+				t.Errorf("Capture(missing %s with valid decoy) = %+v, %v, want empty reference, ErrRecord", field, got, err)
+			}
+		})
+	}
+}
+
+// covers: spec 0002 AC-3. Cancellation during capture never returns a reference.
+func TestCaptureCancellationAfterMetadata(t *testing.T) {
+	r, _, _ := fixture(t, `CREATE TABLE auth_kv(key TEXT PRIMARY KEY,value TEXT)`, "wal")
+	ctx, cancel := context.WithCancel(t.Context())
+	t.Cleanup(cancel)
+	r.afterMetadata = cancel
+	got, err := r.Capture(ctx)
+	if !errors.Is(err, ErrCanceled) || got != (config.Session{}) {
+		t.Errorf("Capture(canceled after metadata) = %+v, %v, want empty reference, ErrCanceled", got, err)
+	}
+	r.afterMetadata = nil
+	got, err = r.Capture(t.Context())
+	if err != nil || got.Fingerprint != expectedFingerprint(record) {
+		t.Errorf("Capture(after canceled capture) = %+v, %v, want original reference, nil", got, err)
+	}
+}
+
 func expectedFingerprint(data string) string {
 	h := sha256.Sum256(append([]byte("kiro-gateway/kiro_cli_idc_sqlite_v1\x00"), []byte(data)...))
 	return hex.EncodeToString(h[:])
 }
 
+// covers: spec 0002 AC-3, AC-9.
 func TestCaptureExactSnapshotInRollbackAndWAL(t *testing.T) {
 	for _, mode := range []string{"delete", "wal"} {
 		t.Run(mode, func(t *testing.T) {
@@ -92,6 +183,7 @@ func TestCaptureExactSnapshotInRollbackAndWAL(t *testing.T) {
 	}
 }
 
+// covers: spec 0002 AC-3, AC-9.
 func TestCaptureUsesOneTransaction(t *testing.T) {
 	r, db, _ := fixture(t, `CREATE TABLE auth_kv(key TEXT PRIMARY KEY, value TEXT)`, "wal")
 	changed := strings.Replace(record, "synthetic-access-secret", "replacement-secret", 1)
@@ -114,6 +206,7 @@ func TestCaptureUsesOneTransaction(t *testing.T) {
 	}
 }
 
+// covers: spec 0002 AC-3.
 func TestCaptureRejectsRecordBeforeValueRead(t *testing.T) {
 	for name, data := range map[string]any{"oversize": strings.Repeat("x", 65537), "blob": []byte(record), "null": nil, "empty": ""} {
 		t.Run(name, func(t *testing.T) {
@@ -129,6 +222,7 @@ func TestCaptureRejectsRecordBeforeValueRead(t *testing.T) {
 	}
 }
 
+// covers: spec 0002 AC-3, AC-9.
 func TestCaptureSchemaContract(t *testing.T) {
 	cases := map[string]string{
 		"unique instead of primary": `CREATE TABLE auth_kv(key TEXT UNIQUE, value TEXT)`,
@@ -166,6 +260,7 @@ func TestCaptureSchemaContract(t *testing.T) {
 	})
 }
 
+// covers: spec 0002 AC-3.
 func TestCaptureValidatesJSONFieldsAndExpiry(t *testing.T) {
 	cases := map[string]string{
 		"duplicate":        strings.Replace(record, `"extra":`, `"region":"duplicate","extra":`, 1),
@@ -195,6 +290,7 @@ func TestCaptureValidatesJSONFieldsAndExpiry(t *testing.T) {
 	}
 }
 
+// covers: spec 0002 AC-3.
 func TestCaptureMissingRecordAndExactKey(t *testing.T) {
 	r, db, _ := fixture(t, `CREATE TABLE auth_kv(key TEXT COLLATE NOCASE PRIMARY KEY,value TEXT)`, "delete")
 	if _, err := db.Exec(`UPDATE auth_kv SET key=?`, strings.ToUpper(selectedKey)); err != nil {
@@ -205,6 +301,7 @@ func TestCaptureMissingRecordAndExactKey(t *testing.T) {
 	}
 }
 
+// covers: spec 0002 AC-3, AC-8.
 func TestCaptureBusyAndCancellation(t *testing.T) {
 	r, db, _ := fixture(t, `CREATE TABLE auth_kv(key TEXT PRIMARY KEY,value TEXT)`, "delete")
 	if _, err := db.Exec(`BEGIN EXCLUSIVE`); err != nil {
@@ -234,6 +331,7 @@ func TestCaptureBusyAndCancellation(t *testing.T) {
 	}
 }
 
+// covers: spec 0002 AC-3, AC-6.
 func TestCaptureRejectsUnsafeSource(t *testing.T) {
 	for _, target := range []string{"Library", "Application Support", "kiro-cli", "data.sqlite3"} {
 		for _, kind := range []string{"symlink", "relative symlink", "permissions"} {

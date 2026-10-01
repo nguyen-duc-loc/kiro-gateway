@@ -3,12 +3,14 @@ package config_test
 import (
 	"errors"
 	"fmt"
+	"maps"
 	"strings"
 	"testing"
 
 	"kiro-gateway/internal/config"
 )
 
+// covers: spec 0002 AC-2, AC-5, AC-8.
 func TestParseRejectsAmbiguousOrInvalidDocuments(t *testing.T) {
 	cases := map[string]string{
 		"missing version":    `{}`,
@@ -46,6 +48,7 @@ func TestParseRejectsAmbiguousOrInvalidDocuments(t *testing.T) {
 	}
 }
 
+// covers: spec 0002 AC-2, AC-5, AC-7.
 func TestDefaultsVersionsAndModelValidation(t *testing.T) {
 	for _, input := range []string{`{"schema_version":1}`, `{"schema_version":1,"session":null,"models":{}}`} {
 		d, err := config.Parse([]byte(input))
@@ -91,6 +94,7 @@ func TestDefaultsVersionsAndModelValidation(t *testing.T) {
 	}
 }
 
+// covers: spec 0002 AC-4, AC-5.
 func TestSessionTransitions(t *testing.T) {
 	d := config.Default()
 	s := config.Session{Source: config.Source, Fingerprint: strings.Repeat("a", 64)}
@@ -108,5 +112,71 @@ func TestSessionTransitions(t *testing.T) {
 	d.Models["sonnet"] = "model"
 	if !d.Forget() || d.Session != nil || len(d.Models) != 0 || d.Forget() {
 		t.Error("Forget(repeated) violates idempotent removal")
+	}
+}
+
+// covers: spec 0002 AC-2, AC-5. Encoding preserves exact identifiers and references.
+func TestEncodeRoundTripPreservesCompleteDocument(t *testing.T) {
+	d := config.Default()
+	d.Listen = "127.42.0.1:65535"
+	d.Session = &config.Session{Source: config.Source, Fingerprint: strings.Repeat("ab", 32)}
+	d.Models = map[string]string{"Opus": "Exact-ID", "opus": "Exact-ID", strings.Repeat("x", 256): strings.Repeat("y", 256)}
+	encoded, err := config.Encode(d)
+	if err != nil {
+		t.Fatalf("Encode(valid document) error = %v, want nil", err)
+	}
+	if len(encoded) == 0 || encoded[len(encoded)-1] != '\n' {
+		t.Errorf("Encode(valid document) = %q, want a trailing newline", encoded)
+	}
+	got, err := config.Parse(encoded)
+	if err != nil {
+		t.Fatalf("Parse(encoded document) error = %v, want nil", err)
+	}
+	if got.SchemaVersion != d.SchemaVersion || got.Listen != d.Listen || got.Session == nil || *got.Session != *d.Session || !maps.Equal(got.Models, d.Models) {
+		t.Errorf("Parse(Encode(document)) = %+v, want %+v", got, d)
+	}
+}
+
+// covers: spec 0002 AC-2. The limit applies to bytes including trailing whitespace.
+func TestParseDocumentSizeBoundary(t *testing.T) {
+	const base = `{"schema_version":1}`
+	for _, size := range []int{config.MaxBytes - 1, config.MaxBytes, config.MaxBytes + 1} {
+		t.Run(fmt.Sprint(size), func(t *testing.T) {
+			input := base + strings.Repeat(" ", size-len(base))
+			_, err := config.Parse([]byte(input))
+			var want error
+			if size > config.MaxBytes {
+				want = config.ErrInvalid
+			}
+			if !errors.Is(err, want) {
+				t.Errorf("Parse(%d bytes) error = %v, want %v", size, err, want)
+			}
+		})
+	}
+}
+
+// covers: spec 0002 AC-2, AC-8. Nested fields obey the exact reference contract.
+func TestParseRejectsInvalidSessionReferences(t *testing.T) {
+	const fingerprint = `"fingerprint":"` + "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" + `"`
+	const source = `"source":"kiro_cli_idc_sqlite_v1"`
+	cases := map[string]string{
+		"unknown source":        `{"source":"other",` + fingerprint + `}`,
+		"null source":           `{"source":null,` + fingerprint + `}`,
+		"null fingerprint":      `{` + source + `,"fingerprint":null}`,
+		"short fingerprint":     `{` + source + `,"fingerprint":"abc"}`,
+		"long fingerprint":      `{` + source + `,"fingerprint":"` + strings.Repeat("a", 65) + `"}`,
+		"uppercase fingerprint": `{` + source + `,"fingerprint":"` + strings.Repeat("A", 64) + `"}`,
+		"nonhex fingerprint":    `{` + source + `,"fingerprint":"` + strings.Repeat("g", 64) + `"}`,
+		"unknown field":         `{` + source + `,` + fingerprint + `,"token":"synthetic-secret"}`,
+		"case variant":          `{"Source":"kiro_cli_idc_sqlite_v1",` + fingerprint + `}`,
+		"escaped duplicate":     `{` + source + `,` + fingerprint + `,"\u0066ingerprint":"synthetic-secret"}`,
+	}
+	for name, session := range cases {
+		t.Run(name, func(t *testing.T) {
+			_, err := config.Parse([]byte(`{"schema_version":1,"session":` + session + `}`))
+			if !errors.Is(err, config.ErrInvalid) {
+				t.Errorf("Parse(%s) error = %v, want ErrInvalid", name, err)
+			}
+		})
 	}
 }

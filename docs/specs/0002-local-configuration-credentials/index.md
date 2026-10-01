@@ -1,7 +1,7 @@
 # 0002. Local configuration and credential data model
 
 **Date**: 2026-10-01
-**Status**: In Progress
+**Status**: Accepted
 
 ## Summary
 
