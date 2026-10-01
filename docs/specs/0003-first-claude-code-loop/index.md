@@ -2,7 +2,7 @@
 
 **Date**: 2026-10-01
 **Status**: In Progress
-**Revision review**: On 2026-10-01 you accepted a limited feasibility experiment with instructions carried in user context and clean stream end treated only as tentative completion. This supersedes the strict preparation gate for this experiment only. The prior profile amendment remains accepted. The first approved launch stopped at baseline preflight with zero inference attempts. The replacement candidate pins Claude Code `2.1.286` and awaits a new exact run review.
+**Revision review**: On 2026-10-01 you accepted a limited feasibility experiment with instructions carried in user context and clean stream end treated only as tentative completion. This supersedes the strict preparation gate for this experiment only. The prior profile amendment remains accepted. The first approved launch stopped at baseline preflight with zero inference attempts. The approved replacement using Claude Code `2.1.286` passed baseline checks but stopped because saved gateway configuration was absent. Both launches made zero inference attempts. Local setup and any further launch await explicit approval; see `verify.md`.
 
 ## Summary
 

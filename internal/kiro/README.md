@@ -126,3 +126,10 @@ inference: installed Claude Code was `2.1.286`, while the reviewed baseline was
 requires a new review of its exact digest and code commit. Kiro CLI remains
 `2.8.0`; synthetic requests and limits are unchanged. See the spec verification
 record for the original launch identity and result.
+
+The approved replacement passed its baseline checks, then stopped with
+`configuration_invalid`. The existing read only `config check` command confirmed
+that no saved gateway configuration exists. It made zero inference attempts and
+did not read Kiro credentials. Local initialization, linking, and the exact saved
+model mapping must be established before a newly approved launch. The harness
+does not perform those setup mutations itself.

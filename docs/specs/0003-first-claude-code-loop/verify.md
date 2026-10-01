@@ -107,6 +107,20 @@ Separate fixed version diagnostics then returned Claude Code `2.1.286`, Kiro CLI
 
 The replacement candidate updates only the Claude Code baseline to `2.1.286`; request bodies, destinations, model, limitations, and budgets remain unchanged. The original approval has been used for its one launch. The new plan digest and clean commit must be reviewed before any further launch, including after this zero request preflight stop.
 
+## Replacement launch stopped at configuration, October 1, 2026
+
+You approved and explicitly launched one replacement experiment at clean commit `40ea75a17a129e5789d464d5816e5bba469d7e1d`, with plan SHA 256 `be490b8a73271fb6af757bcbdc448ad53374529a1c1b82f22184ae15647f7278`. It retained the same model, destination set, synthetic requests, limitations, and six request budget, using Claude Code `2.1.286`.
+
+The harness passed the code, plan, and baseline checks, then reported `configuration_invalid` at `probe_live_test.go:78`. The test failed after 0.17 seconds. It stopped in `openProbeState`, before reading the Kiro token or selected profile and before selecting a network destination or dispatching a request. All six cases are `unrun`; inference attempts are zero. No protocol verdict or run summary was emitted.
+
+The existing read only `config check` command then reported `No saved configuration; defaults are valid.` This identifies the missing prerequisite without opening Kiro's credential store. The experiment requires an existing linked configuration and the exact saved mapping, so it correctly did not initialize settings itself.
+
+### Proposed prerequisite setup
+
+The next proposed action is local setup followed by one separately approved bounded run. Create the existing versioned gateway configuration, capture the current fixed IAM Identity Center token reference through `account link`, and save exactly `models["claude-sonnet-5"] = "claude-sonnet-5"` while holding the stable configuration lock. Keep token bytes in Kiro's store; save only the existing session reference and fingerprint. Preserve the default listener, validate the resulting configuration, and release the lock before launch. No sign in, renewal, profile discovery, or model listing is part of this setup.
+
+This setup is outside the inference harness and requires explicit approval because the two launch approvals covered use of an existing selection, not creating one. It does not change the plan bytes or the inference request budget. Once approved, setup failure stops before inference. Any subsequent launch must use its freshly reviewed clean commit and the unchanged plan digest above. Neither of the completed launch approvals is reused automatically.
+
 ## Later Claude Code acceptance gate
 
 After `/architect` completes the bridge design, the original scope still needs a real Claude Code `2.1.285` session against the gateway using the recorded available Sonnet model. Claude Code must read and fix a disposable Go bug, execute its file and shell tools under normal permissions, return results, finish a follow up user turn, and demonstrate cancellation and incomplete stream handling. Record Kiro CLI `2.8.0`, the actual access path, and every instruction or model control difference. None of that is claimed by this feasibility checklist.
