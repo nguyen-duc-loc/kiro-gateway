@@ -391,3 +391,40 @@ After being asked to refresh the Kiro session so relinking and the bounded test 
 One run at clean commit `1860d2b65caff84e95f8de980cae2e4b400ece3b`, with the unchanged path plan digest `9c5f55aebe373d20ec46334faf97e0f380aceaf2bf673bd398373f99baf17b31`, dispatched to `/generateAssistantResponse` and received HTTP 403 with `access_denied`. Its header supplied the recognized discriminator, so the classifier read zero body bytes. This does not mean the server sent an empty body, identify a different backend, or establish the cause of denial. The five dependent cases remained unrun, and no retry followed.
 
 The renewed credential passed local expiry validation. The reference path and header pair were insufficient to obtain acceptance under the fixed source and other candidate settings. Native token selection, account and profile equivalence, and remaining request metadata differences are still unresolved. Further manual refresh solely to repeat this denied request is not indicated. The allowed record is in `verify.md`; raw headers and account values remain unretained.
+
+## Complete reference comparison after operator feedback
+
+You reported that the reference gateway connects in your setup but sometimes fails before answering. When asked which model and credential mode worked, you replied "all of them". This is evidence that the reference is a useful working baseline across the listed modes, but it does not supply a pinned tested version, exact model for each request, failing status, or proof of identical token bytes. No additional account inspection or live request occurred in this investigation.
+
+The earlier research did inspect the reference repository, but the experiments adopted isolated differences while retaining our original request assumptions. That did not constitute a complete reference comparison. A denial from our partially matched request is not a reproduction of the reference's behavior. The investigation now prioritizes a complete request baseline before any further live experiment.
+
+### Synthetic characterization of the reference code
+
+At the same pinned reference commit `a5292ca04c7c6231e0b47673ac3f981f5a706e1e`, a temporary research script executed only selected converter definitions, the header builder, and the HTTP retry method with synthetic inputs and injected dependencies. It did not import the reference application, authentication manager, configuration loader, or logging setup. A Python audit hook rejected file opens, socket operations, and process launches during the characterization. Input files were read before the hook, and no credential source or environment configuration was read. The script is `/private/tmp/kiro-protocol-research/characterize_reference.py`, SHA 256 `5029dd3e58a95120a49131f68e6c26041fda6a64d064dda791ba57c6b94d5b6c`.
+
+The first turn used the same synthetic instruction, prompt, model, conversation placeholder, and profile placeholder as our plan. Optional fake reasoning and truncation recovery prompt additions were disabled explicitly for this comparison. They are enabled by the reference's defaults, so this fixture does not claim to reproduce the operator's unknown settings. Payload trimming was disabled for the small synthetic input. The header builder received a fixed synthetic fingerprint and invocation ID; it did not call the machine fingerprint function.
+
+| Surface | Reference result or code | Current harness |
+|---|---|---|
+| Current user origin | `AI_EDITOR` | `CLI` |
+| First turn history | Absent when empty | Empty array |
+| Additional model fields | No `additionalModelRequestFields` | Requests `max_tokens: 1024` and disabled thinking |
+| Synthetic first turn content with optional prompt features disabled | Equal to our instruction and prompt text | Same synthetic text |
+| Client metadata | IDE style `User-Agent`, `x-amz-user-agent`, `x-amzn-kiro-agent-mode: vibe`, opt out true, invocation ID, and SDK attempt metadata | Go client user agent and no corresponding metadata headers |
+| Credential lifecycle | Proactive renewal, possible SQLite reload, refresh persistence, and a refresh attempt after 403 | Fixed snapshot validation, no renewal, stop on expiry or denial |
+
+The payload facts come from [the converter](https://github.com/jwadow/kiro-gateway/blob/a5292ca04c7c6231e0b47673ac3f981f5a706e1e/kiro/converters_core.py#L1405); the metadata comes from [the header builder](https://github.com/jwadow/kiro-gateway/blob/a5292ca04c7c6231e0b47673ac3f981f5a706e1e/kiro/utils.py#L61). These are observed implementation differences, not individually proven causes of our 403. The current harness and its plan were not changed to silently omit controls or send new identity metadata.
+
+### Failure before answering can hide the underlying status
+
+The extracted reference retry method was run against three synthetic 403 responses with a fake auth provider and fake HTTP client. It made three fake dispatches, invoked refresh three times, then raised HTTP 504 with a generic unknown error. The retry method did not close any of those fake responses before returning the error; cleanup by surrounding caller or client lifecycle was outside this narrow test. This reproduces the method's behavior without claiming that it caused the operator's instability.
+
+The [retry method](https://github.com/jwadow/kiro-gateway/blob/a5292ca04c7c6231e0b47673ac3f981f5a706e1e/kiro/http_client.py#L171) retains final 429 and 5xx responses but does not retain the 403 response for final classification. Consequently, a displayed 504 is not sufficient to identify a first response timeout. Preserve original failure stage and status in any future adapter instead of copying that loss of diagnostic information.
+
+The [auth manager](https://github.com/jwadow/kiro-gateway/blob/a5292ca04c7c6231e0b47673ac3f981f5a706e1e/kiro/auth.py#L872) renews within a configured 600 second window, reloads SQLite near expiry, and serializes refresh within one manager instance. Its OIDC refresh may reload and retry once after HTTP 400. This does not establish coordination with a separately running native client. [Issue 203](https://github.com/jwadow/kiro-gateway/issues/203) reports a 403 and refresh loop when a Docker gateway shares SQLite with an active CLI. That is an operator report, not proof of the claimed token invalidation mechanism or this user's cause, and its suggested credential copy is not adopted.
+
+The [stream parser](https://github.com/jwadow/kiro-gateway/blob/a5292ca04c7c6231e0b47673ac3f981f5a706e1e/kiro/streaming_core.py#L118) applies its default 15 second first token timeout to the first body chunk, after the HTTP response has been returned. It is not an end to end deadline covering connection, response headers, and the first semantic token. The HTTP layer separately permits longer waits. [Issue 255](https://github.com/jwadow/kiro-gateway/issues/255) and [issue 226](https://github.com/jwadow/kiro-gateway/issues/226) also report client request validation failures before inference. Without the actual status and error category, these remain separate possibilities; a stream interruption diagnosis is not supported by the user's report.
+
+### Revised next step
+
+Establish the complete reference request and authentication selection as the baseline, with synthetic comparison evidence and every intentional difference listed, before another network experiment. Preserve its original failure classification when studying instability. Do not repeat isolated path or target guesses, request another manual refresh without an expiry result, or claim that static source analysis proves the failing account branch. The reference's omitted model controls and additional identity metadata require a coherent experiment revision. No production bridge, automatic refresh, or additional live run is introduced by this research.
