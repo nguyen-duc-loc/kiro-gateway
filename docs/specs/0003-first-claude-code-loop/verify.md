@@ -271,6 +271,12 @@ The result confirms an access denial response for the candidate request. It does
 
 Do not repeat this unchanged request solely to obtain the same class again. A controlled comparison with the official client under the same account, selected profile, and model could help distinguish account access from a candidate request mismatch. Such a comparison would need its own concrete review: the official client may refresh credentials, read additional state, send telemetry, or retry, all outside this harness's current boundary. No official client inference, renewal, profile discovery, entitlement query, or further gateway run is authorized by this completed launch.
 
+## Native model clarification and proposed comparison
+
+The operator reported successful native use, supplied a session reference, and then clarified that the test used Opus 5.5. A bounded read of only `session.json` confirmed the recognized `modelId` value `claude-opus-5.5`. The separate conversation and history files were not read. No session identifier, title, workspace path, conversation, or account metadata is retained here.
+
+The earlier probe used `claude-sonnet-5`, so these are different model observations. Opus success does not establish Sonnet availability or prove a cause for its denial. The next prepared candidate pins the confirmed Opus identifier while retaining the exact request protocol and limits. Explicit relinking of the current fixed snapshot, the exact Opus mapping addition, and one new run require review of the changed model, code, and plan. Relinking must retain the existing rule that changed token bytes clear old mappings. No Opus gateway request has occurred. Controls remain explicit hypotheses for Opus; unsupported controls stop rather than being dropped.
+
 ## Later Claude Code acceptance gate
 
 After `/architect` completes the bridge design, the original scope still needs a real Claude Code `2.1.285` session against the gateway using the recorded available Sonnet model. Claude Code must read and fix a disposable Go bug, execute its file and shell tools under normal permissions, return results, finish a follow up user turn, and demonstrate cancellation and incomplete stream handling. Record Kiro CLI `2.8.0`, the actual access path, and every instruction or model control difference. None of that is claimed by this feasibility checklist.

@@ -26,7 +26,7 @@ const wireTestID = "00000000-0000-4000-8000-000000000001"
 func wireResponses(index int) []byte {
 	switch index {
 	case 0:
-		return append(probeFrame("assistantResponseEvent", `{"content":"PROBE_","modelId":"claude-sonnet-5"}`), probeFrame("assistantResponseEvent", `{"content":"MARKER"}`)...)
+		return append(probeFrame("assistantResponseEvent", `{"content":"PROBE_","modelId":"claude-opus-5.5"}`), probeFrame("assistantResponseEvent", `{"content":"MARKER"}`)...)
 	case 1:
 		return append(probeFrame("toolUseEvent", `{"toolUseId":"synthetic-tool-17","name":"probe_lookup","input":"{\"key\":","stop":false}`), probeFrame("toolUseEvent", `{"toolUseId":"synthetic-tool-17","input":"\"alpha\"}","stop":true}`)...)
 	case 2:

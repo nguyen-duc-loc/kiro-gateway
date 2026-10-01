@@ -26,7 +26,7 @@ import (
 
 const probeSyntheticRecord = `{"access_token":"sentinel-token","expires_at":"2099-01-01T00:00:00Z","region":"synthetic-region","start_url":"https://sentinel-account.example/start"}`
 const probeSyntheticProfile = `{"arn":"arn:aws:codewhisperer:us-east-1:000000000000:profile/sentinel-profile","profileName":"sentinel-name"}`
-const probeSyntheticBody = `{"fixture":"text","model":"claude-sonnet-5"}`
+const probeSyntheticBody = `{"fixture":"text","model":"claude-opus-5.5"}`
 
 func probeHome(t *testing.T) (string, *sql.DB) {
 	t.Helper()

@@ -1,8 +1,8 @@
 {
   "schema_version": 2,
   "status": "prepared_limited",
-  "client_mapping": "claude-sonnet-5",
-  "target_model": "claude-sonnet-5",
+  "client_mapping": "claude-opus-5.5",
+  "target_model": "claude-opus-5.5",
   "instruction_policy": "translate_into_user_context",
   "baseline": {
     "claude_code": "2.1.286",
@@ -250,6 +250,16 @@
       "id": "error_discriminator_sources",
       "reference": "https://smithy.io/2.0/aws/protocols/aws-json-1_0-protocol.html#operation-error-serialization",
       "finding": "The protocol names X-Amzn-Errortype and JSON code or __type as error discriminators, with colon and hash normalization. The installed parser at 0x10085a5a4 reads the header. The plan classifies only fixed types; raw values and messages are never output."
+    },
+    {
+      "id": "operator_native_opus_success",
+      "reference": "Conversation on 2026-10-01 and bounded metadata from the operator supplied native session",
+      "finding": "The session metadata names claude-opus-5.5. The operator confirmed the successful native test used Opus 5.5. Conversation contents were not inspected. This proposes an exact model change for review, not proof of gateway availability or the reason Sonnet was denied."
+    },
+    {
+      "id": "opus_candidate_controls",
+      "reference": "https://kiro.dev/docs/models/effort/",
+      "finding": "The documented generic control path is retained, requesting max_tokens 1024 and thinking.type disabled. The example table does not specifically establish Opus 5.5 support. These values are candidate hypotheses; failure stops without removing controls or substituting a model."
     }
   ],
   "request_examples": [
@@ -261,7 +271,7 @@
         "currentMessage": {
           "userInputMessage": {
             "content": "Synthetic experiment instructions: follow the current request exactly. Use only the offered probe_lookup tool when requested.\n\nReply with exactly PROBE_MARKER and no other text.",
-            "modelId": "claude-sonnet-5",
+            "modelId": "claude-opus-5.5",
             "origin": "CLI"
           }
         }
@@ -282,7 +292,7 @@
           {
             "userInputMessage": {
               "content": "Synthetic experiment instructions: follow the current request exactly. Use only the offered probe_lookup tool when requested.\n\nReply with exactly PROBE_MARKER and no other text.",
-              "modelId": "claude-sonnet-5",
+              "modelId": "claude-opus-5.5",
               "origin": "CLI"
             }
           },
@@ -295,7 +305,7 @@
         "currentMessage": {
           "userInputMessage": {
             "content": "Synthetic experiment instructions: follow the current request exactly. Use only the offered probe_lookup tool when requested.\n\nCall probe_lookup with key alpha. Do not answer instead of calling the tool.",
-            "modelId": "claude-sonnet-5",
+            "modelId": "claude-opus-5.5",
             "origin": "CLI",
             "userInputMessageContext": {
               "tools": [
@@ -343,7 +353,7 @@
           {
             "userInputMessage": {
               "content": "Synthetic experiment instructions: follow the current request exactly. Use only the offered probe_lookup tool when requested.\n\nReply with exactly PROBE_MARKER and no other text.",
-              "modelId": "claude-sonnet-5",
+              "modelId": "claude-opus-5.5",
               "origin": "CLI"
             }
           },
@@ -355,7 +365,7 @@
           {
             "userInputMessage": {
               "content": "Synthetic experiment instructions: follow the current request exactly. Use only the offered probe_lookup tool when requested.\n\nCall probe_lookup with key alpha. Do not answer instead of calling the tool.",
-              "modelId": "claude-sonnet-5",
+              "modelId": "claude-opus-5.5",
               "origin": "CLI",
               "userInputMessageContext": {
                 "tools": [
@@ -404,7 +414,7 @@
         "currentMessage": {
           "userInputMessage": {
             "content": "Synthetic experiment instructions: follow the current request exactly. Use only the offered probe_lookup tool when requested.\n\nReply with exactly the value returned by probe_lookup and no other text.",
-            "modelId": "claude-sonnet-5",
+            "modelId": "claude-opus-5.5",
             "origin": "CLI",
             "userInputMessageContext": {
               "tools": [
@@ -463,7 +473,7 @@
           {
             "userInputMessage": {
               "content": "Synthetic experiment instructions: follow the current request exactly. Use only the offered probe_lookup tool when requested.\n\nReply with exactly PROBE_MARKER and no other text.",
-              "modelId": "claude-sonnet-5",
+              "modelId": "claude-opus-5.5",
               "origin": "CLI"
             }
           },
@@ -475,7 +485,7 @@
           {
             "userInputMessage": {
               "content": "Synthetic experiment instructions: follow the current request exactly. Use only the offered probe_lookup tool when requested.\n\nCall probe_lookup with key alpha. Do not answer instead of calling the tool.",
-              "modelId": "claude-sonnet-5",
+              "modelId": "claude-opus-5.5",
               "origin": "CLI",
               "userInputMessageContext": {
                 "tools": [
@@ -523,7 +533,7 @@
           {
             "userInputMessage": {
               "content": "Synthetic experiment instructions: follow the current request exactly. Use only the offered probe_lookup tool when requested.\n\nReply with exactly the value returned by probe_lookup and no other text.",
-              "modelId": "claude-sonnet-5",
+              "modelId": "claude-opus-5.5",
               "origin": "CLI",
               "userInputMessageContext": {
                 "tools": [
@@ -574,7 +584,7 @@
         "currentMessage": {
           "userInputMessage": {
             "content": "Synthetic experiment instructions: follow the current request exactly. Use only the offered probe_lookup tool when requested.\n\nUsing the prior conversation and tool exchange, reply with exactly probe-followup and no other text.",
-            "modelId": "claude-sonnet-5",
+            "modelId": "claude-opus-5.5",
             "origin": "CLI",
             "userInputMessageContext": {
               "tools": [
@@ -622,7 +632,7 @@
         "currentMessage": {
           "userInputMessage": {
             "content": "Synthetic experiment instructions: follow the current request exactly. Use only the offered probe_lookup tool when requested.\n\nWrite a long sequence of numbered synthetic words, one word per line.",
-            "modelId": "claude-sonnet-5",
+            "modelId": "claude-opus-5.5",
             "origin": "CLI"
           }
         }
@@ -643,7 +653,7 @@
         "currentMessage": {
           "userInputMessage": {
             "content": "Synthetic experiment instructions: follow the current request exactly. Use only the offered probe_lookup tool when requested.\n\nWrite a long sequence of numbered synthetic words, one word per line.",
-            "modelId": "claude-sonnet-5",
+            "modelId": "claude-opus-5.5",
             "origin": "CLI"
           }
         }

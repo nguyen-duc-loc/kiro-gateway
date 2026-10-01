@@ -13,7 +13,7 @@ import (
 	"kiro-gateway/internal/jsonobject"
 )
 
-const probeModel = "claude-sonnet-5"
+const probeModel = "claude-opus-5.5"
 
 // This explicit limitation applies only to the approved experiment.
 const probeInstructionPolicy = wireInstructionPolicy

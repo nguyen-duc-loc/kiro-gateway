@@ -1,7 +1,7 @@
 # Limited feasibility harness
 
 This directory contains test code only. Nothing here is linked into the gateway.
-The concrete candidate plan selects `claude-sonnet-5` as both the saved mapping
+The proposed comparison plan selects `claude-opus-5.5` as both the saved mapping
 and requested model. It is prepared for review, not approved for a live run.
 
 On October 1, 2026 you accepted two limitations for this experiment only:
@@ -184,3 +184,13 @@ printed or saved. Five dependent cases remained unrun, and no retry occurred.
 The exact access rule is still unknown. Further authorization evidence or a
 separately reviewed native client comparison is needed before another candidate;
 the official client's account access and possible refresh are outside this run.
+
+The operator confirmed that the successful native test used Opus 5.5. Only the
+provided session's metadata was inspected; its conversation was not opened. The
+prepared comparison candidate now pins `claude-opus-5.5` exactly. No actual mapping
+or live request has changed yet. Approval must cover explicit relinking of the current fixed snapshot, adding
+that mapping, and the new exact run identity. Changed token bytes clear old
+mappings through the existing link rule; unchanged bytes preserve them. The previous Sonnet results remain historical evidence. The same
+requested output and thinking controls are hypotheses for Opus 5.5, not a claim
+that its service accepts them. No fallback, renewal, or implicit model change is
+added to the runner.

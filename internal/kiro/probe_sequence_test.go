@@ -361,7 +361,7 @@ func TestFixtureOptionalMetadataIsFiltered(t *testing.T) {
 	home, _ := probeHome(t)
 	s, roots, _ := sequenceServer(t, func(i int, _ fixtureRequest, events []fixtureResponseEvent) []fixtureResponseEvent {
 		if i == 0 {
-			events[len(events)-1].Payload = json.RawMessage(`{"complete":true,"model":"claude-sonnet-5","usage":{"sentinel-unknown-usage":999999999999}}`)
+			events[len(events)-1].Payload = json.RawMessage(`{"complete":true,"model":"claude-opus-5.5","usage":{"sentinel-unknown-usage":999999999999}}`)
 		}
 		return events
 	})
