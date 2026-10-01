@@ -2,6 +2,8 @@
 
 All cases are pending. This file is a verification plan, not a record of passing tests. The full Claude Code coding loop remains a later gate in the same scope feature.
 
+The accepted profile amendment adds AC-9 and the profile cases below. Its implementation remains pending. The existing offline harness results are builder evidence; they do not establish these new cases or live compatibility.
+
 ## Local checks before live review
 
 | Scenario | Expected evidence | Criteria |
@@ -15,7 +17,7 @@ All cases are pending. This file is a verification plan, not a record of passing
 | Source changes after its fingerprint is checked | The token used belongs to the checked snapshot; no second token read | AC-2 |
 | Plan or saved mapping is manually edited after the run's startup snapshot | All attempts use the original verified plan and mapping; edits are ignored for this run | AC-1, AC-2 |
 | Saved session reference is manually changed while the credential source also changes | The active run still compares against its frozen reference and rejects the new source | AC-2 |
-| Redirect, unknown region, environment proxy, unapproved host, or additional profile requirement | Refusal without forwarding a credential | AC-1, AC-2, AC-8 |
+| Redirect, unknown profile region, environment proxy, unapproved host, or a requirement for any further account source | Refusal without forwarding a credential | AC-1, AC-2, AC-8, AC-9 |
 | Service error, connection failure, or an apparently retryable result | Exactly one counted attempt and no transport or application replay | AC-3, AC-7 |
 | Sixth attempted dispatch followed by another proposed dispatch | Seventh dispatch refused, including after failed responses | AC-3 |
 | Slow headers, idle stream, byte trickle, expired request deadline, expired run deadline | All respective deadlines terminate work without extending the total budget | AC-3, AC-8 |
@@ -32,6 +34,27 @@ All cases are pending. This file is a verification plan, not a record of passing
 | Run end with unknown model identity, usage, terminal semantics, or instruction precedence | Unknown remains explicit; unsupported claims are absent | AC-4, AC-5, AC-7 |
 | Existing repository checks | Health, configuration, source capture, and native builds still pass | AC-8 |
 
+## Selected profile checks
+
+| Scenario | Expected evidence | Criteria |
+|---|---|---|
+| Synthetic `auth_kv` token and `state` profile with the two exact keys | One connection and one read transaction return the pinned token and exact `arn` member; no other rows or settings are read | AC-2, AC-9 |
+| Token region differs from profile ARN region | The profile's fourth ARN component selects the matching synthetic plan destination; token region and start URL do not affect routing | AC-9 |
+| Either supported profile region | Its corresponding finite plan entry is selected; absent entry or a host outside that plan stops before dispatch | AC-1, AC-9 |
+| Missing, duplicate, nontext, oversize, invalid UTF 8, ambiguous JSON, absent or wrong case `arn` | Fixed `profile_invalid` failure, no value in output, and size checked before allocation | AC-6, AC-8, AC-9 |
+| Exactly one string valued `profileName` or `profile_name`, including an empty string | Both spellings work individually; the decoded name is discarded and cannot affect routing or identity | AC-6, AC-9 |
+| ARN alone, neither name alias, both aliases even with equal values, null or nonstring name, or only a case variant | `profile_invalid` before dispatch; no alias precedence or fallback is invented | AC-8, AC-9 |
+| State table is a view, has generated key/value columns, wrong declared types, or lacks the sole key primary key | `source_unavailable` before reading record values; additive ordinary columns remain allowed | AC-8, AC-9 |
+| Unsupported ARN partition, service, region, account syntax, or resource syntax | `profile_unsupported` without guessing a host, trimming, or falling back to token region | AC-9 |
+| Profile changes between attempts with token unchanged, including only whitespace or ignored name data | Exact byte digest mismatch produces `profile_changed`; the original destination is not replaced and no slot is consumed | AC-2, AC-9 |
+| Token changes while profile remains unchanged | Existing `session_changed` behavior and saved fingerprint formula remain intact | AC-2, AC-9 |
+| A writer changes one or both rows between metadata and value reads in rollback journal and WAL fixtures | The reader observes one consistent SQLite snapshot or a bounded busy failure; no mixed transaction reads and no repair | AC-2, AC-8, AC-9 |
+| Source read is busy or canceled while obtaining the second record | Both reads share the five second deadline and one second busy budget; all resources close and no dispatch occurs | AC-3, AC-8, AC-9 |
+| Profile ARN, name, account component, or profile digest contains synthetic sentinel data | No values in summary, fixed errors, formatting, JSON output, or saved configuration; only approved public destination labels may be emitted | AC-6, AC-9 |
+| New approved run with a different selected profile but unchanged token | First valid combined read establishes a new in memory pin; no hidden persistent pin, forced relink, or settings mutation | AC-2, AC-9 |
+| Ordinary `account link`, `ReadSnapshot`, health, or tests with inherited live controls | Original source boundary remains unchanged; no real profile read or network dispatch | AC-1, AC-8, AC-9 |
+| Profile snapshot is valid but instruction, control, auth, or terminal contract remains missing | Live readiness remains `needs_evidence`; a passing local profile test cannot enable dispatch | AC-1, AC-7, AC-9 |
+
 ## Required live plan review
 
 Before a live invocation, you review the committed `probe-plan.json`, its digest, clean code commit, exact destination and regional rule, authentication source, synthetic bodies, stream decoder assertions, output labels, model mapping, attempt sequence, resource limits, and offline results. Approval in the current conversation covers one explicitly started bounded run. A second launch needs fresh approval. A changed plan, model mapping, code, destination set, or baseline needs review again. Record approval and results in the spec after the run so the reviewed checkout remains clean for launch.
@@ -39,6 +62,8 @@ Before a live invocation, you review the committed `probe-plan.json`, its digest
 The harness verifies the explicit launch controls, clean commit, frozen plan digest, mapping equality, and baseline. It cannot infer human consent from these values or enforce a single approval across separate processes. Check that boundary through the review workflow rather than inventing a machine `plan_unreviewed` state.
 
 This spec contains no approved live plan. Do not substitute the candidate strings in its rationale for one.
+
+For a plan covering multiple profile regions, review every exact permitted destination and the rule selecting one from the saved profile ARN. Approval selects the profile present at the first attempt and freezes it only within that run. No actual ARN is included in the plan, printed for review, or persisted. This does not provide approval bound to an exact account across launches. A change after the first read stops the run.
 
 ## Live cases
 

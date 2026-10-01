@@ -4,7 +4,7 @@
 
 > Premise note: The current evidence does not establish Kiro CLI 2.8.0's complete inference contract. Treating historical SDK source as that contract would leave authentication, instruction roles, and completion semantics for the builder to guess. You chose to establish those facts through a bounded experiment before completing the production bridge design.
 
-The Go gateway already serves authenticated health and supports saved configuration and explicit session capture. The code does not contain an inference adapter or a protocol bridge. Scope feature 4 requires a real coding task with Claude Code owning tools, permissions, history, and continuation. Its GA workflow calls for independent review and explicit evidence.
+The Go gateway already serves authenticated health and supports saved configuration and explicit session capture. The code now contains a six case synthetic feasibility harness, but no live inference dispatcher or protocol bridge. Scope feature 4 requires a real coding task with Claude Code owning tools, permissions, history, and continuation. Its GA workflow calls for independent review and explicit evidence.
 
 You chose a new spec extending 0001 and 0002, one available Sonnet model, and a small Go bug fix in a disposable repository as the eventual product proof. You selected the installed Claude Code `2.1.285` and Kiro CLI `2.8.0` as the initial baseline. A proposed data model preserves the existing configuration and keeps runtime conversation state in memory; you confirmed metadata and reviewed synthetic examples as retained evidence.
 
@@ -73,7 +73,53 @@ You approved the recommended corrections on October 1, 2026. Approval now belong
 
 The same independent reviewer checked the four corrections and found them closed, with no new material contradiction or remaining blocker within that review scope. The author clarified that local rejection before dispatch uses no inference slot, local tests may use synthetic credentials, and raw upstream IDs remain observations in memory rather than retained evidence. The example live test command uses verbose output so an allowed summary remains visible after a passing test.
 
-You accepted the assembled revised feasibility spec on October 1, 2026. The scope links its preparation milestones while keeping the full bridge design and coding loop pending. The spec remains `Proposed` under the feature lifecycle convention. No candidate plan or live run has been approved. No implementation or live compatibility result exists.
+You accepted the assembled revised feasibility spec on October 1, 2026. At that point its status was `Proposed`, and no implementation or live result existed. Development subsequently advanced it to `In Progress` and implemented the synthetic harness. No candidate plan or live run has been approved.
+
+## Profile sourcing amendment, October 1, 2026
+
+The resumed architecture pass found 26 Go source and test files, a clean checkout at `9d911dc`, and zero commits behind `origin/main` after fetching. That checkpoint records passing repository checks and a closed live gate. No real credential, profile, or gateway configuration was read in this architecture pass, and no Kiro process or live inference was launched. Existing verified links were reused without fetching them again.
+
+You selected a read only lookup of Kiro's selected profile record over supplying the inference region in each experiment plan. After independent review and the correction below, you accepted the complete amendment and its new AC-9.
+
+### Options for the additional source
+
+| Option | Benefit | Cost and disposition |
+|---|---|---|
+| Extend the existing reader with one combined token and selected profile snapshot | Reuses the path and transaction safeguards, follows the saved selection, and avoids operator transcription | Adds dependence on another private record; chosen for the amendment. The original token capture remains unchanged. |
+| Put the region explicitly in every reviewed plan | Avoids reading another account record and makes the destination easy to review | Can disagree with the saved profile and still leaves a required `profileArn` without a source; you did not choose it. |
+| Add a new profile discovery adapter alongside the reader | Could use a provider API to establish profile ownership and availability | Requires another operation, network budget, and authentication contract before the first inference; deferred. |
+| Replace the reader with a Kiro subprocess | Delegates selection details to the installed client | May renew credentials, mutate state, or own conversation and tools; inconsistent with this bounded harness, not chosen. |
+
+The recommendation is a targeted extension because the failure is an omitted routing input, not an unmaintainable store adapter. A new SDK, service, profile catalogue, or settings schema would not solve the remaining protocol uncertainty. (basis: existing `internal/credentials/capture.go`, spec 0002, your selected profile choice)
+
+### Static source evidence
+
+The following addresses refer to the installed arm64 `kiro-cli-chat` artifact with SHA 256 `2118bd89d96830a4f0e0884e4f4071fb94e4b6036c757126afe9e3f80c9d90c6`. These are binary inspection findings, not reads of the operator's database. Two read only helpers investigated profile and protocol paths; the author then resolved the profile constants and decoder comparisons directly with LLDB without launching the target.
+
+| Observation | Evidence and implication |
+|---|---|
+| Selected profile key | `Database::get_auth_profile` at `0x1022fb854` calls `get_entry` at `0x1022fb88c`, passing table discriminator `0` and 25 key bytes. Reading constant address `0x11b85f55e` yields `api.codewhisperer.profile`. |
+| Profile table | `get_entry` formats its table through `Table::fmt` at `0x102349b48`. Its discriminator `0` branch uses five bytes at `0x11b85f087`, which read `state`. The gateway's ordinary table, primary key, and size requirements are chosen validation policy, not an observation of the operator's schema. |
+| Profile fields | `get_auth_profile` calls serde `from_trait` at `0x102619a90`, which calls the specialized struct decoder at `0x102694d80`. Comparisons at `0x102694ec8` through `0x102694ee8` recognize `arn`; comparisons at `0x102694f34` through `0x102694ff0` recognize `profileName` and `profile_name`. The recognized values use a string decoder. Missing field paths at `0x10269521c` and `0x10269526c` require the ARN and profile name respectively. Both name aliases share the same field and duplicate check. No region or token association field is established by this path. |
+| Endpoint input | `Endpoint::configured_value` at `0x10259ee70` calls that profile reader at `0x10259ef18`. The ensuing colon search at `0x10259ef7c`, `0x10259efa0`, `0x10259efc4`, and `0x10259efec` selects the fourth component before regional endpoint lookup at `0x10259f11c`. This supports using the profile ARN region. It does not settle the operation's auth branch or all endpoint override behavior. |
+| Candidate hosts | The existing plan records `Endpoint::krs_for_region` at `0x10259ec14` mapping `us-east-1` and `eu-central-1` to their corresponding runtime hosts. They remain candidates, not approved destinations. |
+| Completion gap | The previous inspected message metadata decoder recognizes `conversationId` and `utteranceId`. A further bounded static pass did not establish a positive model completion signal, distinct system wire field, or generation output limit. Negative string searches are not proof that the service lacks them. |
+
+The selected profile is a global saved selection. The inspected read does not bind it to the token's `start_url`. A consistent SQLite transaction and an in memory digest prevent accidental mixing or mid run adoption; they do not establish ownership, historical atomic writes by Kiro, or server permission. A reviewed launch therefore selects the saved profile at its first attempt and relies on the eventual service response for authorization evidence. Reject rather than repair any unusable pair. (basis: static call trace, spec 0002's snapshot rather than identity guarantee)
+
+The official region documentation says inference uses the Kiro profile region, which may differ from the Identity Center instance region. Agent prompt and headless output documentation concern CLI behavior and do not close the installed 2.8.0 runtime contract. The strict instruction and completion requirements are retained. This amendment resolves local source ownership and consistency; it does not declare the remaining service facts true by architectural choice. (basis: [supported regions](https://kiro.dev/docs/enterprise/supported-regions/), [agent configuration](https://kiro.dev/docs/custom-agents/configuration-reference/), [headless output](https://kiro.dev/docs/cli/headless/), prior evidence checkpoint)
+
+The accepted ARN subset is intentionally a gateway policy: commercial `aws` partition, `codewhisperer` service, two candidate regions, and bounded profile resource syntax. It permits deterministic validation without a new ARN library. It may reject a valid but unreviewed format, which is preferable to deriving a network destination from arbitrary account text. The finite reviewed plan still owns all network destinations. (basis: standard library preference, Go security guidance, bounded experiment)
+
+The architectural outcome has two parts. A local combined profile read has a concrete source and verification plan. Live preparation remains `needs_evidence` until new protocol evidence establishes destination and authentication together, distinct instruction roles, controls, and positive completion. There is no recommendation to repeat unchanged investigations or to disguise synthetic successes as live compatibility.
+
+### Amendment review
+
+At your request, `gpt-6-sol` independently read the amendment and its verification plan. It found one material source shape gap: requiring only `arn` would accept a profile record that the installed Kiro decoder rejects for a missing name. It found no other material gap in the local AC-9 slice and confirmed that the draft preserves the unresolved live gates.
+
+You approved the recommended correction. The reader design now requires exactly one string valued `profileName` or `profile_name` field and discards the decoded name after validation. Empty strings remain allowed because this is a type and presence check, not a new semantic use of the name. Missing, wrong type, and conflicting aliases have explicit rejection cases. The same independent reviewer confirmed that the gap was closed.
+
+You then accepted the revised amendment on October 1, 2026. This ratifies the local source design and the explicit disposition of unresolved protocol facts. The lifecycle status stays `In Progress`; profile implementation, live feasibility, and the full Claude Code proof are not claimed complete. No live run is authorized.
 
 ## References
 
@@ -86,6 +132,7 @@ You accepted the assembled revised feasibility spec on October 1, 2026. The scop
 5. [Credential capture](../../../internal/credentials/capture.go) and [health server](../../../internal/gateway/server.go), current implementation boundaries.
 6. [Go security skill](../../../.agents/skills/golang-security/SKILL.md), trust boundaries and sensitive output.
 7. Your design answers and the local version, help, and static artifact observations recorded above.
+8. [Feasibility candidate plan](../../../internal/kiro/testdata/probe-plan.json), existing static provenance and the closed live contract at checkpoint `9d911dc`.
 
 **Practices**
 
@@ -101,3 +148,5 @@ You accepted the assembled revised feasibility spec on October 1, 2026. The scop
 3. [Historical conversation state](https://github.com/aws/amazon-q-developer-cli/blob/main/crates/amzn-codewhisperer-streaming-client/src/types/_conversation_state.rs) and [tool use type](https://github.com/aws/amazon-q-developer-cli/blob/main/crates/amzn-codewhisperer-streaming-client/src/types/_tool_use.rs), candidate field evidence.
 4. [Kiro CLI documentation](https://kiro.dev/docs/cli/) and [authentication](https://kiro.dev/docs/cli/authentication/), supported operator surfaces.
 5. [Kiro infrastructure security](https://kiro.dev/docs/cli/privacy-and-security/infrastructure-security/), general network security description and its inference limits.
+6. [Kiro supported regions](https://kiro.dev/docs/enterprise/supported-regions/), distinction between profile and Identity Center regions, verified during the preceding development evidence pass on October 1, 2026.
+7. [Agent configuration reference](https://kiro.dev/docs/custom-agents/configuration-reference/) and [headless mode](https://kiro.dev/docs/cli/headless/), CLI level instruction and output concepts, verified in that same evidence pass. These do not establish the required runtime wire fields.

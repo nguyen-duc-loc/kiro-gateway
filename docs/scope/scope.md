@@ -97,10 +97,13 @@ Connect an authenticated Kiro account to a local gateway and complete a small re
 
 **Confirmed preparation:** You accepted the bounded feasibility design on October 1, 2026, after independent review and its four corrections. A development harness will investigate one exact saved Sonnet mapping, with at most six inference attempts and explicit review of the concrete plan before each live run. The initial baseline is Claude Code `2.1.285` and Kiro CLI `2.8.0`. The full bridge still needs protocol evidence and another architecture pass; its design checkbox and feature status remain pending.
 
+**Confirmed profile amendment:** You accepted the selected profile source on October 1, 2026, after independent review and its name validation correction. The next local slice reads the fixed token and `state["api.codewhisperer.profile"]` records in one transaction, derives region from the profile ARN, and pins profile bytes for the run. Synthetic implementation can proceed. Destination and authentication, distinct system instructions, output controls, and successful turn completion still need new evidence before live work.
+
 - [x] Plan the feasibility milestone: `/architect first real Claude Code coding loop`
 - [ ] Build the feasibility milestone only: `/develop first real Claude Code coding loop: feasibility milestone only`
-  - [ ] Prepare the concrete experiment and prove one offline path through the harness (AC-1, AC-2, AC-5, AC-6, AC-7, AC-8).
+  - [ ] Prepare the concrete experiment and prove one offline path through the harness (AC-1, AC-2, AC-5, AC-6, AC-7, AC-8, AC-9).
     - [x] Complete the six case synthetic harness, including exact snapshot selection, tool result continuation, local failure controls, and passing repository checks.
+    - [ ] Build the combined token and selected profile snapshot with synthetic verification: `/develop first real Claude Code coding loop: selected profile snapshot only` (AC-1, AC-2, AC-6, AC-8, AC-9).
     - [ ] Complete the current upstream contract and the concrete live request plan from evidence.
   - [ ] Complete the safeguards and present the exact plan and clean code commit for live review (AC-1, AC-2, AC-3, AC-5, AC-6, AC-8).
   - [ ] After approval and explicit launch, run the bounded cases and record evidence or the unresolved contract (AC-2 through AC-8).

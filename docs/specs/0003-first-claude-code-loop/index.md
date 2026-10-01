@@ -2,10 +2,13 @@
 
 **Date**: 2026-10-01
 **Status**: In Progress
+**Revision review**: Profile sourcing amendment accepted on 2026-10-01 after independent review and the approved profile name correction. No live run is authorized.
 
 ## Summary
 
 You first test whether the current Kiro connection can carry the instructions, tool calls, and results that Claude Code needs. An explicitly invoked development harness limits the experiment to one selected Sonnet model and six inference attempts. You review the exact destination and synthetic request plan before any live run. This spec defines that feasibility milestone; the full bridge design and real Claude Code coding loop remain pending its evidence.
+
+The profile amendment obtains the inference region from Kiro's selected profile, read alongside the pinned credential in one SQLite transaction. It makes that local source buildable with synthetic data. Authentication, system instruction placement, output controls, and successful turn completion still need protocol evidence before live work.
 
 ## Requirements
 
@@ -21,6 +24,7 @@ The following criteria apply to the feasibility milestone only. Satisfying them 
 6. **AC-6**: Results retain run metadata, individual case outcomes, and reviewed synthetic protocol examples. Raw traffic, real credentials, fingerprints, account metadata, and ordinary coding conversations are not saved or printed.
 7. **AC-7**: Missing or contradictory evidence stops the run and produces an explicit unresolved contract. No exhausted budget triggers another run. The full bridge remains blocked until this spec is extended through a new architecture decision using the evidence.
 8. **AC-8**: Synthetic local checks prove the harness's credential selection, network restrictions, budgets, cancellation, incomplete result handling, and output filtering. Existing health and configuration behavior and the repository checks continue to pass.
+9. **AC-9**: A combined source read selects only the fixed token and profile records in one transaction. Region comes from the profile ARN, independently of the Identity Center region. Missing, malformed, unsupported, or changed profile data stops the attempt before dispatch. Profile data and its digest remain in memory, and existing capture, configuration, and health behavior stay unchanged.
 
 ## Decision
 
@@ -30,9 +34,11 @@ Keep Go, `net/http`, the existing SQLite reader safeguards, and the existing con
 
 **Implementation skills**: `golang-security` (`samber/cc-skills-golang`, [SKILL.md](../../../.agents/skills/golang-security/SKILL.md)). Its applicable guidance covers credentials, destinations, bounded input, and allowed diagnostic fields.
 
-This is a new spec extending both accepted foundations. You accepted the feasibility design on October 1, 2026, after independent review and approval of its four corrections. This ratifies the preparatory milestone, not a live destination or request body. No live experiment ran during design. The feature linked lifecycle status stays `Proposed` until implementation begins; the full bridge design and scope feature remain pending.
+This spec extends both accepted foundations. You accepted the feasibility design on October 1, 2026, after independent review and approval of its four corrections. This ratified the preparatory milestone, not a live destination or request body. Synthetic implementation has since advanced the spec to `In Progress`; the full bridge design and scope feature remain pending. No live experiment ran during design.
 
 The implementation recommendations below select an explicit Go test entry point, a digest binding the reviewed plan to the run, fixed resource bounds, and a finite case sequence. A separate executable and a general experiment framework would add lifecycle and configuration work without improving this small proof. These recommendations are part of the final spec review. (basis: existing Go testing approach, explicit resource ownership, your development harness choice)
+
+**Accepted profile amendment**: Extend the existing SQLite adapter with a combined credential and selected profile read for the harness. On October 1, 2026, you chose the selected Kiro profile record over an explicitly supplied experiment region, then accepted this amendment after independent review and correction. Keep the saved source identifier and token fingerprint formula unchanged. The profile is pinned only for the current run. This is a narrow additional read for feasibility, not a change to `account link` or permission to inspect the operator's store during preparation. No new dependency or credential type is selected. (basis: your sourcing choice, installed profile decoder evidence in [rationale.md](rationale.md), spec 0002 snapshot boundary)
 
 ## Feature design
 
@@ -44,11 +50,25 @@ Preparation and synthetic harness work may proceed from this spec after ratifica
 
 After feasibility, `/architect` extends this same spec with the actual client endpoint inventory, field support, upstream request and event types, stream state machine, completion semantics, usage handling, model resolution, and real Claude Code verification. The original scope feature stays planned and needs a decision until that full design exists. The eventual proof still requires Claude Code to execute file and shell tools under its normal permissions.
 
+### Contract disposition at this revision
+
+| Gap | Decision and next evidence |
+|---|---|
+| Profile region source | Use the fixed local record and combined snapshot below. This confirmed local slice is ready to build using synthetic fixtures. |
+| Inference destination and authentication | Region derivation is settled locally. The chosen operation's destination, method, path, header names, and IAM Identity Center bearer resolver branch must still be traced together in the current artifact or a current primary protocol source. The generic bearer signer and available host strings are insufficient. |
+| Distinct system instructions | Keep `preserve_distinct_system_role`. Require an evidenced wire field and its role semantics. Agent configuration prompts and generic `additionalModelRequestFields` do not establish either. User content, tool text, and invented field names are not substitutes. |
+| Output controls | Require a named wire control, its value source, and an observable assertion. The local response byte limit cannot substitute for a generation limit. A decision to run without such a control would require your explicit change to this requirement. |
+| Successful turn completion | Require a positive decoded terminal condition with framing and error precedence. EOF, HTTP 200, tool argument completion, and metadata identifiers cannot establish success. |
+| Live cases | Keep them blocked until the preceding contract is concrete. Preserve the six case allocation and all existing limits. |
+
+The evidence currently yields `needs_evidence`, not a rejected protocol and not a supported candidate. Preparation may inspect public artifacts without credentials and implement the local profile slice. It must not open the real store, send exploratory requests, launch Kiro chat, or expand its source set to resolve these gaps. After the local slice, `/develop` stops with the named unresolved contract if no new evidence has arrived. Repeating `/architect` or `/develop` against unchanged evidence is not a resolution step. Resume wire implementation only when new evidence supplies those inputs, or when you explicitly revise the requirements. No additional live run is authorized by this amendment.
+
 ### Data model and lifetime
 
 | Entity | Required fields and identity | Relationship and lifetime |
 |---|---|---|
 | Saved configuration | Existing version, listener, session source and fingerprint, exact model map | Unchanged schema and persistence from spec 0002. One selected session owns zero to 32 mappings. |
+| Selected profile snapshot | Exact profile record bytes, parsed ARN, derived region, in memory profile digest | Read with the selected token in one transaction. Freeze the first validated profile digest for the run and require it on later attempts. No profile values are persisted. |
 | Candidate plan | Stable case labels, evidence sources, exact host and path, method, authentication scheme, header names, body shapes, stream framing and assertions, allowed observation labels, synthetic inputs, client mapping name, exact target model, selected case sequence | One reviewed plan governs one explicitly started run. Only synthetic, nonsecret data may be checked into `internal/kiro/testdata/probe-plan.json`. |
 | Run | Random local run ID, plan digest, start time, reviewed code commit, platform, observed client versions, requested model, attempted count, elapsed time, outcome | One run owns immutable plan and configuration snapshots and at most six attempts. Stored evidence is a reviewed summary, not a runtime database. |
 | Attempt | Run ID and case label, request index, fresh credential snapshot, bounded synthetic conversation, event observations, outcome | One active attempt at a time. Tokens and raw response bytes remain in memory and are discarded at completion or failure. |
@@ -66,8 +86,8 @@ The plan is a concrete artifact the operator can review before real credentials 
 | Required plan item | Gate |
 |---|---|
 | Destination | Exact HTTPS scheme, service host, port 443, method, and path. No wildcard domain, user supplied request URL, environment endpoint override, or redirect destination. Explain how this destination applies to the selected sign in method. |
-| Region rule | An explicit finite mapping from a supported credential `region` to the reviewed service host. Unknown regions fail. The sign in URL never supplies a network destination. |
-| Authentication | Exact header or signing scheme and its source. Only the selected snapshot's access token is currently available. A need for SigV4 credentials, profile metadata from another source, client secrets, or other records is a new decision, not permission to obtain them. |
+| Region rule | An explicit finite mapping from the selected profile ARN region to reviewed service hosts. The token's `region` is Identity Center metadata and is not a routing fallback. Unknown regions fail. Neither the ARN nor the sign in URL supplies a request URL. |
+| Authentication | Exact header or signing scheme and its source. The selected token and the one profile record below are the only permitted account inputs. A need for SigV4 credentials, client secrets, other records, or another profile source is a new decision. Reading a profile does not establish that the token is authorized to use it. |
 | Model | One exact saved mapping name and target ID. No alias expansion or fallback. The request itself must establish that access works; the mapping is not availability evidence. |
 | Request schema | Exact synthetic fields for instructions, current input, history, tool schema, arguments, and tool results. Label which fields are evidenced and which are hypotheses under test. Include any required conversation or request IDs and their source or generation rule. |
 | Controls | Exact requested output bounds and other model controls, their source, and the observation that would show they are honored. A locally enforced byte limit is not a model token limit. |
@@ -81,6 +101,24 @@ No candidate plan is approved at spec creation. In particular, the hostname stri
 Hypotheses about service behavior are appropriate experiment inputs when clearly stated and reviewed. Guessing an authentication destination, reading an additional credential source, suppressing instructions, or treating EOF as success is not. If the inspection cannot produce the required plan fields, record `needs_evidence` and stop before live access. A changed plan, mapping, baseline, destination set, or execution code needs a new review before another launch.
 
 Approval is a human workflow gate. First commit the complete harness, fixtures, plan, and offline evidence locally, leaving a clean checkout. Present its full Git commit ID, plan digest, exact mapping and target, permitted destinations, baseline versions, and six attempt budget. Your approval in the current conversation authorizes one launch of those reviewed inputs. A second launch needs fresh approval, including after a failed or canceled run. Copy that approval and the run result into this spec afterward, so recording it does not dirty the reviewed checkout before execution. There is no approval receipt file or runtime approval counter, and the Go harness does not parse conversation or spec prose to infer consent.
+
+The plan may name a finite destination set for its supported profile regions before the real profile is read. Your live review approves that exact set and the use of whichever profile occupies the selected local record at the first attempt. The harness then chooses one destination from that set and freezes it for the run. It never prints the profile ARN or reads it early to prepare a plan. If you need approval bound to an exact account or profile across launches, that is a separate selection design; this run scoped pin does not provide it.
+
+### Selected profile source and consistency
+
+The additional source is the same fixed database as spec 0002, `<home>/Library/Application Support/kiro-cli/data.sqlite3`, table `main.state`, exact key `api.codewhisperer.profile`, JSON member `arn`. Static inspection connects the installed endpoint selector to this record and its decoder. The decoder also requires a profile name under `profileName` or `profile_name`. The harness validates that field's presence and string type, then discards it without using it for routing or identity. There is no stored region field established by this decoder. The source identifies Kiro's saved selected profile, not a verified association with the independently pinned Identity Center token.
+
+The adapter's combined read accepts the existing saved session reference and returns the validated token, expiry, Identity Center region, profile ARN, profile region, and profile digest in memory. Keep fields private and prevent ordinary formatting or JSON serialization from exposing account data, as with the existing credential snapshot. A caller uses the ARN only in a wire field established by the candidate plan. The existing `Capture` and `ReadSnapshot` operations continue reading only the original token record. Normal gateway commands do not call the new combined read.
+
+Reuse spec 0002's path, ownership, permission, symlink, SQLite URI, query only, and journal safeguards. Check `main.state` with the same ordinary table and plain `TEXT` key/value schema rules as `main.auth_kv`. Require `key` as the sole primary key. Bind each fixed key with `COLLATE BINARY`; do not accept a configurable table, key, path, profile name, or ARN. Check each selected value's type and byte length before reading it. Each value must be exactly one text row of 1 through 65536 bytes. Read metadata and both values in a single read transaction and one connection, within one five second deadline and the existing one second busy budget. Never scan other rows or read one record in a second transaction after validating the other.
+
+Require valid UTF 8 and one JSON object without duplicate members at any depth. Require the exact `arn` member to be a nonempty string of at most 2048 visible ASCII bytes; do not trim, normalize, or accept case variants. Require exactly one of the exact members `profileName` and `profile_name`, with a JSON string value. Reject neither alias, both aliases even when equal, null, nonstring values, and case variants used in place of a recognized alias as `profile_invalid`. An empty name string is allowed; its contents have no routing or identity meaning. The enclosing record bound limits its size. Discard the decoded name after validation, while hashing the original record bytes as specified below. Ignore other additional members after bounded JSON validation. As a deliberately narrow gateway policy, accept only six colon separated ARN components with prefix `arn`, partition `aws`, service `codewhisperer`, a region of `us-east-1` or `eu-central-1`, a 12 digit account component, and a resource `profile/` followed by 1 through 128 ASCII letters, digits, underscores, or hyphens. This is an experiment restriction, not a claim about every valid Kiro profile format. Other partitions, regions, services, or resource formats return `profile_unsupported`. Extract the fourth component as the profile region. A different token region is allowed and must never replace it.
+
+Before every attempt, validate the token and its existing saved fingerprint, then validate the profile from those same transaction bytes. Let `P` be the exact profile value bytes. Compute `SHA256(UTF8("kiro-gateway/probe-profile-v1") || 0x00 || P)` without JSON reencoding. The first successful combined read freezes that digest in the run. Later attempts require exact digest equality, even if only an ignored field or whitespace changes. They also retain the original destination. A changed token returns `session_changed`; a changed valid profile returns `profile_changed`. Missing or malformed profile data returns `profile_invalid`; an unsafe or unavailable database or table returns `source_unavailable`. Source timeout, cancellation, and expiry keep their existing categories. All failures stop before dispatch and use no inference slot.
+
+The combined transaction prevents mixing rows from different SQLite snapshots. It does not prove that Kiro wrote both records atomically or that the account owns the selected profile. Remote authorization remains unverified until an approved request is accepted. The experiment neither repairs stale selections nor falls back to another record. Changing Kiro's saved profile through its own controls takes effect only in a separately approved run. No gateway configuration migration, relink requirement for a profile only change, or persistent profile fingerprint is introduced.
+
+Static evidence identifies two candidate runtime hosts, `runtime.us-east-1.kiro.dev` and `runtime.eu-central-1.kiro.dev`, for their matching regions. They remain candidates until the operation and authentication trace closes the destination gate. The local profile slice can test region selection against synthetic destinations; it cannot promote either candidate to a live allowlist. The legacy default host and Kiro endpoint settings are not read or inherited.
 
 ### Development surface
 
@@ -108,13 +146,15 @@ rtk proxy env GOTOOLCHAIN=local GOWORK=off CGO_ENABLED=1 GOFLAGS= \
   go test -mod=readonly -tags=liveprobe ./internal/kiro -run '^TestProtocolProbe$' -count=1 -parallel=1 -timeout=11m -v
 ```
 
-The angle bracket values come from the concrete review; this is not a runnable command yet. Agents and operators must honor the human approval step; runtime checks cannot replace it. Clear fixed errors distinguish `plan_invalid`, `code_changed`, `baseline_changed`, `configuration_invalid`, `session_changed`, `credential_expired`, `source_unavailable`, `budget_exhausted`, `canceled`, `timed_out`, `stream_incomplete`, `contract_mismatch`, and `needs_evidence`. There is no machine `plan_unreviewed` state. Do not print underlying Git, version command, transport, or database errors.
+The angle bracket values come from the concrete review; this is not a runnable command yet. Agents and operators must honor the human approval step; runtime checks cannot replace it. Clear fixed errors distinguish `plan_invalid`, `code_changed`, `baseline_changed`, `configuration_invalid`, `session_changed`, `profile_invalid`, `profile_unsupported`, `profile_changed`, `credential_expired`, `source_unavailable`, `budget_exhausted`, `canceled`, `timed_out`, `stream_incomplete`, `contract_mismatch`, and `needs_evidence`. There is no machine `plan_unreviewed` state. Do not print underlying Git, version command, transport, or database errors.
 
 ### Request ownership and safeguards
 
 The live harness acquires the existing configuration process lock before loading settings and holds it through cleanup. It requires an existing linked configuration and exact model mapping. Load configuration once, validate it, and copy the selected mapping and session reference into the run's immutable inputs. Require the mapping to equal the reviewed plan. Do not reread the plan, mapping, or reference between attempts. Manual edits during a run are ignored, matching spec 0002's startup snapshot behavior; the lock excludes cooperating commands, not editors. Such edits affect a later run and may require a new plan review. The harness does not initialize, modify, relink, or upgrade settings. Concurrent serving or another mutator prevents a run. The normal gateway bearer token is not an inference credential; this development test is a local operator action rather than an HTTP endpoint.
 
 For each attempt, reuse spec 0002's fixed source, ownership checks, SQLite schema checks, limits, transaction, and expiry rules. Read a fresh source snapshot, compute and compare its digest with the run's frozen reference, then use the access token from those same bytes. Never call `Capture` and reread for a token. If a reusable production credential method is needed, its interface belongs to the consuming Kiro boundary and returns only that validated snapshot to the adapter. It must not widen the capture command's output. A source change detected before a later attempt stops the run; a manual edit to saved settings cannot adopt that change for the active run.
+
+With the profile amendment, use the combined read above for each harness attempt. Profile reads share that same operation deadline. They do not add an extra credential scan, extend the six attempt budget, or open a separate preflight inspection of the real store. Account source buffers and their retained copies count toward the existing 16 MiB run bound. Discard raw profile bytes after validation and hashing, retaining only the bounded fields needed by the active attempt and the frozen digest.
 
 Do not invoke Kiro login, chat, profile, or model listing commands as part of live execution. Such commands may own refresh or other state changes that this experiment does not authorize. Version and help inspection during preparation are allowed. No refresh token or device registration record is needed.
 
@@ -199,6 +239,10 @@ No terminal state starts another run. A successful experiment permits further ar
 | Record versions | Gateway revision, OS and architecture, client versions | Checked clean commit, local platform, and validated version command outputs. Version drift ends this baseline's experiment until reviewed. |
 | Select model | Client name and requested upstream ID | Startup copy of the launch mapping name, the configuration loaded once under lock, and equality with the frozen reviewed plan. Later manual edits are ignored. |
 | Obtain credential | Token, expiry, region | One validated `auth_kv.value` snapshot from the exact spec 0002 source; token never enters evidence. |
+| Obtain profile | Profile ARN and profile region | Exact `arn` member of `main.state.value` at key `api.codewhisperer.profile`, read in the same transaction as the token; region is the validated fourth ARN component. Neither value enters evidence. |
+| Validate profile shape | Presence and type of profile name | Exactly one of the exact `profileName` or `profile_name` members in that same object is a string. Its decoded value is discarded, not returned or emitted. |
+| Pin profile | Expected and observed profile digest | The specified domain separated SHA 256 of exact profile bytes. Freeze the first valid read in memory; compare later fresh reads without persistence or output. |
+| Select destination | One public destination and its allowed output label | Frozen reviewed plan's finite map indexed by the validated profile region. A missing entry fails; token region and source strings never supply a URL. |
 | Check session | Expected and observed fingerprint | Frozen startup reference and the digest of each attempt's fresh source snapshot, compared in memory and omitted from output. |
 | Form conversation | Instructions, messages, tool schema, fixed result | Reviewed synthetic fixtures, plus bounded prior synthetic responses for continuation. |
 | Match tool result | Tool ID, name, arguments | Decoded observed event from attempt 2; use exactly that ID in attempt 3. |
@@ -218,6 +262,8 @@ Critical cases include a complete synthetic tool result and follow up exchange (
 
 Follow the Tracer Bullet approach by proving one bounded path through the harness before broadening the cases.
 
+**Resume point for the amendment**: The six case synthetic harness already exists. First implement one synthetic path from the two fixed SQLite records through token verification, profile parsing, region selection, and filtered outcome. Then exercise changed profiles, concurrent writers, invalid metadata, unsupported ARNs, cancellation, and output sentinels. Keep normal token capture behavior and the closed live gate intact. This is the independently buildable slice for **AC-1**, **AC-2**, **AC-6**, **AC-8**, **AC-9**. Its completion does not tick the whole feasibility milestone. Wire tasks below remain blocked by the contract disposition until new evidence exists; do not rebuild the completed synthetic sequence.
+
 1. **Prepare the concrete experiment and one offline thread.** Inspect the candidate contract without credential access, prepare the plan, and implement the opt in runner from synthetic configuration through snapshot comparison, transport, and filtered result. Exercise a single text stream locally, including an incomplete response. If the plan cannot be completed, report the missing contract and stop before live work. Satisfies **AC-1**, **AC-2**, **AC-5**, **AC-6**, **AC-7**, **AC-8**.
 2. **Complete controls, then review the live plan.** Verify exact destination restrictions, immutable inputs, snapshot consistency, sequential budgets, separate run and attempt cancellation, verdict rules, and allowed observations using local fixtures. Commit the complete candidate harness and plan, then present that clean code commit, plan digest, synthetic bodies, and passing local checks for your review. Approval is for one bounded run and does not authorize implementation of an assumed production bridge. Satisfies **AC-1**, **AC-2**, **AC-3**, **AC-5**, **AC-6**, **AC-8**.
 3. **Run the approved thin proof and extend through tool continuation.** After explicit launch, perform the six prescribed attempts in dependency order, stopping at the first unmet required contract. Complete synthetic tool and failure checks before their corresponding live attempts. Record useful negative evidence instead of enlarging the budget. Satisfies **AC-2**, **AC-3**, **AC-4**, **AC-5**, **AC-6**, **AC-7**, **AC-8**.
@@ -231,6 +277,8 @@ Follow the Tracer Bullet approach by proving one bounded path through the harnes
 
 **Limit**: Neither historical source, static binary strings, nor a successful synthetic tool exchange establishes full Claude Code compatibility, both model families, long conversations, renewal, or dependable daily operation.
 
+**Profile tradeoff**: Reading the selected profile avoids assuming the Identity Center region is the inference region. It also adds a private record dependency and only pins selection within one run. The deliberately narrow ARN policy can reject otherwise valid accounts; broadening it requires evidence and review. Reverting the unused combined reader needs no configuration or database migration.
+
 ## Follow-up
 
 1. Complete and review the candidate plan before any live credential access. Its exact destination, authentication, wire schema, and terminal evidence remain experiment inputs to establish, not accepted production decisions.
@@ -238,6 +286,7 @@ Follow the Tracer Bullet approach by proving one bounded path through the harnes
 3. The later live proof must use Claude Code `2.1.285`, Kiro CLI `2.8.0`, the recorded available Sonnet model, and a disposable Go bug fixture. Preserve the original scope's file edits, shell tools, permission ownership, follow up turn, and failure evidence.
 4. Scope feature 4 remains planned and needs a decision. Finishing this preparatory milestone does not advance its full design checkbox or mark the feature done.
 5. Any durable context change after implementation belongs to `/sync`. No new tool installation or previously declined tooling offer is needed for this design.
+6. Implement the confirmed profile snapshot slice and verify AC-9 with synthetic fixtures. Its independent design review is complete. The live contract remains `needs_evidence`; bring new protocol evidence before resuming wire implementation.
 
 ## Rationale
 
