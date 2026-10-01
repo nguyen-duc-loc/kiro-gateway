@@ -119,3 +119,10 @@ the concrete plan and clean code commit before one explicit launch. A new launch
 changed plan, code, baseline, model, or destination set needs a new review. No live
 run has been performed during implementation. Live requests may consume account
 credits, and local cancellation cannot establish that remote computation stopped.
+
+The first approved launch stopped at `baseline_changed` before account access or
+inference: installed Claude Code was `2.1.286`, while the reviewed baseline was
+`2.1.285`. All six cases remain unrun. The replacement plan pins `2.1.286` and
+requires a new review of its exact digest and code commit. Kiro CLI remains
+`2.8.0`; synthetic requests and limits are unchanged. See the spec verification
+record for the original launch identity and result.

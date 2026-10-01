@@ -2,7 +2,7 @@
 
 **Date**: 2026-10-01
 **Status**: In Progress
-**Revision review**: On 2026-10-01 you accepted a limited feasibility experiment with instructions carried in user context and clean stream end treated only as tentative completion. This supersedes the strict preparation gate for this experiment only. The prior profile amendment remains accepted. No live run is authorized.
+**Revision review**: On 2026-10-01 you accepted a limited feasibility experiment with instructions carried in user context and clean stream end treated only as tentative completion. This supersedes the strict preparation gate for this experiment only. The prior profile amendment remains accepted. The first approved launch stopped at baseline preflight with zero inference attempts. The replacement candidate pins Claude Code `2.1.286` and awaits a new exact run review.
 
 ## Summary
 
@@ -13,6 +13,8 @@ The profile amendment obtains the inference region from Kiro's selected profile,
 ## Requirements
 
 As the local operator, you want a reproducible answer about the connection before building the production bridge. The eventual product proof is a small Go bug fix in a disposable repository, using Claude Code's own file and shell tools and normal permissions, followed by another user request. The initial compatibility baseline is Claude Code `2.1.285` and Kiro CLI `2.8.0` on this Mac.
+
+The initial launch pinned Claude Code `2.1.285` but found installed version `2.1.286`. The replacement feasibility candidate uses `2.1.286`, with Kiro CLI `2.8.0` and Go `1.27.1` unchanged. This is prepared for review, not authorization for another launch. The future full coding loop baseline remains a separate bridge decision.
 
 The following criteria apply to the feasibility milestone only. Satisfying them does not complete scope feature 4.
 

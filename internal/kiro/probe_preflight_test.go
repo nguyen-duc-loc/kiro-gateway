@@ -105,7 +105,7 @@ func checkProbeBaseline(ctx context.Context, env probeEnvironment, run probeComm
 		return errBaselineChanged
 	}
 	claude, err := run(ctx, "claude", "--version")
-	if err != nil || strings.TrimSpace(claude) != "2.1.285 (Claude Code)" {
+	if err != nil || strings.TrimSpace(claude) != "2.1.286 (Claude Code)" {
 		return errBaselineChanged
 	}
 	kiro, err := run(ctx, "kiro-cli", "--version")
@@ -214,14 +214,14 @@ func TestProbeBaselineDriftIsSanitized(t *testing.T) {
 		claude, kiro string
 		want         error
 	}{
-		{"exact", func(*probeEnvironment) {}, "2.1.285 (Claude Code)", "kiro-cli 2.8.0", nil},
+		{"exact", func(*probeEnvironment) {}, "2.1.286 (Claude Code)", "kiro-cli 2.8.0", nil},
 		{"Go", func(e *probeEnvironment) { e.runtime = "go1.26.0" }, "", "", errBaselineChanged},
 		{"workspace", func(e *probeEnvironment) { e.workspace = "" }, "", "", errBaselineChanged},
 		{"download", func(e *probeEnvironment) { e.toolchain = "auto" }, "", "", errBaselineChanged},
 		{"cgo", func(e *probeEnvironment) { e.cgo = "0" }, "", "", errBaselineChanged},
 		{"flags", func(e *probeEnvironment) { e.flags = "-mod=mod" }, "", "", errBaselineChanged},
 		{"Claude", func(*probeEnvironment) {}, "sentinel-version", "kiro-cli 2.8.0", errBaselineChanged},
-		{"Kiro", func(*probeEnvironment) {}, "2.1.285 (Claude Code)", "sentinel-version", errBaselineChanged},
+		{"Kiro", func(*probeEnvironment) {}, "2.1.286 (Claude Code)", "sentinel-version", errBaselineChanged},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			env := base

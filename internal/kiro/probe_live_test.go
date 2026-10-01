@@ -97,7 +97,7 @@ func TestProtocolProbe(t *testing.T) {
 		Started        time.Time     `json:"started"`
 		ElapsedMillis  int64         `json:"elapsed_millis"`
 		Result         wireRunResult `json:"result"`
-	}{runID, digest, commit, runtime.GOOS + "/" + runtime.GOARCH, "2.1.285", "2.8.0", probeModel, destination, started.UTC(), time.Since(started).Milliseconds(), result}
+	}{runID, digest, commit, runtime.GOOS + "/" + runtime.GOARCH, "2.1.286", "2.8.0", probeModel, destination, started.UTC(), time.Since(started).Milliseconds(), result}
 	b, err := json.Marshal(summary)
 	if err != nil {
 		t.Fatal(errNeedsEvidence)

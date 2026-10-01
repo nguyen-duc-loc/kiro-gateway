@@ -84,7 +84,7 @@ func readProbePlan(r io.Reader, expectedDigest string) (probePlan, error) {
 	}
 	d := json.NewDecoder(bytes.NewReader(b))
 	d.DisallowUnknownFields()
-	if d.Decode(&p) != nil || p.SchemaVersion != 2 || p.Status != "prepared_limited" || p.ClientMapping != probeModel || p.TargetModel != probeModel || p.InstructionPolicy != probeInstructionPolicy || p.Baseline.ClaudeCode != "2.1.285" || p.Baseline.KiroCLI != "2.8.0" {
+	if d.Decode(&p) != nil || p.SchemaVersion != 2 || p.Status != "prepared_limited" || p.ClientMapping != probeModel || p.TargetModel != probeModel || p.InstructionPolicy != probeInstructionPolicy || p.Baseline.ClaudeCode != "2.1.286" || p.Baseline.KiroCLI != "2.8.0" {
 		return probePlan{}, errPlanInvalid
 	}
 	if err := p.liveReadiness(); err != nil {

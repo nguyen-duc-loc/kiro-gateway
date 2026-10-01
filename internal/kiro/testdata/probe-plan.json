@@ -5,7 +5,7 @@
   "target_model": "claude-sonnet-5",
   "instruction_policy": "translate_into_user_context",
   "baseline": {
-    "claude_code": "2.1.285",
+    "claude_code": "2.1.286",
     "kiro_cli": "2.8.0"
   },
   "destination": {

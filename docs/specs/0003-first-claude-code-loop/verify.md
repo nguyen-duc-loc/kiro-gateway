@@ -1,6 +1,6 @@
 # Verify: First loop protocol feasibility, spec 0003
 
-All cases are pending. This file is a verification plan, not a record of passing tests. The full Claude Code coding loop remains a later gate in the same scope feature.
+All six live cases remain unrun. This file contains the verification plan and the preflight launch record below; it does not claim independent verification passed. The full Claude Code coding loop remains a later gate in the same scope feature.
 
 The accepted profile amendment adds AC-9 and the profile cases below. Its local implementation is complete. Builder checks cover synthetic profile and wire cases; independent verification and live compatibility remain pending. The limited experiment amendment permits explicit user context instructions and tentative EOF continuation only.
 
@@ -96,6 +96,16 @@ Stop at a missing required contract or unexpected failure. Mark later cases `unr
 For each run, record only its local ID, plan digest, date, checked clean code commit, platform, validated client versions, exact requested model from the plan, whether a matching model identity was evidenced, public service destination from the plan, access method, case outcomes, elapsed times, named instruction or control assertions, and unresolved contracts. Structural observations are restricted to the exact allowed output model in `index.md`. Do not include account identifiers, selected credential metadata, fingerprints, tokens, arbitrary upstream strings or field names, raw traffic, or actual prompt and response bodies.
 
 Reviewed synthetic fixtures may be referenced by case label. A fixture is written from invented content and allowed schema facts; it is not an automatically redacted recording. `limited_candidate_observed` requires every mandatory limited assertion in all six cases to be observed. It never establishes a distinct system role or proven model completion; `observed_completion` stays null. An observed contradiction yields `candidate_rejected`; otherwise any missing required evidence yields `needs_evidence`. Optional model echo and usage observations limit claims without changing a passing verdict. No verdict means that Claude Code compatibility was verified.
+
+## Approved launch stopped in preflight, October 1, 2026
+
+You approved and explicitly launched one experiment at clean commit `3253ffcfca9733e84a2963e0a20f68ce60796aa2`, with plan SHA 256 `26070279796930d28c27718b5b56994780b565b8cb0e4fae73e159ab0282fbf9`. The reviewed model was `claude-sonnet-5`, with at most six requests over ten minutes to the regional destination selected from the saved profile.
+
+The harness passed the code and plan checks, then reported `baseline_changed` at `probe_live_test.go:51`. The test failed after 0.08 seconds. It stopped before run ID creation, opening configuration, acquiring the account snapshot, selecting a destination, or dispatching a request. All six cases are `unrun`; inference attempts are zero. No protocol verdict or run summary was emitted.
+
+Separate fixed version diagnostics then returned Claude Code `2.1.286`, Kiro CLI `2.8.0`, and Go `go1.27.1`. The reviewed Claude Code baseline was `2.1.285`. This identifies the mismatch without reading an account or querying a service. It supplies no evidence against the candidate inference protocol.
+
+The replacement candidate updates only the Claude Code baseline to `2.1.286`; request bodies, destinations, model, limitations, and budgets remain unchanged. The original approval has been used for its one launch. The new plan digest and clean commit must be reviewed before any further launch, including after this zero request preflight stop.
 
 ## Later Claude Code acceptance gate
 
