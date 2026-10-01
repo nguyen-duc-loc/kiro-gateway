@@ -4,6 +4,15 @@ This directory contains test code only. Nothing here is linked into the gateway.
 The current candidate plan selects `claude-sonnet-5` as both the client mapping and
 target. It records `needs_evidence` and cannot dispatch a live request.
 
+The operator reaffirmed `preserve_distinct_system_role` on October 1, 2026. The
+plan validator rejects an absent policy or a downgrade to user context. Static
+inspection of the installed arm64 binary now records exact runtime endpoint
+selector outputs and serializer key writer calls, tied to its SHA 256 digest.
+The current serializer has an opaque `additionalModelRequestFields` document;
+this is not evidence that it accepts system instructions or output bounds.
+The inspected fields do not establish a distinct system role. That finding is
+an evidence gap, not proof that the remote service cannot support one.
+
 You can run the offline checks with:
 
 ```sh

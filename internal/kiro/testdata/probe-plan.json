@@ -3,6 +3,7 @@
   "status": "needs_evidence",
   "client_mapping": "claude-sonnet-5",
   "target_model": "claude-sonnet-5",
+  "instruction_policy": "preserve_distinct_system_role",
   "baseline": {
     "claude_code": "2.1.285",
     "kiro_cli": "2.8.0"
@@ -11,6 +12,7 @@
   "region_rule": null,
   "authentication": null,
   "request_schema": null,
+  "instruction_mapping": null,
   "controls": null,
   "completion": null,
   "cases": [],
@@ -19,12 +21,16 @@
     "region_rule",
     "authentication",
     "request_schema",
+    "instruction_mapping",
     "controls",
     "completion",
     "cases"
   ],
   "offline_framing": "amazon_eventstream",
-  "offline_event_labels": ["assistantResponseEvent", "toolUseEvent"],
+  "offline_event_labels": [
+    "assistantResponseEvent",
+    "toolUseEvent"
+  ],
   "sources": [
     {
       "id": "operator_model_selection",
@@ -56,6 +62,41 @@
       "id": "eventstream_framing",
       "reference": "https://smithy.io/2.0/aws/amazon-eventstream.html",
       "finding": "The offline reader validates both CRC32 checksums and bounded lengths. This generic framing contract does not supply a model completion signal."
+    },
+    {
+      "id": "operator_instruction_policy",
+      "reference": "Conversation on 2026-10-01",
+      "finding": "The operator explicitly retained a distinct system instruction role. Translating system instructions into user context is not authorized. The invented offline instructions field is not evidence of an upstream role."
+    },
+    {
+      "id": "current_runtime_endpoint_selector",
+      "reference": "Installed arm64 Endpoint::krs_for_region, function 0x10259ec14, constant records 0x11e9b5230 and 0x11e9b5260",
+      "sha256": "2118bd89d96830a4f0e0884e4f4071fb94e4b6036c757126afe9e3f80c9d90c6",
+      "finding": "Static disassembly compares us-east-1 and eu-central-1 and selects https://runtime.us-east-1.kiro.dev and https://runtime.eu-central-1.kiro.dev respectively. The default record at 0x11e9b5200 contains https://q.us-east-1.amazonaws.com. These function outputs establish available mappings, not which one applies to the selected IAM Identity Center snapshot."
+    },
+    {
+      "id": "current_configured_endpoint",
+      "reference": "Installed arm64 Endpoint::configured_value, function 0x10259ee70, get_auth_profile call at 0x10259ef18",
+      "sha256": "2118bd89d96830a4f0e0884e4f4071fb94e4b6036c757126afe9e3f80c9d90c6",
+      "finding": "The current configured endpoint path consults settings and profile state. It does not justify substituting the credential record region for profile routing data. No settings, profile record, or credential store was accessed during this inspection."
+    },
+    {
+      "id": "current_request_serializer",
+      "reference": "Installed arm64 ser_generate_assistant_response_input_input, function 0x100810d48, key writer calls 0x100810d98, 0x100810e4c, 0x100810e70, 0x100810e98",
+      "sha256": "2118bd89d96830a4f0e0884e4f4071fb94e4b6036c757126afe9e3f80c9d90c6",
+      "finding": "The current serializer writes conversationState, additionalModelRequestFields, profileArn, and agentMode. The additional model fields use a generic document serializer. Their supported keys and semantics remain unknown; they cannot be assumed to carry system instructions or output bounds."
+    },
+    {
+      "id": "current_conversation_serializer",
+      "reference": "Installed arm64 ser_conversation_state, function 0x100861b10, and ser_user_input_message_context, function 0x100841890",
+      "sha256": "2118bd89d96830a4f0e0884e4f4071fb94e4b6036c757126afe9e3f80c9d90c6",
+      "finding": "The inspected conversation keys include conversationId, workspaceId, history, currentMessage, chatTriggerType, customizationArn, agentContinuationId, and agentTaskType. The context serializer writes environment and editor context, additionalContext, toolResults, and tools. This inspection establishes no distinct system instruction field and does not prove the service lacks one."
+    },
+    {
+      "id": "current_bearer_mechanism",
+      "reference": "Installed arm64 BearerAuthSigner::sign_http_request, function 0x100d6553c, request header insertion at 0x100d65760; UnifiedBearerResolver::resolve_identity at 0x1022679a4",
+      "sha256": "2118bd89d96830a4f0e0884e4f4071fb94e4b6036c757126afe9e3f80c9d90c6",
+      "finding": "The installed runtime contains a bearer signer that formats credential material and inserts a request header. The unified resolver handles multiple credential variants. These functions alone do not establish the GenerateAssistantResponse auth selection or the source branch for the selected IAM Identity Center token."
     }
   ]
 }
