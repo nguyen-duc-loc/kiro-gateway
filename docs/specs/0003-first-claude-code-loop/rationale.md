@@ -478,3 +478,9 @@ The prepared correction discards additional top level members only inside recogn
 The synthetic six case sequence now includes metadata extensions before text and tool events. Wire extension counts are separate from the generic fixture tool parser's strict state, preventing an ignored metadata member from poisoning a later tool event. Tests cover extension redaction, continued text and tools, metadata only input, malformed or negative usage, unknown nested usage, duplicate members, and unknown text fields. The test server initially waited for cancellation without consuming its request body; that fixture was corrected to validate and consume the body before waiting. This was a local test cleanup issue, not a live failure.
 
 The proposed plan digest is `4ad27507d9c8e63592c67dc41dbcd23afb034405d171a79a2b4a2bfd0de5aba3`. Outbound request bodies, headers, model, credentials, and budgets are unchanged. This prepares a narrowly scoped compatibility policy rather than another guessed field name. No further live run occurred.
+
+## Metadata compatibility launch stopped on a changed session
+
+You approved one launch at `542947fe3fd1e49b8c13abce0bc084174d35ef0d`, digest `4ad27507d9c8e63592c67dc41dbcd23afb034405d171a79a2b4a2bfd0de5aba3`. It stopped with `session_changed` before selecting a destination or sending a request. The allowed record is in `verify.md`. The result establishes only that the selected token bytes differ from the saved reference, not an upstream denial, logged out state, or cause of the change.
+
+No decoder change is indicated by this source result. The next setup step is explicit relinking of the current saved fixed session and restoration of the exact Opus mapping. Existing link semantics still clear mappings when token bytes change. No additional sign in is indicated solely by this result. Another bounded run needs approval after that setup; the harness did not renew, relink, or replay automatically.

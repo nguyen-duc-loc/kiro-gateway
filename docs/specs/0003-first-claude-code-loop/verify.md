@@ -483,6 +483,28 @@ The diagnostic locates a string extension in the top level of a metadata event. 
 
 The prepared correction ignores only additional top level `metadataEvent` members while retaining their fixed diagnostics and validating known usage. Its rationale and regression boundaries are recorded in `rationale.md`; plan SHA 256 is `4ad27507d9c8e63592c67dc41dbcd23afb034405d171a79a2b4a2bfd0de5aba3`. It has no live result yet and needs a new exact review.
 
+## Approved metadata compatibility launch stopped before dispatch, October 1, 2026
+
+You approved one run at clean commit `542947fe3fd1e49b8c13abce0bc084174d35ef0d`, with plan SHA 256 `4ad27507d9c8e63592c67dc41dbcd23afb034405d171a79a2b4a2bfd0de5aba3`. Both matched before launch.
+
+| Run metadata | Observed value |
+|---|---|
+| Local run ID | `53b2a383-1cb9-4af3-beae-944a481ec289` |
+| Started | `2026-10-01T14:05:04.452795Z` |
+| Platform and baseline | `darwin/arm64`, Claude Code `2.1.286`, Kiro CLI `2.8.0` |
+| Requested model | `claude-opus-5.5` |
+| Destination | Not selected |
+| Attempts | Zero |
+| First case | `text`: `inconclusive`, cause `session_changed`, stage `source` |
+| Remaining cases | Five unrun |
+| Received bytes and events | Zero |
+| Request and protocol assertions | Unknown |
+| Cleanup | Completed |
+| Verdict and elapsed time | `needs_evidence`, 1 millisecond |
+| Peak reservation | 3735552 bytes |
+
+The selected token record differed from the linked fingerprint. No inference request, remote rejection, renewal, relinking, mapping mutation, or retry occurred. No fingerprint or credential value was retained. This does not establish why the record changed or require another sign in by itself. The metadata acceptance correction remains untested remotely. Explicit relinking, restoration of the exact Opus mapping, and a new bounded launch approval are the next prerequisites. This launch consumed its approval.
+
 ## Later Claude Code acceptance gate
 
 After `/architect` completes the bridge design, the original scope still needs a real Claude Code `2.1.285` session against the gateway using the recorded available Sonnet model. Claude Code must read and fix a disposable Go bug, execute its file and shell tools under normal permissions, return results, finish a follow up user turn, and demonstrate cancellation and incomplete stream handling. Record Kiro CLI `2.8.0`, the actual access path, and every instruction or model control difference. None of that is claimed by this feasibility checklist.

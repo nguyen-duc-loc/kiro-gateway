@@ -95,6 +95,12 @@ JSON checks, and resource limits remain strict. Diagnostics remain bounded and
 values remain private. This policy has passed synthetic verification but still
 needs a live review.
 
+The approved launch at `542947f` stopped with `session_changed` before any
+dispatch. The fixed saved token record no longer matched the linked reference.
+The metadata correction remains untested remotely. Explicitly relink the current
+saved session and restore the exact Opus mapping before another approved run;
+this source result alone does not call for signing in again.
+
 You can run the synthetic harness with:
 
 ```sh
