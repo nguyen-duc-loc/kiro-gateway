@@ -1,6 +1,6 @@
 # Verify: First loop protocol feasibility, spec 0003
 
-All six live cases remain unrun. This file contains the verification plan and the preflight launch record below; it does not claim independent verification passed. The full Claude Code coding loop remains a later gate in the same scope feature.
+No live inference case has dispatched a request. This file contains the verification plan and the launch records below, including the local source failure; it does not claim independent verification passed. The full Claude Code coding loop remains a later gate in the same scope feature.
 
 The accepted profile amendment adds AC-9 and the profile cases below. Its local implementation is complete. Builder checks cover synthetic profile and wire cases; independent verification and live compatibility remain pending. The limited experiment amendment permits explicit user context instructions and tentative EOF continuation only.
 
@@ -39,6 +39,7 @@ The accepted profile amendment adds AC-9 and the profile cases below. Its local 
 | Scenario | Expected evidence | Criteria |
 |---|---|---|
 | Synthetic `auth_kv` token and `state` profile with the two exact keys | One connection and one read transaction return the pinned token and exact `arn` member; no other rows or settings are read | AC-2, AC-9 |
+| Profile value column is declared BLOB but stores bounded text JSON | Accept the same fixed record; actual BLOB storage, generated columns, and token schema changes still fail | AC-2, AC-8, AC-9 |
 | Token region differs from profile ARN region | The profile's fourth ARN component selects the matching synthetic plan destination; token region and start URL do not affect routing | AC-9 |
 | Either supported profile region | Its corresponding finite plan entry is selected; absent entry or a host outside that plan stops before dispatch | AC-1, AC-9 |
 | Missing, duplicate, nontext, oversize, invalid UTF 8, ambiguous JSON, absent or wrong case `arn` | Fixed `profile_invalid` failure, no value in output, and size checked before allocation | AC-6, AC-8, AC-9 |
@@ -120,6 +121,35 @@ The existing read only `config check` command then reported `No saved configurat
 The next proposed action is local setup followed by one separately approved bounded run. Create the existing versioned gateway configuration, capture the current fixed IAM Identity Center token reference through `account link`, and save exactly `models["claude-sonnet-5"] = "claude-sonnet-5"` while holding the stable configuration lock. Keep token bytes in Kiro's store; save only the existing session reference and fingerprint. Preserve the default listener, validate the resulting configuration, and release the lock before launch. No sign in, renewal, profile discovery, or model listing is part of this setup.
 
 This setup is outside the inference harness and requires explicit approval because the two launch approvals covered use of an existing selection, not creating one. It does not change the plan bytes or the inference request budget. Once approved, setup failure stops before inference. Any subsequent launch must use its freshly reviewed clean commit and the unchanged plan digest above. Neither of the completed launch approvals is reused automatically.
+
+## Setup completed and profile source rejected, October 1, 2026
+
+You approved local initialization, linking the current fixed Kiro CLI IAM Identity Center session, saving the exact Sonnet mapping, and one subsequent bounded run. `config init` and `account link` completed successfully. A temporary local helper used the existing configuration store's exclusive lock and atomic save to set `models["claude-sonnet-5"] = "claude-sonnet-5"`, preserving the saved reference. It reloaded and validated the result without printing account data. The helper was removed before launch; `config check` passed and the reviewed checkout was clean.
+
+| Run metadata | Observed value |
+|---|---|
+| Reviewed commit | `468cda48fe2497f65841a1319a68238d996dc6da` |
+| Plan SHA 256 | `be490b8a73271fb6af757bcbdc448ad53374529a1c1b82f22184ae15647f7278` |
+| Local run ID | `8f55a6d3-2869-4840-a6a0-67faabb62272` |
+| Started | `2026-10-01T08:32:56.261269Z` |
+| Platform and versions | `darwin/arm64`, Claude Code `2.1.286`, Kiro CLI `2.8.0` |
+| Requested model | `claude-sonnet-5` |
+| Destination | None selected |
+| Attempts and received bytes | Zero attempts, zero response bytes |
+| First case | `text`: `inconclusive`, `source_unavailable`, attempt zero, cleanup completed |
+| Remaining cases | `tool`, `result`, `followup`, `cancel`, and `interrupt`: `unrun` |
+| Verdict and elapsed time | `needs_evidence`, 1 millisecond in the run summary |
+| Peak reservation | 2621440 bytes, a local reservation count rather than process heap usage |
+
+The run stopped while obtaining the combined snapshot, before dispatch. No model acceptance, text, tool, usage, or completion assertion was established. The two approved experiment limitations remain in force. No second run followed this failure.
+
+### Local schema diagnosis and prepared correction
+
+A separate read only diagnostic inspected only `main.state` schema metadata and the fixed selected profile row's storage type and bounded size. It did not load token or profile contents, scan other account records, or contact a service. Fixed booleans established an ordinary table, a plain declared `TEXT` key as the sole primary key, and a plain declared `BLOB` value column. The selected profile exists once, has storage type `text`, and meets the existing size bound.
+
+The reader had required a declared `TEXT` value column and therefore rejected this source before reading profile bytes. A synthetic reproduction with `CREATE TABLE state(key TEXT PRIMARY KEY,value BLOB)` and invented text JSON failed before the correction. The prepared correction accepts declared `BLOB` only for that profile value column. Actual BLOB values, null, oversized text, generated columns, nontext keys, and the token table's BLOB declaration remain rejected. The existing text profile declaration also remains supported.
+
+The correction uses the same record, transaction, size checks, JSON validation, ARN policy, and digest. It does not modify Kiro's database or change the plan bytes. Synthetic regression and full repository checks cover the correction; a real combined read under the corrected code has not been attempted. A new review of the code commit is required before one further live run.
 
 ## Later Claude Code acceptance gate
 

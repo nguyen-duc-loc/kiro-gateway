@@ -47,7 +47,7 @@ func probeHome(t *testing.T) (string, *sql.DB) {
 	if _, err = db.Exec(`INSERT INTO auth_kv VALUES(?,?)`, "kirocli:odic:token", probeSyntheticRecord); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = db.Exec(`CREATE TABLE state(key TEXT PRIMARY KEY,value TEXT)`); err != nil {
+	if _, err = db.Exec(`CREATE TABLE state(key TEXT PRIMARY KEY,value BLOB)`); err != nil {
 		t.Fatal(err)
 	}
 	if _, err = db.Exec(`INSERT INTO state VALUES(?,?)`, "api.codewhisperer.profile", probeSyntheticProfile); err != nil {

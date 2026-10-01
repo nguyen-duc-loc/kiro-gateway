@@ -133,3 +133,12 @@ that no saved gateway configuration exists. It made zero inference attempts and
 did not read Kiro credentials. Local initialization, linking, and the exact saved
 model mapping must be established before a newly approved launch. The harness
 does not perform those setup mutations itself.
+
+Local setup was then approved and completed. The following approved launch stopped
+with `source_unavailable` before any inference request. Metadata diagnosis found
+that Kiro declares `state.value` as BLOB while storing the selected profile as text.
+The prepared reader correction accepts that declaration for the profile value
+column only. It still requires bounded text storage and all existing source checks.
+Synthetic harness databases now exercise that declaration; actual BLOB values and
+changes to the token table remain rejected. The plan bytes are unchanged, but the
+new code commit needs review before another launch.

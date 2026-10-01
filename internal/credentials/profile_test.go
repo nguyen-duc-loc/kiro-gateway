@@ -165,7 +165,10 @@ func TestProfileSchema(t *testing.T) {
 		{"view", `CREATE VIEW state AS SELECT key,value FROM auth_kv`, ErrSource},
 		{"no primary", `CREATE TABLE state(key TEXT,value TEXT)`, ErrSource},
 		{"composite primary", `CREATE TABLE state(key TEXT,value TEXT,PRIMARY KEY(key,value))`, ErrSource},
-		{"wrong type", `CREATE TABLE state(key TEXT PRIMARY KEY,value BLOB)`, ErrSource},
+		{"blob declaration with text storage", `CREATE TABLE state(key TEXT PRIMARY KEY,value BLOB)`, nil},
+		{"wrong type", `CREATE TABLE state(key TEXT PRIMARY KEY,value INTEGER)`, ErrSource},
+		{"blob key", `CREATE TABLE state(key BLOB PRIMARY KEY,value BLOB)`, ErrSource},
+		{"generated blob value", `CREATE TABLE state(key TEXT PRIMARY KEY,value BLOB GENERATED ALWAYS AS ('x'))`, ErrSource},
 		{"generated value", `CREATE TABLE state(key TEXT PRIMARY KEY,value TEXT GENERATED ALWAYS AS ('x'))`, ErrSource},
 		{"generated key", `CREATE TABLE state(id TEXT PRIMARY KEY,key TEXT GENERATED ALWAYS AS ('x'),value TEXT)`, ErrSource},
 		{"additive", `CREATE TABLE state(key TEXT PRIMARY KEY,value TEXT,unused INTEGER)`, nil},
@@ -194,6 +197,46 @@ func TestProfileSchema(t *testing.T) {
 			}
 			if _, err := r.ReadSnapshot(t.Context(), ref); err != nil {
 				t.Errorf("ReadSnapshot(%s profile table) error=%v, want nil", tc.name, err)
+			}
+		})
+	}
+}
+
+// Kiro declares state.value as BLOB while binding the profile JSON as TEXT.
+// The declaration must not bypass validation of the actual selected value.
+func TestProfileBlobDeclarationPreservesValueChecks(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		value any
+		want  error
+	}{
+		{name: "text JSON", value: profileRecord},
+		{name: "binary JSON", value: []byte(profileRecord), want: ErrProfileInvalid},
+		{name: "oversized text", value: profileRecord + strings.Repeat(" ", config.MaxBytes), want: ErrProfileInvalid},
+		{name: "null", value: nil, want: ErrProfileInvalid},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			r, db, ref := profileFixture(t, "delete")
+			if _, err := db.Exec(`DROP TABLE state; CREATE TABLE state(key TEXT PRIMARY KEY,value BLOB)`); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := db.Exec(`INSERT INTO state VALUES(?,?)`, selectedProfileKey, tc.value); err != nil {
+				t.Fatal(err)
+			}
+			valueRead := false
+			r.afterProfileMetadata = func() { valueRead = true }
+			got, err := r.ReadProfileSnapshot(t.Context(), ref)
+			if !errors.Is(err, tc.want) {
+				t.Errorf("ReadProfileSnapshot(BLOB declaration, %s) error=%v, want %v", tc.name, err, tc.want)
+			}
+			if tc.want != nil && (valueRead || got != (ProfileSnapshot{})) {
+				t.Error("invalid profile reached value read or returned material")
+			}
+			if tc.want == nil {
+				wantDigest := sha256.Sum256(append([]byte("kiro-gateway/probe-profile-v1\x00"), []byte(profileRecord)...))
+				if !valueRead || got.ProfileDigest() != wantDigest || got.Credential().AccessToken() != "synthetic-access-secret" {
+					t.Error("text profile in BLOB declaration lost exact snapshot fields")
+				}
 			}
 		})
 	}

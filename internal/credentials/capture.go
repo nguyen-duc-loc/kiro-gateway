@@ -248,7 +248,12 @@ func checkSchema(ctx context.Context, tx *sql.Tx, profile bool) error {
 			primary++
 		}
 		if name == "key" || name == "value" {
-			if hidden != 0 || strings.ToUpper(strings.TrimSpace(declared)) != "TEXT" {
+			typ := strings.ToUpper(strings.TrimSpace(declared))
+			// Kiro's profile table declares value as BLOB but stores JSON as TEXT.
+			// Only that declaration is additional; readValue still rejects BLOB
+			// storage before reading bytes. The token table remains TEXT only.
+			allowedType := typ == "TEXT" || profile && name == "value" && typ == "BLOB"
+			if hidden != 0 || !allowedType {
 				return ErrSource
 			}
 			if name == "key" {
