@@ -69,21 +69,22 @@ type snapshotReader interface {
 // protocolProbe owns one locked configuration and one sequential run. Offline
 // factories restrict it to loopback; the tagged live factory supplies a fixed dialer.
 type protocolProbe struct {
-	ctx           context.Context
-	cancel        context.CancelFunc
-	store         *configstore.Store
-	reference     config.Session
-	reader        snapshotReader
-	endpoint      *url.URL
-	destinations  map[string]*url.URL
-	profileDigest [sha256.Size]byte
-	profilePinned bool
-	roots         *x509.CertPool
-	limits        probeLimits
-	attempts      int
-	stopped       bool
-	wire          bool
-	dial          func(context.Context, string) (net.Conn, error)
+	ctx               context.Context
+	cancel            context.CancelFunc
+	store             *configstore.Store
+	reference         config.Session
+	reader            snapshotReader
+	endpoint          *url.URL
+	destinations      map[string]*url.URL
+	profileDigest     [sha256.Size]byte
+	profilePinned     bool
+	roots             *x509.CertPool
+	limits            probeLimits
+	attempts          int
+	stopped           bool
+	wire              bool
+	clientFingerprint string
+	dial              func(context.Context, string) (net.Conn, error)
 }
 
 func openOfflineProbe(parent context.Context, home, endpoint string, roots *x509.CertPool, limits probeLimits) (*protocolProbe, error) {
@@ -266,9 +267,17 @@ func (p *protocolProbe) exchangeBuilt(build func(credentials.ProfileSnapshot) (s
 	req.Header.Set("Authorization", "Bearer "+snapshot.AccessToken())
 	req.Header.Set("Content-Type", "application/json")
 	if p.wire {
-		req.Header.Set("Content-Type", wireContentType)
-		req.Header.Set("X-Amz-Target", wireTarget)
-		req.Header.Set("Accept", "application/vnd.amazon.eventstream")
+		invocation, err := wireUUID()
+		if err != nil {
+			return fail(err)
+		}
+		headers, err := wireHeaders(p.clientFingerprint, invocation)
+		if err != nil {
+			return fail(err)
+		}
+		for name, values := range headers {
+			req.Header[name] = values
+		}
 	}
 	req.ContentLength = int64(len(body))
 	start := time.Now()

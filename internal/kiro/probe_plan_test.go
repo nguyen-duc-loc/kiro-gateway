@@ -51,6 +51,8 @@ type probePlan struct {
 	Destination        json.RawMessage   `json:"destination"`
 	RegionRule         json.RawMessage   `json:"region_rule"`
 	Authentication     json.RawMessage   `json:"authentication"`
+	ClientMetadata     json.RawMessage   `json:"client_metadata"`
+	ReferenceBaseline  json.RawMessage   `json:"reference_baseline"`
 	RequestSchema      json.RawMessage   `json:"request_schema"`
 	InstructionMapping json.RawMessage   `json:"instruction_mapping"`
 	Controls           json.RawMessage   `json:"controls"`

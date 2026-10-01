@@ -386,6 +386,24 @@ The run used commit `1860d2b65caff84e95f8de980cae2e4b400ece3b` and plan SHA 256 
 
 This demonstrates a denial at the reference path after the renewed fixed snapshot passed local validation. It does not establish successful remote authentication or native account equivalence. Header classification with zero body bytes is not evidence that the response body was empty. No raw header, body, account value, or credential was retained. No second request, automatic renewal, fallback, or native client launch occurred. The bounded run is complete and its authorization consumed.
 
+## Prepared complete reference request baseline, October 1, 2026
+
+Following the instruction to proceed with the complete reference comparison, the candidate now matches independently generated application header and body examples from reference commit `a5292ca04c7c6231e0b47673ac3f981f5a706e1e`. All inputs are synthetic and optional fake reasoning, truncation recovery additions, and trimming are disabled. The fixture and extraction boundary are documented in `rationale.md`.
+
+| Local evidence | Result |
+|---|---|
+| Six independent reference JSON bodies | Exact semantic matches |
+| Application headers and synthetic fingerprint | Exact matches, plus explicit Accept and identity encoding transport choices |
+| Tool schema sanitizer difference | Detected by reference fixture; corrected by omitting wire `additionalProperties` while preserving strict local arguments |
+| Local TLS sequence | Text, tool, result, followup, cancellation, and cutoff cases passed |
+| Metadata validation | Malformed fingerprints and invocation IDs rejected; fresh UUID v4 values validated |
+| Output guarantees | Controls requested false after dispatch; output within limit remains null; no metadata leakage in summaries |
+| Repository checks | Formatting, vet, build, and all race tests passed |
+| Live tag check | Compiled and skipped with `KIRO_GATEWAY_LIVE_PROBE=0` |
+| Real account access and inference during preparation | None |
+
+Prepared plan SHA 256: `fe17da293c0bfebf56410f824fa20cd0234012cc13ef116f3399d7c85f476b28`. Independent fixture SHA 256: `2867ae2429efc6cfdef8e2937ae0b6a2c56a29ae67b9c1563a4ea9e6170e6fcd`. No live acceptance result exists for this new request baseline. Prior denials concern materially different requests and cannot establish this candidate's result.
+
 ## Later Claude Code acceptance gate
 
 After `/architect` completes the bridge design, the original scope still needs a real Claude Code `2.1.285` session against the gateway using the recorded available Sonnet model. Claude Code must read and fix a disposable Go bug, execute its file and shell tools under normal permissions, return results, finish a follow up user turn, and demonstrate cancellation and incomplete stream handling. Record Kiro CLI `2.8.0`, the actual access path, and every instruction or model control difference. None of that is claimed by this feasibility checklist.

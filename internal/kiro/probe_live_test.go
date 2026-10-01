@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"os/user"
 	"runtime"
 	"syscall"
 	"testing"
@@ -50,6 +51,29 @@ func TestProtocolProbe(t *testing.T) {
 	if checkProbeBaseline(ctx, realProbeEnvironment(), realProbeCommand) != nil {
 		t.Fatal(errBaselineChanged)
 	}
+	// Device metadata is resolved only after explicit launch checks and is
+	// never included in the sanitized summary or error strings.
+	hostname, err := os.Hostname()
+	if err != nil || hostname == "" || len(hostname) > 1024 {
+		t.Fatal(errConfiguration)
+	}
+	username := ""
+	for _, name := range []string{"LOGNAME", "USER", "LNAME", "USERNAME"} {
+		if username = os.Getenv(name); username != "" {
+			break
+		}
+	}
+	if username == "" {
+		current, err := user.Current()
+		if err != nil {
+			t.Fatal(errConfiguration)
+		}
+		username = current.Username
+	}
+	if username == "" || len(username) > 1024 {
+		t.Fatal(errConfiguration)
+	}
+	clientFingerprint := wireClientFingerprint(hostname, username)
 	// Account access begins only after all launch checks pass.
 	home, err := os.UserHomeDir()
 	if err != nil {
@@ -79,6 +103,7 @@ func TestProtocolProbe(t *testing.T) {
 	}
 	defer p.close()
 	p.wire = true
+	p.clientFingerprint = clientFingerprint
 	p.dial = wireDial(net.DefaultResolver.LookupNetIP, (&net.Dialer{}).DialContext)
 	result := runWireCases(p, runID, probeMaxRetained)
 	destination := ""

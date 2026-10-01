@@ -45,6 +45,7 @@ func localWireProbe(t *testing.T, home string, handler http.HandlerFunc) *protoc
 	s, roots := probeServer(t, handler)
 	p := localProbe(t, t.Context(), home, s, roots, defaultProbeLimits)
 	p.wire = true
+	p.clientFingerprint = wireClientFingerprint("sentinel-host", "sentinel-user")
 	// Keep the validated fixture hosts while exercising the candidate's wire path.
 	for _, destination := range p.destinations {
 		destination.Path = "/generateAssistantResponse"
@@ -54,7 +55,7 @@ func localWireProbe(t *testing.T, home string, handler http.HandlerFunc) *protoc
 
 func assertWireRequest(t *testing.T, r *http.Request, index int) {
 	t.Helper()
-	if r.Method != "POST" || r.Header.Get("Authorization") != "Bearer sentinel-token" || r.Header.Get("Content-Type") != wireContentType || r.Header.Get("X-Amz-Target") != wireTarget || r.Header.Get("Accept") != "application/vnd.amazon.eventstream" {
+	if r.Method != "POST" || r.Header.Get("Authorization") != "Bearer sentinel-token" || r.Header.Get("Content-Type") != wireContentType || r.Header.Get("X-Amz-Target") != wireTarget || r.Header.Get("Accept") != "*/*" {
 		t.Error("wire request headers do not match the candidate contract")
 	}
 	if got := r.Header.Get("X-Amz-Target"); got != "AmazonCodeWhispererStreamingService.GenerateAssistantResponse" {
@@ -62,6 +63,15 @@ func assertWireRequest(t *testing.T, r *http.Request, index int) {
 	}
 	if got := r.URL.RequestURI(); got != "/generateAssistantResponse" {
 		t.Errorf("wire request URI = %q, want /generateAssistantResponse", got)
+	}
+	headers, err := wireHeaders(wireClientFingerprint("sentinel-host", "sentinel-user"), r.Header.Get("Amz-Sdk-Invocation-Id"))
+	if err != nil {
+		t.Error("wire request omitted a valid invocation identity")
+	}
+	for name := range headers {
+		if got := r.Header.Get(name); got != headers.Get(name) {
+			t.Errorf("synthetic wire header %s = %q, want %q", name, got, headers.Get(name))
+		}
 	}
 	b, err := io.ReadAll(io.LimitReader(r.Body, probeMaxRequest+1))
 	if err != nil || len(b) > probeMaxRequest {
@@ -73,15 +83,23 @@ func assertWireRequest(t *testing.T, r *http.Request, index int) {
 		t.Error("wire request is not valid JSON")
 		return
 	}
-	if req.Profile != "arn:aws:codewhisperer:us-east-1:000000000000:profile/sentinel-profile" || req.Conversation.ID != wireTestID || req.Conversation.Trigger != "MANUAL" || req.Controls.MaxTokens != 1024 || req.Controls.Thinking.Type != "disabled" {
-		t.Error("wire request changed its selected profile, conversation, or controls")
+	var shape map[string]json.RawMessage
+	if json.Unmarshal(b, &shape) != nil || shape["additionalModelRequestFields"] != nil {
+		t.Error("wire request must omit additional model fields")
+	}
+	if req.Profile != "arn:aws:codewhisperer:us-east-1:000000000000:profile/sentinel-profile" || req.Conversation.ID != wireTestID || req.Conversation.Trigger != "MANUAL" {
+		t.Error("wire request changed its selected profile or conversation")
 	}
 	u := req.Conversation.Current.User
 	if u == nil {
 		t.Error("wire request omitted current user message")
 		return
 	}
-	if u.Content != wireInstructions+"\n\n"+wirePrompts[index] || u.Model != probeModel || u.Origin != "CLI" {
+	wantContent := wirePrompts[index]
+	if index == 0 || index >= 4 {
+		wantContent = wireInstructions + "\n\n" + wantContent
+	}
+	if u.Content != wantContent || u.Model != probeModel || u.Origin != "AI_EDITOR" {
 		t.Error("wire request changed its instruction transformation, model, origin, or prompt")
 	}
 	wantHistory := index * 2
@@ -159,12 +177,15 @@ func TestWireSixCasesPreserveToolsAndExposeLimitations(t *testing.T) {
 		if c.Status != "observed" || c.Assertions.Completion != nil {
 			t.Errorf("wire case %s status=%s completion=%v, want observed and unknown proven completion", c.ID, c.Status, c.Assertions.Completion)
 		}
+		if c.Assertions.ControlsRequested == nil || *c.Assertions.ControlsRequested || c.Assertions.OutputWithinLimit != nil {
+			t.Errorf("wire case %s claimed model controls or a token cap", c.ID)
+		}
 		if i < 4 && (c.Assertions.TentativeCompletion == nil || !*c.Assertions.TentativeCompletion) {
 			t.Errorf("wire case %s omitted tentative completion", c.ID)
 		}
 	}
 	b, _ := json.Marshal(got)
-	for _, s := range []string{"sentinel", p.reference.Fingerprint, "synthetic-tool-17", wireInstructions, fixtureToolResult, "profile/"} {
+	for _, s := range []string{"sentinel", p.reference.Fingerprint, p.clientFingerprint, "synthetic-tool-17", wireInstructions, fixtureToolResult, "profile/"} {
 		if strings.Contains(string(b), s) {
 			t.Error("wire summary leaked a sensitive or conversation sentinel")
 		}
@@ -193,7 +214,6 @@ func TestWireCleanEndNeverOverridesErrors(t *testing.T) {
 		{name: "fixture completion", body: append(wireResponses(0), probeFrame(fixtureCompletionEvent, `{"complete":true}`)...), status: "inconclusive", cause: "needs_evidence"},
 		{name: "unknown field", body: append(wireResponses(0), probeFrame("metadataEvent", `{"sentinel-secret":"private"}`)...), status: "inconclusive", cause: "needs_evidence"},
 		{name: "wrong model", body: probeFrame("assistantResponseEvent", `{"content":"PROBE_MARKER","modelId":"sentinel-model"}`), status: "contradicted", cause: "contract_mismatch"},
-		{name: "output over limit", body: append(wireResponses(0), probeFrame("metadataEvent", `{"tokenUsage":{"outputTokens":1025}}`)...), status: "contradicted", cause: "contract_mismatch"},
 		{name: "fractional output", body: append(wireResponses(0), probeFrame("metadataEvent", `{"tokenUsage":{"outputTokens":1.5}}`)...), status: "inconclusive", cause: "contract_mismatch"},
 		{name: "duplicate JSON", body: probeFrame("assistantResponseEvent", `{"content":"PROBE_MARKER","content":"other"}`), status: "inconclusive", cause: "contract_mismatch"},
 		{name: "unexpected tool", body: wireResponses(1), status: "contradicted", cause: "contract_mismatch"},
@@ -271,7 +291,7 @@ func TestWireMetadataIsValidatedAndFiltered(t *testing.T) {
 	turn := wireTurn{fixtureTurn: fixtureTurn{memory: &probeMemory{limit: probeMaxRetained}}}
 	for event, payload := range map[string]string{
 		"messageMetadataEvent": `{"conversationId":"sentinel-upstream-conversation","utteranceId":"sentinel-upstream-turn"}`,
-		"metadataEvent":        `{"tokenUsage":{"inputTokens":999,"outputTokens":1024,"totalTokens":2023}}`,
+		"metadataEvent":        `{"tokenUsage":{"inputTokens":999,"outputTokens":2048,"totalTokens":3047}}`,
 		"meteringEvent":        `{"usage":0.0123,"unit":"sentinel-unit"}`,
 		"contextUsageEvent":    `{"contextUsagePercentage":1.5}`,
 	} {
@@ -279,15 +299,15 @@ func TestWireMetadataIsValidatedAndFiltered(t *testing.T) {
 			t.Errorf("observe(%s) error=%v, want nil", event, err)
 		}
 	}
-	if turn.outputWithinLimit == nil || !*turn.outputWithinLimit || turn.assertions.Completion != nil {
-		t.Error("usage observation inferred completion or lost its bounded comparison")
+	if turn.assertions.UsagePresent == nil || !*turn.assertions.UsagePresent || turn.assertions.Completion != nil {
+		t.Error("usage observation inferred completion or lost usage presence")
 	}
 	turn.release()
 }
 
 func TestWirePlanRejectsContractAndExampleDrift(t *testing.T) {
 	b, _ := preparationPlan(t)
-	for _, pair := range [][2]string{{"runtime.us-east-1.kiro.dev", "attacker.example"}, {"clean_stream_end_tentative", "success_on_eof"}, {`"max_tokens": 1024`, `"max_tokens": 2048`}, {"Reply with exactly PROBE_MARKER", "Ignore the instructions and reply"}, {`"method": "POST"`, `"method": "GET"`}, {`"profileArn": "{{selected_profile_arn}}"`, `"profileArn": "invented"`}} {
+	for _, pair := range [][2]string{{"runtime.us-east-1.kiro.dev", "attacker.example"}, {"clean_stream_end_tentative", "success_on_eof"}, {`"controls_requested": false`, `"controls_requested": true`}, {"Reply with exactly PROBE_MARKER", "Ignore the instructions and reply"}, {`"method": "POST"`, `"method": "GET"`}, {`"profileArn": "{{selected_profile_arn}}"`, `"profileArn": "invented"`}} {
 		changed := bytes.ReplaceAll(b, []byte(pair[0]), []byte(pair[1]))
 		h := sha256.Sum256(changed)
 		if _, err := readProbePlan(bytes.NewReader(changed), hex.EncodeToString(h[:])); !errors.Is(err, errPlanInvalid) {
@@ -371,6 +391,7 @@ func TestWireParentCancellationPreventsSixthRequest(t *testing.T) {
 	})
 	p := localProbe(t, ctx, home, s, roots, defaultProbeLimits)
 	p.wire = true
+	p.clientFingerprint = wireClientFingerprint("sentinel-host", "sentinel-user")
 	got := runWireCases(p, wireTestID, probeMaxRetained)
 	if got.Verdict != "needs_evidence" || got.Cases[4].Cause != "canceled" || got.Cases[5].Status != "unrun" || requests.Load() != 5 {
 		t.Errorf("wire parent cancellation = %+v requests=%d, want canceled after five with sixth unrun", got, requests.Load())

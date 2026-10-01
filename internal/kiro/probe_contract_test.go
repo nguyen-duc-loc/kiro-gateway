@@ -9,21 +9,27 @@ import (
 // approval still belongs to the workflow, never to a status field in this file.
 func wirePlanParts() map[string]any {
 	return map[string]any{
-		"diagnostics":    probeDiagnosticPolicy(),
-		"destination":    map[string]any{"scheme": "https", "port": 443, "method": "POST", "path": "/generateAssistantResponse", "content_type": wireContentType, "target": wireTarget, "accept": "application/vnd.amazon.eventstream"},
+		"diagnostics":     probeDiagnosticPolicy(),
+		"destination":     map[string]any{"scheme": "https", "port": 443, "method": "POST", "path": "/generateAssistantResponse", "content_type": wireContentType, "target": wireTarget, "accept": "*/*"},
+		"client_metadata": wireHeaderPolicy(),
+		"reference_baseline": map[string]any{
+			"commit":         "a5292ca04c7c6231e0b47673ac3f981f5a706e1e",
+			"fake_reasoning": false, "truncation_recovery": false, "auto_trim_payload": false,
+			"differences": []string{"fixed OIDC snapshot and selected profile; no credential fallback or refresh", "no retries, redirects, proxies, or HTTP/2", "Accept-Encoding identity; no response decompression", "strict CRC, event schema, and local resource limits", "device metadata resolution errors stop instead of default fingerprint"},
+		},
 		"region_rule":    wireDestinations(),
 		"authentication": map[string]string{"header": "Authorization", "scheme": "Bearer", "token_source": "selected_snapshot.access_token", "profile_source": "selected_snapshot.profile_arn"},
 		"request_schema": map[string]any{
 			"conversation_id_source": "crypto/rand UUID v4, generated once per run",
-			"history":                "prior synthetic user messages and observed assistant text or validated tool calls, cases 1 through 4 only",
+			"history":                "prior synthetic turns, cases 1 through 4; omit empty history and historical tool definitions; preserve tool results; empty assistant content becomes (empty placeholder)",
 			"tool_result":            "fixed lookup for alpha, paired with the exact observed tool ID",
 			"examples":               "request_examples, with placeholders for the selected profile ARN, generated conversation ID, and observed tool ID",
 			"framing":                "amazon_eventstream_crc32",
 			"event_fields":           wireEventFields(), "usage_fields": wireUsageFields(),
 			"unknown_policy": "count_and_stop", "exception_policy": "stop_before_tentative_completion",
 		},
-		"instruction_mapping": map[string]string{"policy": wireInstructionPolicy, "prefix": wireInstructions, "separator": "\n\n", "field": "conversationState.currentMessage.userInputMessage.content", "label": "instructions_in_user_content"},
-		"controls":            map[string]any{"max_tokens": wireMaxTokens, "thinking_type": "disabled", "field": "additionalModelRequestFields", "observation": "metadataEvent.tokenUsage.outputTokens <= 1024 when present; absence is unknown"},
+		"instruction_mapping": map[string]string{"policy": wireInstructionPolicy, "prefix": wireInstructions, "separator": "\n\n", "field": "first user content of each independent conversation; retained once in history", "label": "instructions_in_user_content"},
+		"controls":            map[string]any{"policy": "omit_additional_model_fields", "controls_requested": false, "output_within_limit": nil, "observation": "validate usage when present without claiming an upstream token cap or disabled thinking"},
 		"limits":              map[string]int{"attempts": probeMaxAttempts, "run_seconds": 600, "request_seconds": 120, "idle_seconds": 30, "cleanup_seconds": 5, "request_bytes": probeMaxRequest, "header_bytes": probeMaxHeaders, "response_bytes": probeMaxResponse, "event_bytes": probeMaxEvent, "retained_bytes": probeMaxRetained, "cutoff_bytes": fixtureCutoff},
 		"observation_policy":  map[string]any{"raw_values": "never_output", "instruction_label": "instructions_in_user_content", "completion_label": wireCompletionPolicy, "assertions": []string{"incremental", "instruction_placement", "marker_match", "valid_arguments", "matching_tool_name", "matching_tool_id", "matching_model_identity", "usage_present", "observed_completion", "tentative_completion", "controls_requested", "output_within_limit", "reached_injection_trigger", "completed_cleanup"}},
 		"completion":          map[string]any{"policy": wireCompletionPolicy, "requires": []string{"HTTP 200", "valid EventStream content type", "CRC checked frames", "clean HTTP body EOF", "case assertions met", "no errors or unknown fields", "local cleanup completed"}, "observed_completion": nil, "best_verdict": "limited_candidate_observed"},
@@ -86,7 +92,7 @@ func (p probePlan) liveReadiness() error {
 		return errNeedsEvidence
 	}
 	parts := wirePlanParts()
-	for name, raw := range map[string]json.RawMessage{"destination": p.Destination, "region_rule": p.RegionRule, "authentication": p.Authentication, "request_schema": p.RequestSchema, "instruction_mapping": p.InstructionMapping, "controls": p.Controls, "completion": p.Completion, "limits": p.Limits, "observation_policy": p.ObservationPolicy, "diagnostics": p.Diagnostics} {
+	for name, raw := range map[string]json.RawMessage{"destination": p.Destination, "region_rule": p.RegionRule, "authentication": p.Authentication, "client_metadata": p.ClientMetadata, "reference_baseline": p.ReferenceBaseline, "request_schema": p.RequestSchema, "instruction_mapping": p.InstructionMapping, "controls": p.Controls, "completion": p.Completion, "limits": p.Limits, "observation_policy": p.ObservationPolicy, "diagnostics": p.Diagnostics} {
 		if !samePlanValue(raw, parts[name]) {
 			return errPlanInvalid
 		}

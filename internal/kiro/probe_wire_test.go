@@ -19,8 +19,7 @@ const (
 	wireCompletionPolicy  = "clean_stream_end_tentative"
 	wireInstructions      = "Synthetic experiment instructions: follow the current request exactly. Use only the offered probe_lookup tool when requested."
 	wireToolDescription   = "Return the fixed value for key alpha."
-	wireToolSchema        = `{"type":"object","properties":{"key":{"type":"string","enum":["alpha"]}},"required":["key"],"additionalProperties":false}`
-	wireMaxTokens         = 1024
+	wireToolSchema        = `{"type":"object","properties":{"key":{"type":"string","enum":["alpha"]}},"required":["key"]}`
 )
 
 var wirePrompts = [6]string{
@@ -79,20 +78,18 @@ type wireRequest struct {
 	Conversation struct {
 		ID      string        `json:"conversationId"`
 		Trigger string        `json:"chatTriggerType"`
-		History []wireMessage `json:"history"`
+		History []wireMessage `json:"history,omitempty"`
 		Current wireMessage   `json:"currentMessage"`
 	} `json:"conversationState"`
-	Profile  string `json:"profileArn"`
-	Controls struct {
-		MaxTokens int `json:"max_tokens"`
-		Thinking  struct {
-			Type string `json:"type"`
-		} `json:"thinking"`
-	} `json:"additionalModelRequestFields"`
+	Profile string `json:"profileArn"`
 }
 
 func wireCurrent(index int, toolID string) wireMessage {
-	u := &wireUser{Content: wireInstructions + "\n\n" + wirePrompts[index], Model: probeModel, Origin: "CLI"}
+	content := wirePrompts[index]
+	if index == 0 || index >= 4 {
+		content = wireInstructions + "\n\n" + content
+	}
+	u := &wireUser{Content: content, Model: probeModel, Origin: "AI_EDITOR"}
 	if index >= 1 && index <= 3 {
 		spec := wireToolSpecification{Name: fixtureTool, Description: wireToolDescription}
 		spec.InputSchema.JSON = json.RawMessage(wireToolSchema)
@@ -139,14 +136,26 @@ func wireBody(index int, history []wireMessage, toolID, conversationID, profileA
 	}
 	var req wireRequest
 	req.Conversation.ID, req.Conversation.Trigger = conversationID, "MANUAL"
-	req.Conversation.History = history
-	if history == nil {
-		req.Conversation.History = []wireMessage{}
+	// The reference carries tools only in the current message. Copy before
+	// normalizing so retained turn state and observed tool results remain intact.
+	for _, message := range history {
+		if message.User != nil {
+			u := *message.User
+			u.Context = nil
+			if message.User.Context != nil && len(message.User.Context.Results) != 0 {
+				u.Context = &wireUserContext{Results: message.User.Context.Results}
+			}
+			message.User = &u
+		}
+		if message.Assistant != nil && message.Assistant.Content == "" {
+			a := *message.Assistant
+			a.Content = "(empty placeholder)"
+			message.Assistant = &a
+		}
+		req.Conversation.History = append(req.Conversation.History, message)
 	}
 	req.Conversation.Current = current
 	req.Profile = profileARN
-	req.Controls.MaxTokens = wireMaxTokens
-	req.Controls.Thinking.Type = "disabled"
 	b, err := json.Marshal(req)
 	if err != nil || len(b) > probeMaxRequest {
 		return "", wireMessage{}, errBudget
@@ -212,8 +221,7 @@ func wireKnown(name string, names []string) bool {
 
 type wireTurn struct {
 	fixtureTurn
-	textEvents        int
-	outputWithinLimit *bool
+	textEvents int
 }
 
 func wireString(raw json.RawMessage) (string, error) {
@@ -302,10 +310,6 @@ func (s *wireTurn) observe(event string, payload []byte) error {
 			if name == "outputTokens" {
 				if n != math.Trunc(n) {
 					return errContract
-				}
-				s.outputWithinLimit = probeBool(n <= wireMaxTokens)
-				if n > wireMaxTokens {
-					return errContradicted
 				}
 			}
 		}
@@ -473,14 +477,13 @@ func runWireCases(p *protocolProbe, conversationID string, memoryLimit int64) (o
 		c.TextEvents, c.ToolEvents = turn.textEvents, result.ToolEvents
 		if p.attempts > before {
 			c.Attempt = p.attempts
-			c.Assertions.ControlsRequested = probeBool(true)
+			c.Assertions.ControlsRequested = probeBool(false)
 			c.Assertions.InstructionPlacement = probeBool(true)
 		}
 		c.Assertions.probeCaseAssertions = turn.assertions
 		if c.Attempt != 0 {
 			c.Assertions.InstructionPlacement = probeBool(true)
 		}
-		c.Assertions.OutputWithinLimit = turn.outputWithinLimit
 		c.Assertions.CleanupCompleted = result.CleanupCompleted
 		if err == nil && (result.CleanupCompleted == nil || !*result.CleanupCompleted) {
 			err = errTimedOut

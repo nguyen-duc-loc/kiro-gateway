@@ -1,0 +1,301 @@
+{
+  "reference_commit": "a5292ca04c7c6231e0b47673ac3f981f5a706e1e",
+  "synthetic_hostname": "sentinel-host",
+  "synthetic_username": "sentinel-user",
+  "synthetic_fingerprint": "f93116a856a4be9512da3c16825fb99d82c4f0c5ad12aa6d1c20a7725e20a99f",
+  "header_examples": {
+    "Authorization": "Bearer sentinel-token",
+    "Content-Type": "application/x-amz-json-1.0",
+    "x-amz-target": "AmazonCodeWhispererStreamingService.GenerateAssistantResponse",
+    "User-Agent": "aws-sdk-js/1.0.27 ua/2.1 os/win32#10.0.19044 lang/js md/nodejs#22.21.1 api/codewhispererstreaming#1.0.27 m/E KiroIDE-0.7.45-f93116a856a4be9512da3c16825fb99d82c4f0c5ad12aa6d1c20a7725e20a99f",
+    "x-amz-user-agent": "aws-sdk-js/1.0.27 KiroIDE-0.7.45-f93116a856a4be9512da3c16825fb99d82c4f0c5ad12aa6d1c20a7725e20a99f",
+    "x-amzn-codewhisperer-optout": "true",
+    "x-amzn-kiro-agent-mode": "vibe",
+    "amz-sdk-invocation-id": "00000000-0000-4000-8000-000000000001",
+    "amz-sdk-request": "attempt=1; max=3"
+  },
+  "request_examples": [
+    {
+      "conversationState": {
+        "chatTriggerType": "MANUAL",
+        "conversationId": "{{conversation_id}}",
+        "currentMessage": {
+          "userInputMessage": {
+            "content": "Synthetic experiment instructions: follow the current request exactly. Use only the offered probe_lookup tool when requested.\n\nReply with exactly PROBE_MARKER and no other text.",
+            "modelId": "claude-opus-5.5",
+            "origin": "AI_EDITOR"
+          }
+        }
+      },
+      "profileArn": "{{selected_profile_arn}}"
+    },
+    {
+      "conversationState": {
+        "chatTriggerType": "MANUAL",
+        "conversationId": "{{conversation_id}}",
+        "currentMessage": {
+          "userInputMessage": {
+            "content": "Call probe_lookup with key alpha. Do not answer instead of calling the tool.",
+            "modelId": "claude-opus-5.5",
+            "origin": "AI_EDITOR",
+            "userInputMessageContext": {
+              "tools": [
+                {
+                  "toolSpecification": {
+                    "name": "probe_lookup",
+                    "description": "Return the fixed value for key alpha.",
+                    "inputSchema": {
+                      "json": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string",
+                            "enum": [
+                              "alpha"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "key"
+                        ]
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "history": [
+          {
+            "userInputMessage": {
+              "content": "Synthetic experiment instructions: follow the current request exactly. Use only the offered probe_lookup tool when requested.\n\nReply with exactly PROBE_MARKER and no other text.",
+              "modelId": "claude-opus-5.5",
+              "origin": "AI_EDITOR"
+            }
+          },
+          {
+            "assistantResponseMessage": {
+              "content": "PROBE_MARKER"
+            }
+          }
+        ]
+      },
+      "profileArn": "{{selected_profile_arn}}"
+    },
+    {
+      "conversationState": {
+        "chatTriggerType": "MANUAL",
+        "conversationId": "{{conversation_id}}",
+        "currentMessage": {
+          "userInputMessage": {
+            "content": "Reply with exactly the value returned by probe_lookup and no other text.",
+            "modelId": "claude-opus-5.5",
+            "origin": "AI_EDITOR",
+            "userInputMessageContext": {
+              "tools": [
+                {
+                  "toolSpecification": {
+                    "name": "probe_lookup",
+                    "description": "Return the fixed value for key alpha.",
+                    "inputSchema": {
+                      "json": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string",
+                            "enum": [
+                              "alpha"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "key"
+                        ]
+                      }
+                    }
+                  }
+                }
+              ],
+              "toolResults": [
+                {
+                  "content": [
+                    {
+                      "text": "probe-value-alpha"
+                    }
+                  ],
+                  "status": "success",
+                  "toolUseId": "{{observed_tool_id}}"
+                }
+              ]
+            }
+          }
+        },
+        "history": [
+          {
+            "userInputMessage": {
+              "content": "Synthetic experiment instructions: follow the current request exactly. Use only the offered probe_lookup tool when requested.\n\nReply with exactly PROBE_MARKER and no other text.",
+              "modelId": "claude-opus-5.5",
+              "origin": "AI_EDITOR"
+            }
+          },
+          {
+            "assistantResponseMessage": {
+              "content": "PROBE_MARKER"
+            }
+          },
+          {
+            "userInputMessage": {
+              "content": "Call probe_lookup with key alpha. Do not answer instead of calling the tool.",
+              "modelId": "claude-opus-5.5",
+              "origin": "AI_EDITOR"
+            }
+          },
+          {
+            "assistantResponseMessage": {
+              "content": "(empty placeholder)",
+              "toolUses": [
+                {
+                  "name": "probe_lookup",
+                  "input": {
+                    "key": "alpha"
+                  },
+                  "toolUseId": "{{observed_tool_id}}"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "profileArn": "{{selected_profile_arn}}"
+    },
+    {
+      "conversationState": {
+        "chatTriggerType": "MANUAL",
+        "conversationId": "{{conversation_id}}",
+        "currentMessage": {
+          "userInputMessage": {
+            "content": "Using the prior conversation and tool exchange, reply with exactly probe-followup and no other text.",
+            "modelId": "claude-opus-5.5",
+            "origin": "AI_EDITOR",
+            "userInputMessageContext": {
+              "tools": [
+                {
+                  "toolSpecification": {
+                    "name": "probe_lookup",
+                    "description": "Return the fixed value for key alpha.",
+                    "inputSchema": {
+                      "json": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string",
+                            "enum": [
+                              "alpha"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "key"
+                        ]
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "history": [
+          {
+            "userInputMessage": {
+              "content": "Synthetic experiment instructions: follow the current request exactly. Use only the offered probe_lookup tool when requested.\n\nReply with exactly PROBE_MARKER and no other text.",
+              "modelId": "claude-opus-5.5",
+              "origin": "AI_EDITOR"
+            }
+          },
+          {
+            "assistantResponseMessage": {
+              "content": "PROBE_MARKER"
+            }
+          },
+          {
+            "userInputMessage": {
+              "content": "Call probe_lookup with key alpha. Do not answer instead of calling the tool.",
+              "modelId": "claude-opus-5.5",
+              "origin": "AI_EDITOR"
+            }
+          },
+          {
+            "assistantResponseMessage": {
+              "content": "(empty placeholder)",
+              "toolUses": [
+                {
+                  "name": "probe_lookup",
+                  "input": {
+                    "key": "alpha"
+                  },
+                  "toolUseId": "{{observed_tool_id}}"
+                }
+              ]
+            }
+          },
+          {
+            "userInputMessage": {
+              "content": "Reply with exactly the value returned by probe_lookup and no other text.",
+              "modelId": "claude-opus-5.5",
+              "origin": "AI_EDITOR",
+              "userInputMessageContext": {
+                "toolResults": [
+                  {
+                    "content": [
+                      {
+                        "text": "probe-value-alpha"
+                      }
+                    ],
+                    "status": "success",
+                    "toolUseId": "{{observed_tool_id}}"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "assistantResponseMessage": {
+              "content": "probe-value-alpha"
+            }
+          }
+        ]
+      },
+      "profileArn": "{{selected_profile_arn}}"
+    },
+    {
+      "conversationState": {
+        "chatTriggerType": "MANUAL",
+        "conversationId": "{{conversation_id}}",
+        "currentMessage": {
+          "userInputMessage": {
+            "content": "Synthetic experiment instructions: follow the current request exactly. Use only the offered probe_lookup tool when requested.\n\nWrite a long sequence of numbered synthetic words, one word per line.",
+            "modelId": "claude-opus-5.5",
+            "origin": "AI_EDITOR"
+          }
+        }
+      },
+      "profileArn": "{{selected_profile_arn}}"
+    },
+    {
+      "conversationState": {
+        "chatTriggerType": "MANUAL",
+        "conversationId": "{{conversation_id}}",
+        "currentMessage": {
+          "userInputMessage": {
+            "content": "Synthetic experiment instructions: follow the current request exactly. Use only the offered probe_lookup tool when requested.\n\nWrite a long sequence of numbered synthetic words, one word per line.",
+            "modelId": "claude-opus-5.5",
+            "origin": "AI_EDITOR"
+          }
+        }
+      },
+      "profileArn": "{{selected_profile_arn}}"
+    }
+  ]
+}

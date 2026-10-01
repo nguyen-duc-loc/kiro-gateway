@@ -34,15 +34,19 @@ The prepared reference comparison uses these fixed destinations:
 Each request is POST with `application/x-amz-json-1.0` and
 `X-Amz-Target: AmazonCodeWhispererStreamingService.GenerateAssistantResponse`.
 Bearer authentication and `profileArn` come from the same fresh combined snapshot.
-The request carries `max_tokens: 1024` and `thinking.type: disabled` through
-`additionalModelRequestFields`. Optional output usage is validated and reduced to
-a boolean comparison with the requested limit. Missing usage stays unknown.
+The prepared reference baseline omits `additionalModelRequestFields`, so it
+requests no token cap or thinking control. `controls_requested` is false after
+dispatch and `output_within_limit` stays null. Local byte and time limits remain.
+It uses `AI_EDITOR`, prepends instructions once per conversation, omits empty
+history and historical tool definitions, and normalizes empty assistant history.
+Local tool argument validation remains strict even though the reference sanitizer
+omits `additionalProperties` from the wire schema.
 The path and header pair comes from `jwadow/kiro-gateway` at commit
 `a5292ca04c7c6231e0b47673ac3f981f5a706e1e`, inspected as source only.
 Earlier root path requests using either operation target were denied. This
 operation path also returned HTTP 403 after session renewal and relinking. The reference
-project's refresh, retries, credential fallback, and identity headers are not
-part of this candidate. See the spec rationale for evidence and limitations.
+project's refresh, retries, and credential fallback are not part of this
+candidate. The new prepared baseline includes its application identity headers. See the spec rationale for evidence and limitations.
 
 The approved launch at `a9fc79db09457461e9d97eea311c3b7634a17dea`
 stopped with `credential_expired` before dispatch. After the operator reported
@@ -63,8 +67,8 @@ were unrun; no retry or automatic refresh followed.
 No model supplied command is executed. Cases stop at the first unexpected failure
 and never trigger corrective requests. Unknown events or fields, stream errors,
 malformed frames, duplicate JSON members, incomplete tools, and wrong identifiers
-cannot become tentative completion. A request for disabled thinking that produces
-a reasoning event stops as inconclusive. The old synthetic fixture decoder remains
+cannot become tentative completion. Reasoning is not explicitly disabled; an
+unsupported reasoning event stops as inconclusive. The old synthetic fixture decoder remains
 separate; its invented `probeFixtureComplete` event is rejected by the wire decoder.
 
 ## Local checks
@@ -79,6 +83,20 @@ It uses temporary homes, synthetic SQLite records, and local TLS servers.
 `probe_wire_checks_test.go` exercises the concrete request and response path,
 including the complete tool exchange, tentative completion, error precedence,
 plan drift, profile drift, DNS restrictions, output filtering, and budgets.
+
+`probe_reference_checks_test.go` compares all six JSON bodies and application
+headers with `testdata/reference-requests.json`, generated independently by the
+pinned reference's converter and header builder using synthetic inputs. Optional
+fake reasoning, truncation recovery additions, and payload trimming are disabled
+in that baseline. Fixture generation is not part of ordinary tests.
+
+The prepared metadata policy includes the reference's IDE compatibility user
+agent strings, opt out true, agent mode `vibe`, and SDK metadata. A SHA 256 digest
+of hostname and username supplies its client fingerprint; a fresh random UUID v4
+identifies each request. These are resolved only after live launch gates and are
+never logged. The fixed `attempt=1; max=3` header does not enable retries. The
+reviewed transport differences remain explicit: identity encoding, strict TLS
+and framing, fixed source selection, local limits, and no refresh or replay.
 The earlier fixture checks still exercise deadlines, cancellation, locking,
 source consistency, framing bounds, and malformed tool arguments.
 
