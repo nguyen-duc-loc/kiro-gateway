@@ -260,3 +260,11 @@ The original sanitized category combined transport failure and non 200 HTTP stat
 You approved the diagnostic plan at `b2490a92125e147b53a2eb6615ce17d952c61eea` with digest `137a0c1d0999e5700cec06a998d860ba151d844eaecd6ec27d4a7cf9efe0496b`. The run stopped at the source stage with `credential_expired`, before selecting a destination or dispatching any request. Its allowed summary is recorded in `verify.md`. This is an expected source boundary, not a new protocol finding or evidence that the earlier dispatch failed for the same reason.
 
 No code change is indicated by this result. The next prerequisite is operator renewal through Kiro CLI's IAM Identity Center flow, then explicit relinking and restoration of the exact model mapping. Automatic renewal and relinking remain outside the harness. No further live run occurred.
+
+## Renewed session reached HTTP 403
+
+After you reported successful IAM Identity Center sign in, the gateway explicitly relinked the renewed snapshot and restored the exact Sonnet mapping. You approved one diagnostic run at `b07b0d6add6dcf85c74d66357853d00271696b35`, with digest `137a0c1d0999e5700cec06a998d860ba151d844eaecd6ec27d4a7cf9efe0496b`. It passed local source validation and received HTTP 403 from the reviewed US runtime path. The first case was inconclusive and five dependent cases were unrun. The allowed summary is recorded in `verify.md`.
+
+This resolves the diagnostic ambiguity for this attempt only: the HTTP client received a denial, rather than failing before a response. It does not establish which service restriction failed, whether the selected profile is authorized for the token, whether the requested model is accessible, or whether an additional operation detail is required. No error body or raw headers were retained. A sign in succeeding and a locally valid token cannot establish remote authorization for this operation.
+
+The recommendation is to investigate the authorization contract using new evidence before another request. Do not repeat the same candidate, change accounts or models, or try another endpoint automatically. The feasibility milestone records `needs_evidence`; the full bridge design remains pending. No further inference run occurred.

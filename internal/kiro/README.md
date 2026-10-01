@@ -158,3 +158,10 @@ Renew the IAM Identity Center session through the normal Kiro CLI flow before
 further live work, then explicitly relink and restore the exact model mapping.
 The harness does not renew or relink automatically. A new launch still requires
 its own exact review. This expiry does not explain the earlier dispatch failure.
+
+After renewed sign in and explicit gateway relinking, the approved diagnostic run
+received HTTP 403 Forbidden from the reviewed US runtime path on its first request.
+Local source validation passed, but remote authorization and model acceptance
+remain unproven. Five dependent cases were unrun. No raw error body or headers
+were retained, and no retry occurred. The current disposition is `needs_evidence`;
+further authorization evidence should precede another inference proposal.

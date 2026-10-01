@@ -1,6 +1,6 @@
 # Verify: First loop protocol feasibility, spec 0003
 
-One dispatch attempt has occurred, with no decoded response events and an inconclusive result. This file contains the verification plan and the launch records below; it does not claim independent verification passed. The full Claude Code coding loop remains a later gate in the same scope feature.
+Two separately approved dispatch attempts have occurred, with no decoded response events. The latest received HTTP 403 Forbidden and remains inconclusive. This file contains the verification plan and the launch records below; it does not claim independent verification passed. The full Claude Code coding loop remains a later gate in the same scope feature.
 
 The accepted profile amendment adds AC-9 and the profile cases below. Its local implementation is complete. Builder checks cover synthetic profile and wire cases; independent verification and live compatibility remain pending. The limited experiment amendment permits explicit user context instructions and tentative EOF continuation only.
 
@@ -200,6 +200,38 @@ You approved one diagnostic launch at clean commit `b2490a92125e147b53a2eb6615ce
 The source reader rejected the expired credential before destination selection and dispatch. No renewal, sign in, fallback, relink, corrective request, or second launch followed. This result does not identify the earlier dispatch failure or establish model compatibility. No expiry timestamp, token, fingerprint, account value, or raw source error was retained.
 
 The operator must renew the IAM Identity Center session through the normal Kiro CLI flow before further live work. The gateway must then explicitly link the current snapshot and restore the exact Sonnet mapping, because changed credential bytes produce a new reference and relinking clears mappings. This remediation is separate from inference; the harness does not perform it automatically. A further launch still needs its own reviewed clean commit and plan digest after the session is ready.
+
+## Renewed session diagnostic run returned forbidden, October 1, 2026
+
+You reported a completed IAM Identity Center sign in. The gateway explicitly relinked the renewed fixed token snapshot and restored `claude-sonnet-5` to the same exact target under the configuration lock. Configuration validation passed. Claude Code and Kiro CLI still matched the diagnostic baseline. No source fingerprint, token, or account metadata was printed or retained in this record.
+
+You then approved one run at clean commit `b07b0d6add6dcf85c74d66357853d00271696b35`, with plan SHA 256 `137a0c1d0999e5700cec06a998d860ba151d844eaecd6ec27d4a7cf9efe0496b`.
+
+| Run metadata | Observed value |
+|---|---|
+| Local run ID | `9b1ca2ad-2e28-425f-9199-802a6edc896c` |
+| Started | `2026-10-01T09:10:41.388901Z` |
+| Platform and baseline | `darwin/arm64`, Claude Code `2.1.286`, Kiro CLI `2.8.0` |
+| Requested model | `claude-sonnet-5` |
+| Selected destination | `https://runtime.us-east-1.kiro.dev:443/` |
+| Attempts | One dispatch attempt |
+| First case | `text`: `inconclusive`, cause `needs_evidence`, failure stage `http_status`, HTTP status category `forbidden`, attempt one |
+| Transport diagnostic | Absent; the HTTP client returned a response rather than a transport error |
+| Remaining cases | `tool`, `result`, `followup`, `cancel`, and `interrupt`: `unrun` |
+| Response observations | Zero counted stream bytes and zero decoded events; the error response body was not read |
+| Local request assertions | Instruction placement and controls requested true; no assertion of service acceptance |
+| Model, usage, and completion | Unknown |
+| Cleanup | Completed |
+| Verdict and elapsed time | `needs_evidence`, 902 milliseconds |
+| Peak reservation | 2621440 bytes |
+
+The fixed `forbidden` category maps only to HTTP 403. The combined source read, local expiry check, profile selection, and TLS verified request path passed far enough to receive that response. This establishes a service denial for this candidate request, not successful authentication, model access, or inference compatibility. The response could originate from the service or its front end; the retained observations do not identify which authorization check failed.
+
+No error body, raw headers, upstream request ID, or raw error text was retained. No retry, second request, model substitution, endpoint switch, renewal, or automatic relink followed. The prior dispatch attempt without these diagnostics cannot be assumed to have failed for the same reason.
+
+### Feasibility disposition
+
+The bounded feasibility build has produced an explicit unresolved outcome. The candidate is not supported, and a 403 alone does not contradict the instruction or tool protocol assertions, so the verdict remains `needs_evidence`, not `candidate_rejected`. Full Claude Code compatibility remains unproven. The next investigation should establish why the selected token, profile, model, and operation were denied before proposing another inference run. Repeating the same request without new evidence is not recommended. Independent GA verification and review remain pending.
 
 ## Later Claude Code acceptance gate
 
