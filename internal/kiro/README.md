@@ -44,6 +44,11 @@ prepared path has no live result and requires a new run review. The reference
 project's refresh, retries, credential fallback, and identity headers are not
 part of this candidate. See the spec rationale for evidence and limitations.
 
+The approved launch at `a9fc79db09457461e9d97eea311c3b7634a17dea`
+stopped with `credential_expired` before dispatch. Zero requests were sent, so
+the new path remains untested. Renew the Kiro session before explicit relinking,
+restoring the exact Opus mapping, and reviewing another bounded run.
+
 | Attempt | Assertion or trigger |
 |---|---|
 | 1 | Assemble `PROBE_MARKER` from at least two nonempty text events. |

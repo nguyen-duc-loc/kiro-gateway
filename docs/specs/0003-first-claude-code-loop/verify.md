@@ -336,6 +336,28 @@ The requested source review of `jwadow/kiro-gateway` is recorded in `rationale.m
 
 `scripts/check` passed formatting, vet, compilation, and all tests with the race detector. Existing six case tests assert the new request URI and operation header against local TLS servers. The destination checks reject root path, trailing slash, encoded path, query, and fragment variants. The tagged live entry point compiled and skipped with `KIRO_GATEWAY_LIVE_PROBE=0`. No reference application code, account access, refresh, or inference ran during preparation. This changed destination still needs one concrete live approval; the prior run's permission is consumed.
 
+## Approved reference path launch stopped on expiry, October 1, 2026
+
+You approved one bounded live run at clean commit `a9fc79db09457461e9d97eea311c3b7634a17dea` and plan SHA 256 `9c5f55aebe373d20ec46334faf97e0f380aceaf2bf673bd398373f99baf17b31`. Both matched before launch.
+
+| Run metadata | Observed value |
+|---|---|
+| Local run ID | `c1ebfb5d-4695-4885-b002-38f8be2b08be` |
+| Started | `2026-10-01T12:37:58.850424Z` |
+| Platform and baseline | `darwin/arm64`, Claude Code `2.1.286`, Kiro CLI `2.8.0` |
+| Requested model | `claude-opus-5.5` |
+| Destination | Not selected |
+| Attempts | Zero dispatch attempts |
+| First case | `text`: `inconclusive`, cause `credential_expired`, failure stage `source` |
+| Remaining cases | `tool`, `result`, `followup`, `cancel`, and `interrupt`: `unrun` |
+| Received bytes and events | Zero |
+| Request and protocol assertions | Unknown |
+| Cleanup | Completed |
+| Verdict and elapsed time | `needs_evidence`, 1 millisecond |
+| Peak reservation | 3735552 bytes |
+
+This is a local expiry result, not a denial from the new path. No inference request, renewal, relink, mapping change, or retry occurred. No credential value was retained. The candidate remains untested remotely; the operator must renew the Kiro session before explicit relinking and another approved run. This launch consumed its one run approval.
+
 ## Later Claude Code acceptance gate
 
 After `/architect` completes the bridge design, the original scope still needs a real Claude Code `2.1.285` session against the gateway using the recorded available Sonnet model. Claude Code must read and fix a disposable Go bug, execute its file and shell tools under normal permissions, return results, finish a follow up user turn, and demonstrate cancellation and incomplete stream handling. Record Kiro CLI `2.8.0`, the actual access path, and every instruction or model control difference. None of that is claimed by this feasibility checklist.
