@@ -1,6 +1,6 @@
 # Verify: First loop protocol feasibility, spec 0003
 
-Two separately approved dispatch attempts have occurred, with no decoded response events. The latest received HTTP 403 Forbidden and remains inconclusive. This file contains the verification plan and the launch records below; it does not claim independent verification passed. The full Claude Code coding loop remains a later gate in the same scope feature.
+Three separately approved dispatch attempts have occurred, with no decoded inference events. The latest received HTTP 403 and the recognized service error class `access_denied`; it remains inconclusive. This file contains the verification plan and the launch records below; it does not claim independent verification passed. The full Claude Code coding loop remains a later gate in the same scope feature.
 
 The accepted profile amendment adds AC-9 and the profile cases below. Its local implementation is complete. Builder checks cover synthetic profile and wire cases; independent verification and live compatibility remain pending. The limited experiment amendment permits explicit user context instructions and tentative EOF continuation only.
 
@@ -240,6 +240,36 @@ The authorization research and static addresses are recorded in `rationale.md`. 
 The next local candidate retains the same six requests, model, destinations, source rules, and stop conditions. It adds finite `service_error` and `error_response_format` observations from the protocol's named error discriminator, preferring the header and permitting a bounded JSON inspection only if the header is absent. Raw values, namespaces, suffixes, messages, and bodies remain unprinted and unpersisted. Unknown, duplicate, conflicting, malformed, oversized, or unreadable inputs yield fixed labels and never a success assertion or replay.
 
 Synthetic tests cover header precedence without a body read, decorated type names, unknown private sentinels, duplicate headers and JSON keys, conflicting discriminators, malformed values, non JSON responses, oversized bodies, read failures, and HTTP 403 with private message and account fields. The run remains inconclusive after one rejected request. All new data comes from invented fixtures. This candidate awaits review of its changed diagnostic policy before live use.
+
+## Bounded error classifier run returned access denied, October 1, 2026
+
+You approved one run at clean commit `3511f2a4aac847f8582ff49cfc88139de7600ea6`, with plan SHA 256 `1b53928cc89c8216a4e90ff1aff28144895806aa082c96e4723492e86ae0affb`, including the bounded error discriminator read.
+
+| Run metadata | Observed value |
+|---|---|
+| Local run ID | `a37d86e9-4020-470e-b42a-036487fad8ff` |
+| Started | `2026-10-01T09:40:49.131469Z` |
+| Platform and baseline | `darwin/arm64`, Claude Code `2.1.286`, Kiro CLI `2.8.0` |
+| Requested model | `claude-sonnet-5` |
+| Selected destination | `https://runtime.us-east-1.kiro.dev:443/` |
+| Attempts | One dispatch attempt |
+| First case | `text`: `inconclusive`, cause `needs_evidence`, failure stage `http_status`, HTTP status category `forbidden` |
+| Error observation | `service_error: access_denied`, `error_response_format: json` |
+| Received bytes | 119 error response bytes inspected in memory; zero decoded text or tool events |
+| Remaining cases | `tool`, `result`, `followup`, `cancel`, and `interrupt`: `unrun` |
+| Local request assertions | Instruction placement and controls requested true; these do not establish service acceptance |
+| Protocol assertions | Marker match, tool behavior, model identity, usage, and completion remain unknown |
+| Cleanup | Completed |
+| Verdict and elapsed time | `needs_evidence`, 983 milliseconds |
+| Peak reservation | 3735552 bytes |
+
+The error classifier recognized an allowlisted access denial discriminator in the bounded JSON response. The summary retains the class only and does not distinguish the two mapped access denial spellings. No raw body, discriminator decoration, message, header, request ID, or account value was printed or saved. The byte count supplies no evidence about the discarded message and must not be used to guess it.
+
+The result confirms an access denial response for the candidate request. It does not establish whether the failure concerns the token, profile, account entitlement, model, client restrictions, or another service rule. It does not retroactively classify earlier attempts. The run stopped without retry, fallback, or a second request, and does not establish inference compatibility.
+
+### Next evidence needed
+
+Do not repeat this unchanged request solely to obtain the same class again. A controlled comparison with the official client under the same account, selected profile, and model could help distinguish account access from a candidate request mismatch. Such a comparison would need its own concrete review: the official client may refresh credentials, read additional state, send telemetry, or retry, all outside this harness's current boundary. No official client inference, renewal, profile discovery, entitlement query, or further gateway run is authorized by this completed launch.
 
 ## Later Claude Code acceptance gate
 

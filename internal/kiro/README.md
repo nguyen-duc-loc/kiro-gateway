@@ -176,3 +176,11 @@ detect an oversized body. It emits only allowlisted classes and fixed fallback
 labels. No error message, account value, raw header, or body is saved or printed.
 This replaces the former policy of leaving every error body unread only after a
 new exact plan review. No live request was made during research or local tests.
+
+The approved bounded classifier run received HTTP 403 with `service_error:
+access_denied` from its first request. It inspected 119 JSON error response bytes
+in memory and retained only fixed labels. No raw message or account value was
+printed or saved. Five dependent cases remained unrun, and no retry occurred.
+The exact access rule is still unknown. Further authorization evidence or a
+separately reviewed native client comparison is needed before another candidate;
+the official client's account access and possible refresh are outside this run.

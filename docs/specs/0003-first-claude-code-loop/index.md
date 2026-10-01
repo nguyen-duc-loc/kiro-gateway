@@ -2,7 +2,7 @@
 
 **Date**: 2026-10-01
 **Status**: In Progress
-**Revision review**: On 2026-10-01 you accepted a limited feasibility experiment with instructions carried in user context and clean stream end treated only as tentative completion. This supersedes the strict preparation gate for this experiment only. The prior profile amendment remains accepted. The first approved launch stopped at baseline preflight with zero inference attempts. The approved replacement using Claude Code `2.1.286` passed baseline checks but stopped because saved gateway configuration was absent. The subsequently approved local setup succeeded. Its approved run stopped during profile schema validation with zero inference attempts. The profile declaration correction was then approved. The latest run passed source validation, consumed one dispatch attempt, and stopped inconclusively before any decoded response event. After an expiry stop, you renewed the session and the gateway explicitly relinked it. The latest approved diagnostic run received HTTP 403 on its first request and stopped. The feasibility result is `needs_evidence`; investigate the authorization contract before another reviewed launch. See `verify.md`.
+**Revision review**: On 2026-10-01 you accepted a limited feasibility experiment with instructions carried in user context and clean stream end treated only as tentative completion. This supersedes the strict preparation gate for this experiment only. The prior profile amendment remains accepted. The first approved launch stopped at baseline preflight with zero inference attempts. The approved replacement using Claude Code `2.1.286` passed baseline checks but stopped because saved gateway configuration was absent. The subsequently approved local setup succeeded. Its approved run stopped during profile schema validation with zero inference attempts. The profile declaration correction was then approved. The latest run passed source validation, consumed one dispatch attempt, and stopped inconclusively before any decoded response event. After an expiry stop, you renewed the session and the gateway explicitly relinked it. The latest approved bounded error classifier run received HTTP 403 and the recognized class `access_denied` on its first request, then stopped. The exact failed access rule remains unknown. The feasibility result is `needs_evidence`; obtain new authorization evidence or design a controlled native client comparison before another reviewed launch. See `verify.md`.
 
 ## Summary
 
@@ -84,9 +84,9 @@ The first dispatch run's fixed `needs_evidence` category could not distinguish `
 
 That approved revision did not read error response bodies. The prepared extension below changes only the bounded diagnostic read. A non 200 response stays inconclusive and stops the sequence; a diagnostic label never makes an assertion observed or authorizes a retry. Code validates the plan's exact label sets. The inference requests, source selection, role and completion limitations, and all existing budgets stay unchanged.
 
-### Prepared error discriminator diagnostic
+### Error discriminator diagnostic
 
-The authorization investigation identified named error discriminator sources in the installed decoder and the AWS JSON protocol. The next candidate keeps outbound requests unchanged and adds only `service_error` and `error_response_format` labels on non 200 responses. It is prepared for review, not approved for a live run.
+The authorization investigation identified named error discriminator sources in the installed decoder and the AWS JSON protocol. The next candidate keeps outbound requests unchanged and adds only `service_error` and `error_response_format` labels on non 200 responses. You approved this diagnostic for the run at `3511f2a4aac847f8582ff49cfc88139de7600ea6`; that run returned `access_denied` and its authorization is consumed.
 
 Inspect `Content-Type` only to classify the response as `json`, `html`, `other`, `absent`, or `ambiguous`. Use exactly one `X-Amzn-Errortype` header of at most 256 visible ASCII bytes when present. Normalize the error type by removing the first colon and everything after it, then retaining the part after the first hash. Match only the finite input to output map in the plan. Empty, oversized, malformed, duplicate, or conflicting discriminators cannot produce a recognized label. An unrecognized spelling is `unknown`, never copied into output.
 
@@ -94,11 +94,13 @@ If that header is absent and content type is JSON (`application/json`, `applicat
 
 Known labels are `access_denied`, `missing_authentication_token`, `internal_server_error`, `service_quota_exceeded`, `throttling`, and `service_unavailable`, plus `absent`, `unknown`, `ambiguous`, `unparseable`, `oversized`, and `unavailable`. The exact type spellings and mapping are frozen in the plan. These are reported error classes, not proof of a particular missing permission or successful authentication. The result stays inconclusive and the sequence stops at the same non 200 response. No raw error message, body, header, namespace, or suffix is printed or saved.
 
-This proposal supersedes `never_read_or_output` only in a newly reviewed diagnostic plan. Its exact policy name is `bounded_json_error_type_only`. The previously completed runs and their unread error bodies are unchanged; they cannot be retroactively classified.
+This approved policy supersedes `never_read_or_output` for the bounded classifier plan. Its exact policy name is `bounded_json_error_type_only`. The previously completed runs and their unread error bodies are unchanged; they cannot be retroactively classified.
 
 ### Current live disposition
 
-The approved renewed session run at `b07b0d6add6dcf85c74d66357853d00271696b35` received HTTP 403 from the reviewed US runtime path on its first dispatch attempt. Local source validation passed, but authentication, profile authorization, model access, and protocol compatibility were not established. The remaining five cases were unrun. Error bodies were intentionally unread, so the exact reason for denial is unknown. The verdict is `needs_evidence`. The next architecture investigation must use new authorization evidence before proposing a changed candidate; no automatic retry, endpoint fallback, model change, or account switch is allowed.
+The latest approved run at `3511f2a4aac847f8582ff49cfc88139de7600ea6` received HTTP 403 and `service_error: access_denied` from the reviewed US runtime path on its first request. Local source validation passed, but remote authentication, profile authorization, model access, and inference compatibility were not established. Five dependent cases were unrun. The bounded classifier retained only the error class; the exact reason remains unknown. The verdict is `needs_evidence`.
+
+Further work needs new authorization evidence or a separately reviewed controlled native client comparison before proposing another candidate. The official client's account access, potential renewal, telemetry, and retries are not covered by this harness approval. No automatic retry, endpoint fallback, model change, account switch, or native client launch is allowed.
 
 ### Data model and lifetime
 
