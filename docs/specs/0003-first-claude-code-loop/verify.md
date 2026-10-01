@@ -434,6 +434,30 @@ The static metering schema review and prepared optional `unitPlural` decoder cor
 
 The corrected decoder passed formatting, vet, build, all race tests, and the complete local TLS sequence with synthetic plural unit metadata. The live tagged entry point compiled and skipped with its gate disabled. No additional account access or live request occurred during the correction.
 
+## Approved metering decoder run still stopped, October 1, 2026
+
+You approved one bounded run at clean commit `906e14a351792bf691b57ffb5b95d769baad7146`, plan SHA 256 `7f251348b878c311b777b556bfccf4fef9913826046c3526c841c87f644e0678`.
+
+| Run metadata | Observed value |
+|---|---|
+| Local run ID | `cac31e82-a7c4-42a0-83ca-26547374e477` |
+| Started | `2026-10-01T13:26:18.991175Z` |
+| Platform and baseline | `darwin/arm64`, Claude Code `2.1.286`, Kiro CLI `2.8.0` |
+| Model and destination | `claude-opus-5.5`, `https://runtime.us-east-1.kiro.dev:443/generateAssistantResponse` |
+| Attempts and HTTP outcome | One attempt, HTTP 200 |
+| First case | `text`: `inconclusive`, `needs_evidence`, stage `stream` |
+| Received bytes and events | 380 bytes, two text events, zero tool events, zero unknown event names, one unknown field |
+| Remaining cases | Five unrun |
+| Local assertions | Instruction placement true; controls requested false |
+| Marker, incremental assertion, model, usage, completion, token limit | Unknown |
+| Cleanup | Completed |
+| Verdict and elapsed time | `needs_evidence`, 2377 milliseconds |
+| Peak reservation | 3808522 bytes |
+
+The added metering member did not resolve the unknown field stop. Neither the event containing that field nor its spelling was retained, and equal counts do not prove equal discarded contents. No later request, retry, refresh, raw response retention, or account mutation occurred. This run's approval is consumed.
+
+The prepared structural diagnostic and finite vocabulary are described in `rationale.md`. Its plan digest is `ffed93d9e9089568d095506f490e9924d5c96c683ad9a8e1eeb387af6d0d3ef5`. It preserves the request and stop behavior while adding bounded event, location, known name hint, and JSON kind labels. It awaits a new exact run review.
+
 ## Later Claude Code acceptance gate
 
 After `/architect` completes the bridge design, the original scope still needs a real Claude Code `2.1.285` session against the gateway using the recorded available Sonnet model. Claude Code must read and fix a disposable Go bug, execute its file and shell tools under normal permissions, return results, finish a follow up user turn, and demonstrate cancellation and incomplete stream handling. Record Kiro CLI `2.8.0`, the actual access path, and every instruction or model control difference. None of that is claimed by this feasibility checklist.

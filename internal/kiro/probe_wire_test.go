@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io"
 	"math"
+	"slices"
 	"strings"
 
 	"kiro-gateway/internal/credentials"
@@ -170,21 +171,22 @@ type wireAssertions struct {
 	OutputWithinLimit   *bool `json:"output_within_limit"`
 }
 type wireCaseResult struct {
-	ServiceError        string         `json:"service_error,omitempty"`
-	ErrorResponseFormat string         `json:"error_response_format,omitempty"`
-	FailureStage        string         `json:"failure_stage,omitempty"`
-	TransportFailure    string         `json:"transport_failure,omitempty"`
-	HTTPStatus          string         `json:"http_status_category,omitempty"`
-	ID                  string         `json:"case"`
-	Status              string         `json:"status"`
-	Cause               string         `json:"cause,omitempty"`
-	Attempt             int            `json:"attempt"`
-	ReceivedBytes       int64          `json:"received_bytes"`
-	TextEvents          int            `json:"text_events"`
-	ToolEvents          int            `json:"tool_events"`
-	UnknownEvents       int            `json:"unknown_event_count"`
-	UnknownFields       int            `json:"unknown_field_count"`
-	Assertions          wireAssertions `json:"assertions"`
+	UnknownFieldDetails []wireUnknownField `json:"unknown_field_details,omitempty"`
+	ServiceError        string             `json:"service_error,omitempty"`
+	ErrorResponseFormat string             `json:"error_response_format,omitempty"`
+	FailureStage        string             `json:"failure_stage,omitempty"`
+	TransportFailure    string             `json:"transport_failure,omitempty"`
+	HTTPStatus          string             `json:"http_status_category,omitempty"`
+	ID                  string             `json:"case"`
+	Status              string             `json:"status"`
+	Cause               string             `json:"cause,omitempty"`
+	Attempt             int                `json:"attempt"`
+	ReceivedBytes       int64              `json:"received_bytes"`
+	TextEvents          int                `json:"text_events"`
+	ToolEvents          int                `json:"tool_events"`
+	UnknownEvents       int                `json:"unknown_event_count"`
+	UnknownFields       int                `json:"unknown_field_count"`
+	Assertions          wireAssertions     `json:"assertions"`
 }
 type wireRunResult struct {
 	Cases                       [6]wireCaseResult `json:"cases"`
@@ -221,7 +223,8 @@ func wireKnown(name string, names []string) bool {
 
 type wireTurn struct {
 	fixtureTurn
-	textEvents int
+	textEvents     int
+	unknownDetails []wireUnknownField
 }
 
 func wireString(raw json.RawMessage) (string, error) {
@@ -248,9 +251,14 @@ func (s *wireTurn) observe(event string, payload []byte) error {
 	if err != nil {
 		return errContract
 	}
+	names := make([]string, 0, len(o))
 	for name := range o {
+		names = append(names, name)
+	}
+	slices.Sort(names)
+	for _, name := range names {
 		if !wireKnown(name, fields) {
-			s.unknownFields++
+			s.noteUnknownField(event, "event", name, o[name])
 		}
 	}
 	if s.unknownFields != 0 {
@@ -298,9 +306,15 @@ func (s *wireTurn) observe(event string, payload []byte) error {
 			return errContract
 		}
 		s.assertions.UsagePresent = probeBool(true)
-		for name, value := range usage {
+		names = names[:0]
+		for name := range usage {
+			names = append(names, name)
+		}
+		slices.Sort(names)
+		for _, name := range names {
+			value := usage[name]
 			if !wireKnown(name, wireUsageFields()) {
-				s.unknownFields++
+				s.noteUnknownField(event, "token_usage", name, value)
 				return errNeedsEvidence
 			}
 			n, err := wireNumber(value)
@@ -476,6 +490,7 @@ func runWireCases(p *protocolProbe, conversationID string, memoryLimit int64) (o
 			c.FailureStage = "stream"
 		}
 		c.ReceivedBytes, c.UnknownFields, c.UnknownEvents = result.ReceivedBytes, turn.unknownFields, result.UnknownEvents
+		c.UnknownFieldDetails = turn.unknownDetails
 		c.TextEvents, c.ToolEvents = turn.textEvents, result.ToolEvents
 		if p.attempts > before {
 			c.Attempt = p.attempts

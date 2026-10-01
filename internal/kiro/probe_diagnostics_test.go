@@ -178,15 +178,16 @@ func probeHTTPLabel(status int) string {
 
 func probeDiagnosticPolicy() map[string]any {
 	return map[string]any{
-		"failure_stages":         []string{"pre_dispatch", "source", "request_build", "transport", "http_status", "response_headers", "stream", "cleanup"},
-		"transport_failures":     []string{"dns", "connect", "destination_policy", "tls", "timeout", "other"},
-		"http_status_categories": []string{"ok", "bad_request", "unauthorized", "forbidden", "not_found", "throttled", "redirect", "server_error", "other"},
-		"error_body_policy":      "bounded_json_error_type_only",
-		"error_body_limit":       probeErrorBodyLimit,
-		"error_type_header":      "X-Amzn-Errortype",
-		"error_type_body_fields": []string{"code", "__type"},
-		"known_error_types":      probeServiceErrorTypes(),
-		"error_type_fallbacks":   []string{"absent", "unknown", "ambiguous", "unparseable", "oversized", "unavailable"},
-		"error_response_formats": []string{"json", "html", "other", "absent", "ambiguous"},
+		"unknown_field_diagnostics": wireUnknownPolicy(),
+		"failure_stages":            []string{"pre_dispatch", "source", "request_build", "transport", "http_status", "response_headers", "stream", "cleanup"},
+		"transport_failures":        []string{"dns", "connect", "destination_policy", "tls", "timeout", "other"},
+		"http_status_categories":    []string{"ok", "bad_request", "unauthorized", "forbidden", "not_found", "throttled", "redirect", "server_error", "other"},
+		"error_body_policy":         "bounded_json_error_type_only",
+		"error_body_limit":          probeErrorBodyLimit,
+		"error_type_header":         "X-Amzn-Errortype",
+		"error_type_body_fields":    []string{"code", "__type"},
+		"known_error_types":         probeServiceErrorTypes(),
+		"error_type_fallbacks":      []string{"absent", "unknown", "ambiguous", "unparseable", "oversized", "unavailable"},
+		"error_response_formats":    []string{"json", "html", "other", "absent", "ambiguous"},
 	}
 }

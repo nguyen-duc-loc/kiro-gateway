@@ -80,6 +80,13 @@ string `meteringEvent.unitPlural`; the prepared decoder validates and discards i
 This is a documented schema correction, not proof of the discarded field's name.
 The outbound request baseline remains unchanged and another live run needs review.
 
+The approved metering update at `906e14a` again returned HTTP 200 and two text
+events but stopped on one unknown field. The next prepared plan adds bounded
+structural diagnostics: recognized event, location, JSON kind, and a field hint
+only if it matches the fixed schema vocabulary. Unmatched names become `unlisted`;
+values never enter the summary. Unknown fields still stop the sequence. This
+diagnostic change is prepared for review, with no further live run yet.
+
 You can run the synthetic harness with:
 
 ```sh
