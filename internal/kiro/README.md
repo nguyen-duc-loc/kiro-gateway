@@ -108,6 +108,12 @@ reports a hint only from the inspected SDK stream event names, or `unlisted`.
 It does not accept new events or expose their payloads. The first four cases
 have positive live evidence; the two failure checks remain pending.
 
+The event diagnostic launch at `67ae516` stopped with `session_changed` before
+dispatch. Its plan is unchanged and still awaits a live result. The spec proposes
+authorizing the existing relink and exact Opus mapping restoration before each
+separately approved feasibility run, while continuing to reject changes during
+a run. This recurring setup permission has not yet been granted.
+
 You can run the synthetic harness with:
 
 ```sh

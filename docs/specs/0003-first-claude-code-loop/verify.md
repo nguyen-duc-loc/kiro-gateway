@@ -534,6 +534,27 @@ No retry, renewal, fallback, or sixth request followed. The first four protocol 
 
 The next prepared diagnostic reports only a finite unsupported event hint from the inspected SDK stream vocabulary or `unlisted`. It changes no request or acceptance behavior. Its plan SHA 256 is `a188bf63b275f919445cf5b7a01eef3b789027cd1d14b5f7d762441ff38f9a4f`; it awaits another exact run review.
 
+## Approved event diagnostic stopped on session change, October 1, 2026
+
+You approved one diagnostic run at clean commit `67ae516e305f18dae4fe68816a3123a0db710bba`, plan SHA 256 `a188bf63b275f919445cf5b7a01eef3b789027cd1d14b5f7d762441ff38f9a4f`.
+
+| Run metadata | Observed value |
+|---|---|
+| Local run ID | `3ae598e4-6b1f-4782-94ee-c6729a4749e9` |
+| Started | `2026-10-01T14:27:09.001676Z` |
+| Platform and baseline | `darwin/arm64`, Claude Code `2.1.286`, Kiro CLI `2.8.0` |
+| Requested model | `claude-opus-5.5` |
+| Destination and attempts | Not selected, zero attempts |
+| First case | `text`: `inconclusive`, `session_changed`, stage `source` |
+| Remaining cases | Five unrun |
+| Received bytes and events | Zero |
+| Request and protocol assertions | Unknown |
+| Cleanup | Completed |
+| Verdict and elapsed time | `needs_evidence`, 1 millisecond |
+| Peak reservation | 3735552 bytes |
+
+No request, renewal, relink, mapping change, or retry occurred. The event hint has not yet been exercised live, and the cause of the saved token record change is unknown. The previously observed text and tool roundtrip remain historical evidence; cancellation and interruption remain pending. This one run approval is consumed.
+
 ## Later Claude Code acceptance gate
 
 After `/architect` completes the bridge design, the original scope still needs a real Claude Code `2.1.285` session against the gateway using the recorded available Sonnet model. Claude Code must read and fix a disposable Go bug, execute its file and shell tools under normal permissions, return results, finish a follow up user turn, and demonstrate cancellation and incomplete stream handling. Record Kiro CLI `2.8.0`, the actual access path, and every instruction or model control difference. None of that is claimed by this feasibility checklist.
