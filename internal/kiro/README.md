@@ -151,3 +151,10 @@ The next prepared plan adds fixed failure stage, transport, and HTTP status
 categories. It does not read error bodies or emit raw errors, addresses, headers,
 or account data. Inference requests and limits remain unchanged. Its updated
 code and diagnostic policy need a new exact review before another live launch.
+
+The approved diagnostic run stopped at `failure_stage: source` with
+`credential_expired`, before selecting a destination or dispatching any request.
+Renew the IAM Identity Center session through the normal Kiro CLI flow before
+further live work, then explicitly relink and restore the exact model mapping.
+The harness does not renew or relink automatically. A new launch still requires
+its own exact review. This expiry does not explain the earlier dispatch failure.

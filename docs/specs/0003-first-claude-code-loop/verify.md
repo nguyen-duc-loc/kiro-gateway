@@ -179,6 +179,28 @@ The next candidate adds the finite diagnostic labels in the spec. Synthetic HTTP
 
 The diagnostic plan has a new digest because its allowed output policy changes. It requires a new exact code and plan review before a launch. The completed run above remains inconclusive; additional diagnostics cannot retroactively identify its failure.
 
+## Diagnostic run stopped on expiry, October 1, 2026
+
+You approved one diagnostic launch at clean commit `b2490a92125e147b53a2eb6615ce17d952c61eea`, with plan SHA 256 `137a0c1d0999e5700cec06a998d860ba151d844eaecd6ec27d4a7cf9efe0496b`.
+
+| Run metadata | Observed value |
+|---|---|
+| Local run ID | `ec074214-3df6-40b6-a1f7-2554470aefb0` |
+| Started | `2026-10-01T08:59:57.380217Z` |
+| Platform and baseline | `darwin/arm64`, Claude Code `2.1.286`, Kiro CLI `2.8.0` |
+| Requested model | `claude-sonnet-5` |
+| Destination | None selected |
+| Attempts and received bytes | Zero attempts, zero response bytes |
+| First case | `text`: `inconclusive`, failure stage `source`, cause `credential_expired`, attempt zero, cleanup completed |
+| Remaining cases | `tool`, `result`, `followup`, `cancel`, and `interrupt`: `unrun` |
+| Protocol and request assertions | Unknown; no inference request was constructed or dispatched |
+| Verdict and elapsed time | `needs_evidence`, 1 millisecond |
+| Peak reservation | 2621440 bytes |
+
+The source reader rejected the expired credential before destination selection and dispatch. No renewal, sign in, fallback, relink, corrective request, or second launch followed. This result does not identify the earlier dispatch failure or establish model compatibility. No expiry timestamp, token, fingerprint, account value, or raw source error was retained.
+
+The operator must renew the IAM Identity Center session through the normal Kiro CLI flow before further live work. The gateway must then explicitly link the current snapshot and restore the exact Sonnet mapping, because changed credential bytes produce a new reference and relinking clears mappings. This remediation is separate from inference; the harness does not perform it automatically. A further launch still needs its own reviewed clean commit and plan digest after the session is ready.
+
 ## Later Claude Code acceptance gate
 
 After `/architect` completes the bridge design, the original scope still needs a real Claude Code `2.1.285` session against the gateway using the recorded available Sonnet model. Claude Code must read and fix a disposable Go bug, execute its file and shell tools under normal permissions, return results, finish a follow up user turn, and demonstrate cancellation and incomplete stream handling. Record Kiro CLI `2.8.0`, the actual access path, and every instruction or model control difference. None of that is claimed by this feasibility checklist.

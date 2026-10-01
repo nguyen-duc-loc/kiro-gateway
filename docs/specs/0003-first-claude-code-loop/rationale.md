@@ -254,3 +254,9 @@ The proposed correction permits either `TEXT` or `BLOB` declarations for the pla
 You approved the corrected reader at `3323e609a9404f27549944b3b8965b43f10991d8` with plan digest `be490b8a73271fb6af757bcbdc448ad53374529a1c1b82f22184ae15647f7278`. The combined snapshot passed and selected the US runtime destination. One dispatch attempt stopped with `needs_evidence`, before any decoded response event. Its summary is retained in `verify.md`; no raw response or error was saved.
 
 The original sanitized category combined transport failure and non 200 HTTP status. This protected account data but omitted a safe distinction needed to localize the failure. The prepared correction emits only finite local stage, transport, and HTTP status labels. It leaves error bodies unread and preserves the existing stop and verdict rules. Raw error logging would expose unbounded upstream content and is not proposed. A fresh diagnostic run needs its own review because both code and allowed output policy changed. The prior attempt is not replayed automatically and its exact cause remains unknown.
+
+## Approved diagnostic launch stopped on credential expiry
+
+You approved the diagnostic plan at `b2490a92125e147b53a2eb6615ce17d952c61eea` with digest `137a0c1d0999e5700cec06a998d860ba151d844eaecd6ec27d4a7cf9efe0496b`. The run stopped at the source stage with `credential_expired`, before selecting a destination or dispatching any request. Its allowed summary is recorded in `verify.md`. This is an expected source boundary, not a new protocol finding or evidence that the earlier dispatch failed for the same reason.
+
+No code change is indicated by this result. The next prerequisite is operator renewal through Kiro CLI's IAM Identity Center flow, then explicit relinking and restoration of the exact model mapping. Automatic renewal and relinking remain outside the harness. No further live run occurred.

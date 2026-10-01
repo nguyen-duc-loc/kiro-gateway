@@ -2,7 +2,7 @@
 
 **Date**: 2026-10-01
 **Status**: In Progress
-**Revision review**: On 2026-10-01 you accepted a limited feasibility experiment with instructions carried in user context and clean stream end treated only as tentative completion. This supersedes the strict preparation gate for this experiment only. The prior profile amendment remains accepted. The first approved launch stopped at baseline preflight with zero inference attempts. The approved replacement using Claude Code `2.1.286` passed baseline checks but stopped because saved gateway configuration was absent. The subsequently approved local setup succeeded. Its approved run stopped during profile schema validation with zero inference attempts. The profile declaration correction was then approved. The latest run passed source validation, consumed one dispatch attempt, and stopped inconclusively before any decoded response event. A diagnostic refinement is prepared for the next exact review; see `verify.md`.
+**Revision review**: On 2026-10-01 you accepted a limited feasibility experiment with instructions carried in user context and clean stream end treated only as tentative completion. This supersedes the strict preparation gate for this experiment only. The prior profile amendment remains accepted. The first approved launch stopped at baseline preflight with zero inference attempts. The approved replacement using Claude Code `2.1.286` passed baseline checks but stopped because saved gateway configuration was absent. The subsequently approved local setup succeeded. Its approved run stopped during profile schema validation with zero inference attempts. The profile declaration correction was then approved. The latest run passed source validation, consumed one dispatch attempt, and stopped inconclusively before any decoded response event. The approved diagnostic launch then stopped at the source stage with `credential_expired`, before any dispatch. Operator session renewal and explicit relinking are required before another reviewed launch; see `verify.md`.
 
 ## Summary
 
@@ -76,9 +76,9 @@ The exact six prompts, synthetic example bodies, decoded field sets, resource li
 
 The output record adds only fixed transformation and completion labels, nullable booleans for tentative completion, controls requested, and output within the requested limit, plus local event counts. Numeric usage, upstream identifiers, prompts, arguments, results, and profile data never enter output. Keep the generic fixture runner's invented completion event isolated from this wire decoder.
 
-### Prepared diagnostic refinement
+### Diagnostic refinement
 
-The latest run's fixed `needs_evidence` category could not distinguish `http.Client.Do` failure from a non 200 response. The next reviewable plan adds three optional fixed labels per case: `failure_stage`, `transport_failure`, and `http_status_category`. This change is prepared locally and does not authorize another launch.
+The latest run's fixed `needs_evidence` category could not distinguish `http.Client.Do` failure from a non 200 response. The approved diagnostic plan adds three optional fixed labels per case: `failure_stage`, `transport_failure`, and `http_status_category`. You approved this change for the diagnostic launch at `b2490a92125e147b53a2eb6615ce17d952c61eea`; that launch stopped on credential expiry and does not authorize another run.
 
 `failure_stage` comes from the local execution branch: `pre_dispatch`, `source`, `request_build`, `transport`, `http_status`, `response_headers`, `stream`, or `cleanup`. `transport_failure` comes from fixed dial branches (`dns`, `connect`, `destination_policy`), a TLS handshake completion callback (`tls`), a timeout type check (`timeout`), or `other`. HTTP response codes map locally to `ok`, `bad_request`, `unauthorized`, `forbidden`, `not_found`, `throttled`, `redirect`, `server_error`, or `other`. No raw status text, IP addresses, certificates, header values, request errors, or response bodies enter these labels.
 
@@ -201,7 +201,7 @@ The harness emits only the following observation fields. Every variable label co
 | Measurements | Locally measured received bytes, retained bytes, argument bytes, event counts, request counts, and durations, checked against the experiment's resource bounds. Do not copy unvalidated numeric metadata from an upstream response. |
 | Assertions | Boolean or null results for marker match, instruction placement, distinct system role preservation, controls requested, output within limit, valid arguments, matching tool name and ID, matching model identity, usage presence, observed completion, tentative completion, reached injection trigger, and completed cleanup. Null means not established. Terminal and transformation labels must match the reviewed plan's finite list; otherwise record `unknown`. |
 | Outcome | The fixed case status, run verdict, and failure category defined in this spec. |
-| Prepared failure diagnostics | Only the three finite label sets defined in the diagnostic refinement above, derived from local execution branches, TLS completion, and the numeric HTTP status. Error response bodies remain unread. |
+| Failure diagnostics | Only the three finite label sets defined in the diagnostic refinement above, derived from local execution branches, TLS completion, and the numeric HTTP status. Error response bodies remain unread. |
 
 stdout may contain the run summary and these structured observations. stderr is limited to fixed progress and failure categories, case labels, attempt indices, and local durations. Do not use arbitrary response text, raw tool names or IDs, arguments, result contents, upstream request IDs, raw model strings, unknown field names, or raw errors in either stream. Usage presence and a validated comparison against the requested output limit can be recorded; token counts are not emitted.
 
