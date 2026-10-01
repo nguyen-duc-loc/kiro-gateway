@@ -71,7 +71,18 @@
       "normalizedTokenUsage"
     ],
     "unknown_policy": "count_ignore_metadata_event_extensions_otherwise_stop",
-    "exception_policy": "stop_before_tentative_completion"
+    "exception_policy": "stop_before_tentative_completion",
+    "failure_case_reasoning": {
+      "event": "reasoningContentEvent",
+      "cases": [
+        "cancel",
+        "interrupt"
+      ],
+      "payload": "bounded JSON object; duplicate keys rejected; values discarded",
+      "counter": "discarded_reasoning_events",
+      "trigger": "reasoning does not satisfy text cancellation; byte cutoff remains unchanged",
+      "history": "never retained or used for continuation; unsupported in cases 1 through 4"
+    }
   },
   "instruction_mapping": {
     "policy": "translate_into_user_context",
@@ -300,6 +311,12 @@
       "reference": "Installed @kiro/agent 0.3.234 dist/server/acp-server.js, ChatResponseStream schema lines 143794 to 143800 and corresponding identifier constants",
       "sha256": "233e4dec77cd538e35b691d1fd0e12ca64a7c90d720c4dbf6979f21b4c45482f",
       "finding": "The ten named stream members supply a finite diagnostic vocabulary for an unsupported event. Match one exact known name or emit unlisted, never the event payload or an unmatched name. Diagnostic membership does not enable the event or satisfy cancellation; the sequence still stops."
+    },
+    {
+      "id": "failure_case_reasoning",
+      "reference": "Approved diagnostic run 73507d2a-b5ef-42df-b3c3-086c97dd5e2a; installed @kiro/agent 0.3.234 ReasoningContentEvent schema lines 143445 to 143451",
+      "sha256": "233e4dec77cd538e35b691d1fd0e12ca64a7c90d720c4dbf6979f21b4c45482f",
+      "finding": "The cancellation request was blocked by the fixed reasoningContentEvent hint before text. In the two independent failure checks only, validate each bounded reasoning JSON object and discard values without history, text, completion, or cancellation assertions. Preserve byte cutoff semantics. Reasoning remains unsupported in the conversation and tool cases; no reasoning continuation policy is inferred."
     }
   ],
   "request_examples": [

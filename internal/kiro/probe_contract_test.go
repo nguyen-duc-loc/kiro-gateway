@@ -25,6 +25,7 @@ func wirePlanParts() map[string]any {
 			"tool_result":            "fixed lookup for alpha, paired with the exact observed tool ID",
 			"examples":               "request_examples, with placeholders for the selected profile ARN, generated conversation ID, and observed tool ID",
 			"framing":                "amazon_eventstream_crc32",
+			"failure_case_reasoning": map[string]any{"event": "reasoningContentEvent", "cases": []string{"cancel", "interrupt"}, "payload": "bounded JSON object; duplicate keys rejected; values discarded", "counter": "discarded_reasoning_events", "trigger": "reasoning does not satisfy text cancellation; byte cutoff remains unchanged", "history": "never retained or used for continuation; unsupported in cases 1 through 4"},
 			"event_fields":           wireEventFields(), "usage_fields": wireUsageFields(),
 			"unknown_policy": "count_ignore_metadata_event_extensions_otherwise_stop", "exception_policy": "stop_before_tentative_completion",
 		},

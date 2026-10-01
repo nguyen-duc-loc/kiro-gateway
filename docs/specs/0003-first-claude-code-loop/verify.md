@@ -555,6 +555,35 @@ You approved one diagnostic run at clean commit `67ae516e305f18dae4fe68816a3123a
 
 No request, renewal, relink, mapping change, or retry occurred. The event hint has not yet been exercised live, and the cause of the saved token record change is unknown. The previously observed text and tool roundtrip remain historical evidence; cancellation and interruption remain pending. This one run approval is consumed.
 
+## Approved setup and event diagnostic identified reasoning, October 1, 2026
+
+You approved recurring setup before each remaining separately approved feasibility run, plus one current diagnostic run. Relinking, exact Opus mapping restoration, and configuration validation succeeded. No agent driven renewal occurred. The temporary helper was removed and the working tree was clean before launch at `8dbeeae529a401747dbdb7e42558fa5355a51e15`, with plan SHA 256 `a188bf63b275f919445cf5b7a01eef3b789027cd1d14b5f7d762441ff38f9a4f`.
+
+| Run metadata | Observed value |
+|---|---|
+| Local run ID | `73507d2a-b5ef-42df-b3c3-086c97dd5e2a` |
+| Started | `2026-10-01T14:35:16.97726Z` |
+| Platform and baseline | `darwin/arm64`, Claude Code `2.1.286`, Kiro CLI `2.8.0` |
+| Model and destination | `claude-opus-5.5`, `https://runtime.us-east-1.kiro.dev:443/generateAssistantResponse` |
+| Attempts | Five, all HTTP 200 |
+| Verdict and elapsed time | `needs_evidence`, 16095 milliseconds |
+| Peak reservation | 3818172 bytes |
+
+| Case | Outcome | Allowed observations |
+|---|---|---|
+| Text | `observed` | 695 bytes, two text events, incremental and marker true |
+| Tool | `observed` | 1177 bytes, four tool events, arguments and tool name and ID true |
+| Result | `observed` | 578 bytes, one text event, marker true |
+| Followup | `observed` | 576 bytes, one text event, marker true |
+| Cancellation | `inconclusive`, `needs_evidence`, stage `stream` | 119 bytes, no text or tool events, one unknown event, hint `reasoningContentEvent`, trigger false |
+| Interruption | `unrun` | No dispatch |
+
+The first four cases again counted one unlisted string metadata extension each and completed tentative EOF and cleanup assertions. Instruction placement was true and controls requested false for all dispatched cases. Model identity, usage, authoritative completion, and token limit remained unknown. Cleanup completed for cancellation after the unsupported event stop, but the planned cancellation itself was not observed. No payload, reasoning, account value, device fingerprint, raw tool argument, or identifier was retained.
+
+The run consumed its approval and did not retry. Standing permission for the existing pre-run relink and exact Opus mapping restoration remains in force for separately approved remaining feasibility tests.
+
+The prepared correction discards bounded reasoning objects only in the independent failure cases, preserving the text trigger and byte cutoff. Local regression and race checks passed and the tagged live entry point compiled and skipped while disabled. Its plan SHA 256 is `21d76d39ca83de75df9dbefcbeae8e43c016e856a1ebc3bab9b83c47936cf4f6`; the correction has not run live yet.
+
 ## Later Claude Code acceptance gate
 
 After `/architect` completes the bridge design, the original scope still needs a real Claude Code `2.1.285` session against the gateway using the recorded available Sonnet model. Claude Code must read and fix a disposable Go bug, execute its file and shell tools under normal permissions, return results, finish a follow up user turn, and demonstrate cancellation and incomplete stream handling. Record Kiro CLI `2.8.0`, the actual access path, and every instruction or model control difference. None of that is claimed by this feasibility checklist.

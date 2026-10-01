@@ -68,7 +68,8 @@ No model supplied command is executed. Cases stop at the first unexpected failur
 and never trigger corrective requests. Unknown events or semantic fields, stream errors,
 malformed frames, duplicate JSON members, incomplete tools, and wrong identifiers
 cannot become tentative completion. Reasoning is not explicitly disabled; an
-unsupported reasoning event stops as inconclusive. The old synthetic fixture decoder remains
+unsupported reasoning event stops as inconclusive outside the independent
+failure checks described below. The old synthetic fixture decoder remains
 separate; its invented `probeFixtureComplete` event is rejected by the wire decoder.
 
 ## Local checks
@@ -112,7 +113,9 @@ The event diagnostic launch at `67ae516` stopped with `session_changed` before
 dispatch. Its plan is unchanged and still awaits a live result. The spec proposes
 authorizing the existing relink and exact Opus mapping restoration before each
 separately approved feasibility run, while continuing to reject changes during
-a run. This recurring setup permission has not yet been granted.
+a run. The operator subsequently approved this setup before each separately approved
+remaining feasibility run; it does not authorize renewal, replay, or changes
+to the linked reference during a run.
 
 You can run the synthetic harness with:
 
@@ -280,3 +283,10 @@ one request with `KiroRuntimeService.GenerateAssistantResponse` again received
 HTTP 403 with `access_denied`. Five cases were unrun. The run stopped without
 retry or account changes. The target change alone was insufficient; native token
 and profile selection remain unresolved. Full deterministic checks passed.
+
+The diagnostic at `8dbeeae` again observed the first four cases and identified
+`reasoningContentEvent` before the cancellation text trigger. The prepared
+correction discards bounded reasoning objects only in the two independent
+failure checks. It records an event count, retains no values or history, and
+keeps cancellation tied to nonempty text. Reasoning remains unsupported in
+normal conversation and tool cases. The byte cutoff and all other limits remain.

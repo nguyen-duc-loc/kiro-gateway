@@ -131,7 +131,7 @@ func TestWireMetadataExtensionsCannotHideInvalidUsageOrMakeText(t *testing.T) {
 
 func TestWireUnsupportedCancellationEventHasOnlyFiniteHint(t *testing.T) {
 	for _, tc := range []struct{ name, event, want string }{
-		{name: "known schema", event: "reasoningContentEvent", want: "reasoningContentEvent"},
+		{name: "known schema", event: "codeReferenceEvent", want: "codeReferenceEvent"},
 		{name: "unlisted schema", event: "sentinel-private-event", want: "unlisted"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

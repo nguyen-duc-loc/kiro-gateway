@@ -171,23 +171,24 @@ type wireAssertions struct {
 	OutputWithinLimit   *bool `json:"output_within_limit"`
 }
 type wireCaseResult struct {
-	UnsupportedEventHint string             `json:"unsupported_event_hint,omitempty"`
-	UnknownFieldDetails  []wireUnknownField `json:"unknown_field_details,omitempty"`
-	ServiceError         string             `json:"service_error,omitempty"`
-	ErrorResponseFormat  string             `json:"error_response_format,omitempty"`
-	FailureStage         string             `json:"failure_stage,omitempty"`
-	TransportFailure     string             `json:"transport_failure,omitempty"`
-	HTTPStatus           string             `json:"http_status_category,omitempty"`
-	ID                   string             `json:"case"`
-	Status               string             `json:"status"`
-	Cause                string             `json:"cause,omitempty"`
-	Attempt              int                `json:"attempt"`
-	ReceivedBytes        int64              `json:"received_bytes"`
-	TextEvents           int                `json:"text_events"`
-	ToolEvents           int                `json:"tool_events"`
-	UnknownEvents        int                `json:"unknown_event_count"`
-	UnknownFields        int                `json:"unknown_field_count"`
-	Assertions           wireAssertions     `json:"assertions"`
+	DiscardedReasoningEvents int                `json:"discarded_reasoning_events,omitempty"`
+	UnsupportedEventHint     string             `json:"unsupported_event_hint,omitempty"`
+	UnknownFieldDetails      []wireUnknownField `json:"unknown_field_details,omitempty"`
+	ServiceError             string             `json:"service_error,omitempty"`
+	ErrorResponseFormat      string             `json:"error_response_format,omitempty"`
+	FailureStage             string             `json:"failure_stage,omitempty"`
+	TransportFailure         string             `json:"transport_failure,omitempty"`
+	HTTPStatus               string             `json:"http_status_category,omitempty"`
+	ID                       string             `json:"case"`
+	Status                   string             `json:"status"`
+	Cause                    string             `json:"cause,omitempty"`
+	Attempt                  int                `json:"attempt"`
+	ReceivedBytes            int64              `json:"received_bytes"`
+	TextEvents               int                `json:"text_events"`
+	ToolEvents               int                `json:"tool_events"`
+	UnknownEvents            int                `json:"unknown_event_count"`
+	UnknownFields            int                `json:"unknown_field_count"`
+	Assertions               wireAssertions     `json:"assertions"`
 }
 type wireRunResult struct {
 	Cases                       [6]wireCaseResult `json:"cases"`
@@ -456,6 +457,16 @@ func runWireCases(p *protocolProbe, conversationID string, memoryLimit int64) (o
 				input = cutoff
 			}
 			decodeErr := walkFramedEvents(input, obs, memory, func(event string, payload []byte) error {
+				if i >= 4 && event == "reasoningContentEvent" {
+					// These attempts have no history or continuation. Validate the
+					// bounded object, discard its values, and keep waiting for text
+					// or the byte cutoff. Reasoning never satisfies either trigger.
+					if _, err := jsonobject.Parse(payload, probeMaxEvent); err != nil {
+						return errContract
+					}
+					c.DiscardedReasoningEvents++
+					return nil
+				}
 				err := turn.observe(event, payload)
 				if i != 1 && turn.toolID != "" {
 					err = errContradicted
@@ -472,6 +483,7 @@ func runWireCases(p *protocolProbe, conversationID string, memoryLimit int64) (o
 				return nil
 			}, func(event string) bool {
 				_, ok := allowed[event]
+				ok = ok || i >= 4 && event == "reasoningContentEvent"
 				if !ok {
 					c.UnsupportedEventHint = wireUnsupportedEventHint(event)
 				}
