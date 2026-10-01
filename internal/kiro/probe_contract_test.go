@@ -9,6 +9,7 @@ import (
 // approval still belongs to the workflow, never to a status field in this file.
 func wirePlanParts() map[string]any {
 	return map[string]any{
+		"diagnostics":    probeDiagnosticPolicy(),
 		"destination":    map[string]any{"scheme": "https", "port": 443, "method": "POST", "path": "/", "content_type": wireContentType, "target": wireTarget, "accept": "application/vnd.amazon.eventstream"},
 		"region_rule":    wireDestinations(),
 		"authentication": map[string]string{"header": "Authorization", "scheme": "Bearer", "token_source": "selected_snapshot.access_token", "profile_source": "selected_snapshot.profile_arn"},
@@ -85,7 +86,7 @@ func (p probePlan) liveReadiness() error {
 		return errNeedsEvidence
 	}
 	parts := wirePlanParts()
-	for name, raw := range map[string]json.RawMessage{"destination": p.Destination, "region_rule": p.RegionRule, "authentication": p.Authentication, "request_schema": p.RequestSchema, "instruction_mapping": p.InstructionMapping, "controls": p.Controls, "completion": p.Completion, "limits": p.Limits, "observation_policy": p.ObservationPolicy} {
+	for name, raw := range map[string]json.RawMessage{"destination": p.Destination, "region_rule": p.RegionRule, "authentication": p.Authentication, "request_schema": p.RequestSchema, "instruction_mapping": p.InstructionMapping, "controls": p.Controls, "completion": p.Completion, "limits": p.Limits, "observation_policy": p.ObservationPolicy, "diagnostics": p.Diagnostics} {
 		if !samePlanValue(raw, parts[name]) {
 			return errPlanInvalid
 		}

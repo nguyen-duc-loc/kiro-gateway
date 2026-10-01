@@ -685,5 +685,37 @@
       "reached_injection_trigger",
       "completed_cleanup"
     ]
+  },
+  "diagnostics": {
+    "failure_stages": [
+      "pre_dispatch",
+      "source",
+      "request_build",
+      "transport",
+      "http_status",
+      "response_headers",
+      "stream",
+      "cleanup"
+    ],
+    "transport_failures": [
+      "dns",
+      "connect",
+      "destination_policy",
+      "tls",
+      "timeout",
+      "other"
+    ],
+    "http_status_categories": [
+      "ok",
+      "bad_request",
+      "unauthorized",
+      "forbidden",
+      "not_found",
+      "throttled",
+      "redirect",
+      "server_error",
+      "other"
+    ],
+    "error_body_policy": "never_read_or_output"
   }
 }

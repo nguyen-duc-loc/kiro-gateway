@@ -13,9 +13,11 @@ import (
 	"mime"
 	"net"
 	"net/http"
+	"net/http/httptrace"
 	"net/netip"
 	"net/url"
 	"strings"
+	"sync/atomic"
 	"time"
 	"unicode/utf8"
 
@@ -41,6 +43,9 @@ var defaultProbeLimits = probeLimits{10 * time.Minute, 2 * time.Minute, 30 * tim
 // Output is built only from fixed labels and local counts. Payloads, tokens,
 // references, raw errors and upstream header values have no output field.
 type probeObservation struct {
+	FailureStage     string `json:"failure_stage,omitempty"`
+	TransportFailure string `json:"transport_failure,omitempty"`
+	HTTPStatus       string `json:"http_status_category,omitempty"`
 	Outcome          string `json:"outcome"`
 	Cause            string `json:"cause"`
 	Attempts         int    `json:"attempts"`
@@ -162,6 +167,7 @@ func (p *protocolProbe) exchange(body string, consume probeStreamConsumer) (prob
 
 func (p *protocolProbe) exchangeBuilt(build func(credentials.ProfileSnapshot) (string, error), consume probeStreamConsumer) (result probeObservation, outcome error) {
 	result.Outcome = "needs_evidence"
+	result.FailureStage = "pre_dispatch"
 	fail := func(err error) (probeObservation, error) {
 		result.Cause = err.Error() // Only fixed category errors reach this closure.
 		result.Attempts = p.attempts
@@ -193,9 +199,11 @@ func (p *protocolProbe) exchangeBuilt(build func(credentials.ProfileSnapshot) (s
 		result.CleanupCompleted = &cleaned
 		if !cleaned {
 			result.Cause = errTimedOut.Error()
+			result.FailureStage = "cleanup"
 			outcome = errTimedOut
 		}
 	}()
+	result.FailureStage = "source"
 	selected, err := p.reader.ReadProfileSnapshot(ctx, p.reference)
 	if err != nil {
 		switch {
@@ -233,6 +241,7 @@ func (p *protocolProbe) exchangeBuilt(build func(credentials.ProfileSnapshot) (s
 	if !config.VisibleASCII(snapshot.AccessToken(), config.MaxBytes) {
 		return fail(errSource)
 	}
+	result.FailureStage = "request_build"
 	body, err := build(selected)
 	if err != nil {
 		return fail(err)
@@ -240,8 +249,15 @@ func (p *protocolProbe) exchangeBuilt(build func(credentials.ProfileSnapshot) (s
 	if len(body) > probeMaxRequest {
 		return fail(errBudget)
 	}
+	var tlsFailed atomic.Bool
+	trace := &httptrace.ClientTrace{TLSHandshakeDone: func(_ tls.ConnectionState, err error) {
+		if err != nil {
+			tlsFailed.Store(true)
+		}
+	}}
+	requestContext := httptrace.WithClientTrace(ctx, trace)
 	// NopCloser prevents GetBody from enabling request replay.
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, p.endpoint.String(), io.NopCloser(strings.NewReader(body)))
+	req, err := http.NewRequestWithContext(requestContext, http.MethodPost, p.endpoint.String(), io.NopCloser(strings.NewReader(body)))
 	if err != nil {
 		return fail(errPlanInvalid)
 	}
@@ -261,7 +277,7 @@ func (p *protocolProbe) exchangeBuilt(build func(credentials.ProfileSnapshot) (s
 		TLSNextProto: map[string]func(string, *tls.Conn) http.RoundTripper{},
 		DialContext: func(ctx context.Context, network, address string) (net.Conn, error) {
 			if address != p.endpoint.Host {
-				return nil, errPlanInvalid
+				return nil, &probeDialFailure{stage: "destination_policy", cause: errPlanInvalid}
 			}
 			var c net.Conn
 			var err error
@@ -269,6 +285,9 @@ func (p *protocolProbe) exchangeBuilt(build func(credentials.ProfileSnapshot) (s
 				c, err = p.dial(ctx, address)
 			} else {
 				c, err = (&net.Dialer{}).DialContext(ctx, "tcp4", address)
+				if err != nil {
+					err = &probeDialFailure{stage: "connect", cause: err}
+				}
 			}
 			if err != nil {
 				return nil, err
@@ -280,15 +299,20 @@ func (p *protocolProbe) exchangeBuilt(build func(credentials.ProfileSnapshot) (s
 	if ctx.Err() != nil {
 		return fail(probeContextError(ctx, ctx.Err()))
 	}
+	result.FailureStage = "transport"
 	p.attempts++ // A failed connection consumes one attempt. Nothing retries.
 	resp, err := client.Do(req)
 	if err != nil {
+		result.TransportFailure = probeTransportLabel(err, tlsFailed.Load())
 		return fail(probeContextError(ctx, err))
 	}
 	responseBody = resp.Body
+	result.HTTPStatus = probeHTTPLabel(resp.StatusCode)
+	result.FailureStage = "http_status"
 	if resp.StatusCode != http.StatusOK {
 		return fail(errNeedsEvidence)
 	}
+	result.FailureStage = "response_headers"
 	if p.wire {
 		media, params, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
 		if err != nil || media != "application/vnd.amazon.eventstream" || len(params) != 0 || resp.Header.Get("Content-Encoding") != "" {
@@ -298,6 +322,7 @@ func (p *protocolProbe) exchangeBuilt(build func(credentials.ProfileSnapshot) (s
 	if resp.ContentLength > probeMaxResponse {
 		return fail(errBudget)
 	}
+	result.FailureStage = "stream"
 	err = consume(ctx, cancel, resp.Body, &result)
 	if p.ctx.Err() != nil {
 		return fail(probeContextError(p.ctx, p.ctx.Err()))
@@ -310,6 +335,7 @@ func (p *protocolProbe) exchangeBuilt(build func(credentials.ProfileSnapshot) (s
 	}
 	if err == nil {
 		result.Attempts = p.attempts
+		result.FailureStage = ""
 		return result, nil
 	}
 	for _, category := range []error{errIncomplete, errContract, errBudget, errContradicted, errInjectedCutoff, errNeedsEvidence} {

@@ -102,20 +102,20 @@ Connect an authenticated Kiro account to a local gateway and complete a small re
 **Confirmed limited experiment:** After the additional protocol investigation on October 1, 2026, you approved carrying instructions in user context and treating clean stream end as tentative completion for feasibility only. Static evidence now connects the regional runtime operation and bearer token path, and documented model controls supply the bounded request. Even six observed cases yield only `limited_candidate_observed`; the distinct system role and proven model completion guarantees remain unresolved. Your approval covers preparation, not live account access or inference.
 
 - [x] Plan the feasibility milestone: `/architect first real Claude Code coding loop`
-- [ ] Build the feasibility milestone only: `/develop first real Claude Code coding loop: feasibility milestone only`
+- [x] Build the feasibility milestone only: `/develop first real Claude Code coding loop: feasibility milestone only`
   - [x] Prepare the concrete experiment and prove one offline path through the harness (AC-1, AC-2, AC-5, AC-6, AC-7, AC-8, AC-9).
     - [x] Complete the six case synthetic harness, including exact snapshot selection, tool result continuation, local failure controls, and passing repository checks.
     - [x] Build the combined token and selected profile snapshot with synthetic verification: `/develop first real Claude Code coding loop: selected profile snapshot only` (AC-1, AC-2, AC-6, AC-8, AC-9).
     - [x] Complete the limited candidate contract and concrete request plan from evidence and the approved instruction and completion limitations.
   - [x] Complete the safeguards and present the exact plan and clean code commit for live review (AC-1, AC-2, AC-3, AC-5, AC-6, AC-8).
-  - [ ] After approval and explicit launch, run the bounded cases and record evidence or the unresolved contract (AC-2 through AC-8).
+  - [x] After approval and explicit launch, run the bounded cases and record evidence or the unresolved contract (AC-2 through AC-8). One dispatch attempt stopped inconclusively; five dependent cases remained unrun as required.
 - [ ] Verify the feasibility milestone: `/check verify first real Claude Code coding loop: feasibility milestone only`
 - [ ] Test the feasibility milestone: `/test first real Claude Code coding loop: feasibility milestone only`
 - [ ] Review the feasibility milestone (fresh model): `/check review first real Claude Code coding loop: feasibility milestone only`
 - [ ] Document the feasibility milestone: `/document changelog first real Claude Code coding loop: feasibility milestone only`
 - [ ] Design it (spec): `/architect first real Claude Code coding loop`
 
-**Code:** The test only harness in `internal/kiro` contains the concrete limited plan, six case wire runner, and opt in live entry. Local configuration, session linking, and the exact Sonnet mapping are now set up. The next approved launch stopped at `source_unavailable` with zero inference attempts. Metadata diagnosis found a declared `BLOB` profile value column containing text. A narrow reader correction in `internal/credentials/capture.go` now accepts that declaration while retaining all value and token checks, with synthetic regression coverage. The unchanged plan and new code checkpoint await review before another run. Live case execution, independent GA checks, and the full Claude Code bridge remain pending.
+**Code:** The test only limited harness is built in `internal/kiro`, and local configuration, session linking, and the exact Sonnet mapping are set up. The corrected profile reader passed local source validation in the approved run at `3323e60`. One dispatch attempt to the reviewed US destination stopped as `needs_evidence`, without decoded response events; the remaining five cases were unrun. The run evidence is in spec 0003's verification record. A local diagnostic refinement now distinguishes transport and HTTP failure categories without retaining raw errors or bodies and awaits its own exact live review. The feasibility build has recorded an unresolved outcome, not compatibility. Independent GA verification, tests, review, documentation, and the full Claude Code bridge remain pending.
 
 ## Slice 2: Keep access working
 

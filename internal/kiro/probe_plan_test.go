@@ -38,11 +38,12 @@ var (
 
 // probePlan binds a reviewable experiment to fixed implemented semantics.
 type probePlan struct {
-	SchemaVersion     int    `json:"schema_version"`
-	Status            string `json:"status"`
-	ClientMapping     string `json:"client_mapping"`
-	TargetModel       string `json:"target_model"`
-	InstructionPolicy string `json:"instruction_policy"`
+	Diagnostics       json.RawMessage `json:"diagnostics"`
+	SchemaVersion     int             `json:"schema_version"`
+	Status            string          `json:"status"`
+	ClientMapping     string          `json:"client_mapping"`
+	TargetModel       string          `json:"target_model"`
+	InstructionPolicy string          `json:"instruction_policy"`
 	Baseline          struct {
 		ClaudeCode string `json:"claude_code"`
 		KiroCLI    string `json:"kiro_cli"`

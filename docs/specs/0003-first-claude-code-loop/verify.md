@@ -1,6 +1,6 @@
 # Verify: First loop protocol feasibility, spec 0003
 
-No live inference case has dispatched a request. This file contains the verification plan and the launch records below, including the local source failure; it does not claim independent verification passed. The full Claude Code coding loop remains a later gate in the same scope feature.
+One dispatch attempt has occurred, with no decoded response events and an inconclusive result. This file contains the verification plan and the launch records below; it does not claim independent verification passed. The full Claude Code coding loop remains a later gate in the same scope feature.
 
 The accepted profile amendment adds AC-9 and the profile cases below. Its local implementation is complete. Builder checks cover synthetic profile and wire cases; independent verification and live compatibility remain pending. The limited experiment amendment permits explicit user context instructions and tentative EOF continuation only.
 
@@ -150,6 +150,34 @@ A separate read only diagnostic inspected only `main.state` schema metadata and 
 The reader had required a declared `TEXT` value column and therefore rejected this source before reading profile bytes. A synthetic reproduction with `CREATE TABLE state(key TEXT PRIMARY KEY,value BLOB)` and invented text JSON failed before the correction. The prepared correction accepts declared `BLOB` only for that profile value column. Actual BLOB values, null, oversized text, generated columns, nontext keys, and the token table's BLOB declaration remain rejected. The existing text profile declaration also remains supported.
 
 The correction uses the same record, transaction, size checks, JSON validation, ARN policy, and digest. It does not modify Kiro's database or change the plan bytes. Synthetic regression and full repository checks cover the correction; a real combined read under the corrected code has not been attempted. A new review of the code commit is required before one further live run.
+
+## Corrected reader run, October 1, 2026
+
+You approved the corrected reader and one run at clean commit `3323e609a9404f27549944b3b8965b43f10991d8`, with unchanged plan SHA 256 `be490b8a73271fb6af757bcbdc448ad53374529a1c1b82f22184ae15647f7278`.
+
+| Run metadata | Observed value |
+|---|---|
+| Local run ID | `44871b03-d69e-455e-ad62-e3ff6289e440` |
+| Started | `2026-10-01T08:46:46.141392Z` |
+| Platform and baseline | `darwin/arm64`, Claude Code `2.1.286`, Kiro CLI `2.8.0` |
+| Requested model | `claude-sonnet-5` |
+| Selected destination | `https://runtime.us-east-1.kiro.dev:443/` |
+| Attempts | One dispatch attempt |
+| First case | `text`: `inconclusive`, cause `needs_evidence`, attempt one, cleanup completed |
+| Remaining cases | `tool`, `result`, `followup`, `cancel`, and `interrupt`: `unrun` |
+| Response observations | Zero counted stream bytes, text events, tool events, unknown events, and unknown fields |
+| Local request assertions | Instruction placement and controls requested true; these describe the constructed request, not service acceptance |
+| Protocol assertions | Marker match, model match, usage, and completion remain unknown |
+| Verdict and elapsed time | `needs_evidence`, 1162 milliseconds |
+| Peak reservation | 2621440 bytes |
+
+The combined snapshot passed and the approved regional destination was selected. One attempt was counted immediately before dispatch. The original summary does not distinguish DNS, connection, TLS, or HTTP rejection at this point. Zero counted stream bytes does not prove the service sent no response body: non 200 bodies are not decoded or counted. There is no retained status or raw error from which to recover the missing distinction, and no claim that authentication or model acceptance succeeded. No second request or automatic replay occurred.
+
+### Prepared diagnostic followup
+
+The next candidate adds the finite diagnostic labels in the spec. Synthetic HTTP responses prove that status categories remain distinct from transport failures and that private header and body sentinels are never emitted. Synthetic DNS and connection failures, rejected private destinations, and an untrusted local TLS certificate exercise the transport labels. Successful case behavior and all stop conditions remain unchanged. No extra real account read or network experiment was used to test this change.
+
+The diagnostic plan has a new digest because its allowed output policy changes. It requires a new exact code and plan review before a launch. The completed run above remains inconclusive; additional diagnostics cannot retroactively identify its failure.
 
 ## Later Claude Code acceptance gate
 

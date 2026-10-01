@@ -161,16 +161,19 @@ type wireAssertions struct {
 	OutputWithinLimit   *bool `json:"output_within_limit"`
 }
 type wireCaseResult struct {
-	ID            string         `json:"case"`
-	Status        string         `json:"status"`
-	Cause         string         `json:"cause,omitempty"`
-	Attempt       int            `json:"attempt"`
-	ReceivedBytes int64          `json:"received_bytes"`
-	TextEvents    int            `json:"text_events"`
-	ToolEvents    int            `json:"tool_events"`
-	UnknownEvents int            `json:"unknown_event_count"`
-	UnknownFields int            `json:"unknown_field_count"`
-	Assertions    wireAssertions `json:"assertions"`
+	FailureStage     string         `json:"failure_stage,omitempty"`
+	TransportFailure string         `json:"transport_failure,omitempty"`
+	HTTPStatus       string         `json:"http_status_category,omitempty"`
+	ID               string         `json:"case"`
+	Status           string         `json:"status"`
+	Cause            string         `json:"cause,omitempty"`
+	Attempt          int            `json:"attempt"`
+	ReceivedBytes    int64          `json:"received_bytes"`
+	TextEvents       int            `json:"text_events"`
+	ToolEvents       int            `json:"tool_events"`
+	UnknownEvents    int            `json:"unknown_event_count"`
+	UnknownFields    int            `json:"unknown_field_count"`
+	Assertions       wireAssertions `json:"assertions"`
 }
 type wireRunResult struct {
 	Cases                       [6]wireCaseResult `json:"cases"`
@@ -459,6 +462,10 @@ func runWireCases(p *protocolProbe, conversationID string, memoryLimit int64) (o
 			return probeReadError(decodeErr)
 		})
 		memory.release(4 * probeMaxRequest)
+		c.FailureStage, c.TransportFailure, c.HTTPStatus = result.FailureStage, result.TransportFailure, result.HTTPStatus
+		if c.FailureStage == "" {
+			c.FailureStage = "stream"
+		}
 		c.ReceivedBytes, c.UnknownFields, c.UnknownEvents = result.ReceivedBytes, turn.unknownFields, result.UnknownEvents
 		c.TextEvents, c.ToolEvents = turn.textEvents, result.ToolEvents
 		if p.attempts > before {
@@ -520,6 +527,7 @@ func runWireCases(p *protocolProbe, conversationID string, memoryLimit int64) (o
 		}
 		turn.release()
 		c.Status = "observed"
+		c.FailureStage = ""
 	}
 	return out
 }

@@ -38,23 +38,27 @@ func wireDial(resolve probeResolve, dial probeDial) func(context.Context, string
 			}
 		}
 		if !allowed {
-			return nil, errPlanInvalid
+			return nil, &probeDialFailure{stage: "destination_policy", cause: errPlanInvalid}
 		}
 		host, port, err := net.SplitHostPort(address)
 		if err != nil || port != "443" {
-			return nil, errPlanInvalid
+			return nil, &probeDialFailure{stage: "destination_policy", cause: errPlanInvalid}
 		}
 		addresses, err := resolve(ctx, "ip4", host)
 		if err != nil || len(addresses) == 0 {
-			return nil, errNeedsEvidence
+			return nil, &probeDialFailure{stage: "dns", cause: err}
 		}
 		for _, a := range addresses {
 			if !wirePublicIPv4(a) {
-				return nil, errPlanInvalid
+				return nil, &probeDialFailure{stage: "destination_policy", cause: errPlanInvalid}
 			}
 		}
 		// No fallback to another address if this connection fails.
-		return dial(ctx, "tcp4", net.JoinHostPort(addresses[0].String(), port))
+		conn, err := dial(ctx, "tcp4", net.JoinHostPort(addresses[0].String(), port))
+		if err != nil {
+			return nil, &probeDialFailure{stage: "connect", cause: err}
+		}
+		return conn, nil
 	}
 }
 

@@ -142,3 +142,12 @@ column only. It still requires bounded text storage and all existing source chec
 Synthetic harness databases now exercise that declaration; actual BLOB values and
 changes to the token table remain rejected. The plan bytes are unchanged, but the
 new code commit needs review before another launch.
+
+The next approved run passed combined source validation and selected the reviewed
+US endpoint. It consumed one dispatch attempt, returned `needs_evidence`, and
+produced no decoded response events. Five dependent cases remained unrun. The
+original summary cannot distinguish transport failure from HTTP rejection.
+The next prepared plan adds fixed failure stage, transport, and HTTP status
+categories. It does not read error bodies or emit raw errors, addresses, headers,
+or account data. Inference requests and limits remain unchanged. Its updated
+code and diagnostic policy need a new exact review before another live launch.
