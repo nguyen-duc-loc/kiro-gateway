@@ -53,6 +53,9 @@ func assertWireRequest(t *testing.T, r *http.Request, index int) {
 	if r.Method != "POST" || r.Header.Get("Authorization") != "Bearer sentinel-token" || r.Header.Get("Content-Type") != wireContentType || r.Header.Get("X-Amz-Target") != wireTarget || r.Header.Get("Accept") != "application/vnd.amazon.eventstream" {
 		t.Error("wire request headers do not match the candidate contract")
 	}
+	if got := r.Header.Get("X-Amz-Target"); got != "KiroRuntimeService.GenerateAssistantResponse" {
+		t.Errorf("wire request X-Amz-Target = %q, want bundled agent target KiroRuntimeService.GenerateAssistantResponse", got)
+	}
 	b, err := io.ReadAll(io.LimitReader(r.Body, probeMaxRequest+1))
 	if err != nil || len(b) > probeMaxRequest {
 		t.Error("wire request exceeds its read limit")

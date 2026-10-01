@@ -14,7 +14,7 @@ import (
 
 const (
 	wireContentType       = "application/x-amz-json-1.0"
-	wireTarget            = "AmazonCodeWhispererStreamingService.GenerateAssistantResponse"
+	wireTarget            = "KiroRuntimeService.GenerateAssistantResponse"
 	wireInstructionPolicy = "translate_into_user_context"
 	wireCompletionPolicy  = "clean_stream_end_tentative"
 	wireInstructions      = "Synthetic experiment instructions: follow the current request exactly. Use only the offered probe_lookup tool when requested."

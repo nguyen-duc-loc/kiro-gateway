@@ -32,12 +32,14 @@ The current binary trace connects the streaming operation to these candidates:
 | `eu-central-1` | `https://runtime.eu-central-1.kiro.dev:443/` |
 
 Each request is POST with `application/x-amz-json-1.0` and
-`X-Amz-Target: AmazonCodeWhispererStreamingService.GenerateAssistantResponse`.
+`X-Amz-Target: KiroRuntimeService.GenerateAssistantResponse`.
 Bearer authentication and `profileArn` come from the same fresh combined snapshot.
 The request carries `max_tokens: 1024` and `thinking.type: disabled` through
 `additionalModelRequestFields`. Optional output usage is validated and reduced to
 a boolean comparison with the requested limit. Missing usage stays unknown.
-Static evidence supplies a candidate; remote acceptance and behavior remain untested.
+The bundled ACP agent supplies this operation target. Earlier runs using
+`AmazonCodeWhispererStreamingService.GenerateAssistantResponse` were denied.
+Remote acceptance of the new target remains untested.
 
 | Attempt | Assertion or trigger |
 |---|---|
