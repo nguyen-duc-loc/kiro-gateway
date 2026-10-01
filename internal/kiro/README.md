@@ -39,7 +39,8 @@ The request carries `max_tokens: 1024` and `thinking.type: disabled` through
 a boolean comparison with the requested limit. Missing usage stays unknown.
 The bundled ACP agent supplies this operation target. Earlier runs using
 `AmazonCodeWhispererStreamingService.GenerateAssistantResponse` were denied.
-Remote acceptance of the new target remains untested.
+The controlled comparison with the new target also received HTTP 403 and
+`access_denied`; inference compatibility remains unproven.
 
 | Attempt | Assertion or trigger |
 |---|---|
@@ -203,3 +204,11 @@ with `access_denied`. Five dependent cases remained unrun. Matching the native
 model did not resolve the denial. No raw response was retained and no retry
 occurred. The next investigation should trace the native authentication and
 request path; another live operation needs its own review.
+
+The operator then authorized testing the bundled agent target. At clean commit
+`5c6e8c6fc2221e9194c7945f6caf1309556c24db`, plan digest
+`eecbd193c8aec5ab93ce6ed3c77d33a0160a7f6af7980070ade6c2f66b6b621d`,
+one request with `KiroRuntimeService.GenerateAssistantResponse` again received
+HTTP 403 with `access_denied`. Five cases were unrun. The run stopped without
+retry or account changes. The target change alone was insufficient; native token
+and profile selection remain unresolved. Full deterministic checks passed.

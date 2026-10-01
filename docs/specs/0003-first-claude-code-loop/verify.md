@@ -305,6 +305,31 @@ The exact model string now matches the operator confirmed native Opus test, but 
 
 No raw message, body, header, upstream identifier, token, fingerprint, or account value was retained. No retry, model fallback, endpoint change, renewal, or second request followed. The next productive investigation is the native client's actual authentication and request path, using the successful native session as operator evidence. Another unchanged gateway request is not recommended. Any native live comparison or changed inference candidate still needs its own concrete review.
 
+## Bundled operation target comparison, October 1, 2026
+
+You instructed, "yes, test them", after reviewing the two operation header values and the single bounded comparison. The new target was prepared at clean commit `5c6e8c6fc2221e9194c7945f6caf1309556c24db`, with plan SHA 256 `eecbd193c8aec5ab93ce6ed3c77d33a0160a7f6af7980070ade6c2f66b6b621d`. Both were recorded before launch. Full deterministic checks passed, including race tests and the synthetic header assertion. The tagged live test compiled and skipped with live probing disabled before the authorized launch.
+
+| Run metadata | Observed value |
+|---|---|
+| Local run ID | `1e5d79ab-5220-41d3-94d9-2bf6e7c72900` |
+| Started | `2026-10-01T12:13:33.293265Z` |
+| Platform and baseline | `darwin/arm64`, Claude Code `2.1.286`, Kiro CLI `2.8.0` |
+| Requested model | `claude-opus-5.5` |
+| Operation target | `KiroRuntimeService.GenerateAssistantResponse` |
+| Selected destination | `https://runtime.us-east-1.kiro.dev:443/` |
+| Attempts | One dispatch attempt |
+| First case | `text`: `inconclusive`, cause `needs_evidence`, failure stage `http_status`, HTTP status category `forbidden` |
+| Error observation | `service_error: access_denied`, `error_response_format: json` |
+| Received bytes | 119 error response bytes inspected in memory; zero decoded text or tool events |
+| Remaining cases | `tool`, `result`, `followup`, `cancel`, and `interrupt`: `unrun` |
+| Local request assertions | Instruction placement and controls requested true; no service acceptance claim |
+| Model identity, usage, and completion | Unknown |
+| Cleanup | Completed |
+| Verdict and elapsed time | `needs_evidence`, 1620 milliseconds |
+| Peak reservation | 3735552 bytes |
+
+The header change did not resolve the denial. The previous old target result remains the historical comparison, not a repeated request in this run. This does not establish native credential equivalence or identify the failed service rule. No renewal, relink, mapping change, native client launch, second request, or raw response retention occurred. This one run authorization is consumed.
+
 ## Later Claude Code acceptance gate
 
 After `/architect` completes the bridge design, the original scope still needs a real Claude Code `2.1.285` session against the gateway using the recorded available Sonnet model. Claude Code must read and fix a disposable Go bug, execute its file and shell tools under normal permissions, return results, finish a follow up user turn, and demonstrate cancellation and incomplete stream handling. Record Kiro CLI `2.8.0`, the actual access path, and every instruction or model control difference. None of that is claimed by this feasibility checklist.
