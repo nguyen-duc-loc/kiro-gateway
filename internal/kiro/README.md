@@ -40,14 +40,16 @@ a boolean comparison with the requested limit. Missing usage stays unknown.
 The path and header pair comes from `jwadow/kiro-gateway` at commit
 `a5292ca04c7c6231e0b47673ac3f981f5a706e1e`, inspected as source only.
 Earlier root path requests using either operation target were denied. This
-prepared path has no live result and requires a new run review. The reference
+operation path also returned HTTP 403 after session renewal and relinking. The reference
 project's refresh, retries, credential fallback, and identity headers are not
 part of this candidate. See the spec rationale for evidence and limitations.
 
 The approved launch at `a9fc79db09457461e9d97eea311c3b7634a17dea`
-stopped with `credential_expired` before dispatch. Zero requests were sent, so
-the new path remains untested. Renew the Kiro session before explicit relinking,
-restoring the exact Opus mapping, and reviewing another bounded run.
+stopped with `credential_expired` before dispatch. After the operator reported
+refreshing the session, relinking and exact Opus mapping restoration succeeded.
+The run at `1860d2b65caff84e95f8de980cae2e4b400ece3b` dispatched once and
+received `access_denied` in the error header. The body was not read. Five cases
+were unrun; no retry or automatic refresh followed.
 
 | Attempt | Assertion or trigger |
 |---|---|

@@ -383,3 +383,11 @@ This is evidence from a separate implementation, not proof that the installed na
 ## Reference path launch reached the expiry boundary
 
 You approved one run of the prepared path candidate at `a9fc79db09457461e9d97eea311c3b7634a17dea`, digest `9c5f55aebe373d20ec46334faf97e0f380aceaf2bf673bd398373f99baf17b31`. It stopped with `credential_expired` before any destination selection or dispatch. The allowed summary is in `verify.md`. There is no new protocol evidence and no reason to change the path candidate based on this result. Continue after operator renewal, explicit relinking and mapping restoration, and a fresh bounded launch approval. Automatic refresh remains outside this harness.
+
+## Renewed session did not resolve the reference path denial
+
+After being asked to refresh the Kiro session so relinking and the bounded test could continue, you reported "refreshed". The existing account link command captured the refreshed fixed snapshot, clearing mappings under its existing rule. A temporary helper restored only the exact Opus mapping through the configuration store's exclusive lock and atomic save, verified it, and was removed before launch. Configuration validation passed. No agent driven renewal occurred.
+
+One run at clean commit `1860d2b65caff84e95f8de980cae2e4b400ece3b`, with the unchanged path plan digest `9c5f55aebe373d20ec46334faf97e0f380aceaf2bf673bd398373f99baf17b31`, dispatched to `/generateAssistantResponse` and received HTTP 403 with `access_denied`. Its header supplied the recognized discriminator, so the classifier read zero body bytes. This does not mean the server sent an empty body, identify a different backend, or establish the cause of denial. The five dependent cases remained unrun, and no retry followed.
+
+The renewed credential passed local expiry validation. The reference path and header pair were insufficient to obtain acceptance under the fixed source and other candidate settings. Native token selection, account and profile equivalence, and remaining request metadata differences are still unresolved. Further manual refresh solely to repeat this denied request is not indicated. The allowed record is in `verify.md`; raw headers and account values remain unretained.

@@ -358,6 +358,34 @@ You approved one bounded live run at clean commit `a9fc79db09457461e9d97eea311c3
 
 This is a local expiry result, not a denial from the new path. No inference request, renewal, relink, mapping change, or retry occurred. No credential value was retained. The candidate remains untested remotely; the operator must renew the Kiro session before explicit relinking and another approved run. This launch consumed its one run approval.
 
+## Renewed reference path run returned access denied, October 1, 2026
+
+After the requested session refresh was reported complete, the gateway relinked the fixed snapshot and restored the exact Opus mapping using its existing lock and atomic save. The temporary setup helper was removed before launch, configuration validation passed, and the working tree was clean. No probe code or plan changed since the prior approval; the intervening commit recorded the expiry result.
+
+The run used commit `1860d2b65caff84e95f8de980cae2e4b400ece3b` and plan SHA 256 `9c5f55aebe373d20ec46334faf97e0f380aceaf2bf673bd398373f99baf17b31`.
+
+| Run metadata | Observed value |
+|---|---|
+| Local run ID | `36876f90-1267-423a-af49-8724858359bc` |
+| Started | `2026-10-01T12:49:30.243654Z` |
+| Platform and baseline | `darwin/arm64`, Claude Code `2.1.286`, Kiro CLI `2.8.0` |
+| Requested model | `claude-opus-5.5` |
+| Selected destination | `https://runtime.us-east-1.kiro.dev:443/generateAssistantResponse` |
+| Operation target | `AmazonCodeWhispererStreamingService.GenerateAssistantResponse` |
+| Attempts | One dispatch attempt |
+| First case | `text`: `inconclusive`, cause `needs_evidence`, stage `http_status`, HTTP status category `forbidden` |
+| Error observation | `service_error: access_denied`, `error_response_format: json` |
+| Received body bytes | Zero read; the classifier recognized the error header and did not inspect the body |
+| Text, tool, and unknown events | Zero |
+| Remaining cases | `tool`, `result`, `followup`, `cancel`, and `interrupt`: `unrun` |
+| Local assertions | Instruction placement and controls requested true; no service acceptance claim |
+| Model, usage, and completion | Unknown |
+| Cleanup | Completed |
+| Verdict and elapsed time | `needs_evidence`, 2285 milliseconds |
+| Peak reservation | 3735552 bytes |
+
+This demonstrates a denial at the reference path after the renewed fixed snapshot passed local validation. It does not establish successful remote authentication or native account equivalence. Header classification with zero body bytes is not evidence that the response body was empty. No raw header, body, account value, or credential was retained. No second request, automatic renewal, fallback, or native client launch occurred. The bounded run is complete and its authorization consumed.
+
 ## Later Claude Code acceptance gate
 
 After `/architect` completes the bridge design, the original scope still needs a real Claude Code `2.1.285` session against the gateway using the recorded available Sonnet model. Claude Code must read and fix a disposable Go bug, execute its file and shell tools under normal permissions, return results, finish a follow up user turn, and demonstrate cancellation and incomplete stream handling. Record Kiro CLI `2.8.0`, the actual access path, and every instruction or model control difference. None of that is claimed by this feasibility checklist.
