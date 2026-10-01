@@ -26,7 +26,8 @@ const wireTestID = "00000000-0000-4000-8000-000000000001"
 func wireResponses(index int) []byte {
 	switch index {
 	case 0:
-		return append(probeFrame("assistantResponseEvent", `{"content":"PROBE_","modelId":"claude-opus-5.5"}`), probeFrame("assistantResponseEvent", `{"content":"MARKER"}`)...)
+		text := append(probeFrame("assistantResponseEvent", `{"content":"PROBE_","modelId":"claude-opus-5.5"}`), probeFrame("assistantResponseEvent", `{"content":"MARKER"}`)...)
+		return append(text, probeFrame("meteringEvent", `{"usage":0.01,"unit":"sentinel-unit","unitPlural":"sentinel-units"}`)...)
 	case 1:
 		return append(probeFrame("toolUseEvent", `{"toolUseId":"synthetic-tool-17","name":"probe_lookup","input":"{\"key\":","stop":false}`), probeFrame("toolUseEvent", `{"toolUseId":"synthetic-tool-17","input":"\"alpha\"}","stop":true}`)...)
 	case 2:
@@ -292,7 +293,7 @@ func TestWireMetadataIsValidatedAndFiltered(t *testing.T) {
 	for event, payload := range map[string]string{
 		"messageMetadataEvent": `{"conversationId":"sentinel-upstream-conversation","utteranceId":"sentinel-upstream-turn"}`,
 		"metadataEvent":        `{"tokenUsage":{"inputTokens":999,"outputTokens":2048,"totalTokens":3047}}`,
-		"meteringEvent":        `{"usage":0.0123,"unit":"sentinel-unit"}`,
+		"meteringEvent":        `{"usage":0.0123,"unit":"sentinel-unit","unitPlural":"sentinel-units"}`,
 		"contextUsageEvent":    `{"contextUsagePercentage":1.5}`,
 	} {
 		if err := turn.observe(event, []byte(payload)); err != nil {
@@ -313,6 +314,32 @@ func TestWirePlanRejectsContractAndExampleDrift(t *testing.T) {
 		if _, err := readProbePlan(bytes.NewReader(changed), hex.EncodeToString(h[:])); !errors.Is(err, errPlanInvalid) {
 			t.Errorf("readProbePlan(drift %q) error=%v, want plan_invalid", pair[0], err)
 		}
+	}
+}
+
+func TestWireMeteringPluralRemainsMetadata(t *testing.T) {
+	for _, tc := range []struct {
+		name, payload string
+		want          error
+	}{
+		{name: "valid", payload: `{"usage":1,"unit":"synthetic-unit","unitPlural":"synthetic-units"}`},
+		{name: "absent", payload: `{"usage":1,"unit":"synthetic-unit"}`},
+		{name: "number", payload: `{"unitPlural":3}`, want: errContract},
+		{name: "null", payload: `{"unitPlural":null}`, want: errContract},
+		{name: "duplicate", payload: `{"unitPlural":"a","unitPlural":"b"}`, want: errContract},
+		{name: "unknown", payload: `{"unitPlural":"a","unreviewed":"b"}`, want: errNeedsEvidence},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			turn := wireTurn{fixtureTurn: fixtureTurn{memory: &probeMemory{limit: probeMaxRetained}}}
+			err := turn.observe("meteringEvent", []byte(tc.payload))
+			if !errors.Is(err, tc.want) {
+				t.Errorf("observe(meteringEvent, %s) error=%v, want %v", tc.name, err, tc.want)
+			}
+			if turn.text != "" || turn.toolID != "" || turn.assertions.Completion != nil {
+				t.Errorf("observe(meteringEvent, %s) must not produce text, tools, or completion", tc.name)
+			}
+			turn.release()
+		})
 	}
 }
 

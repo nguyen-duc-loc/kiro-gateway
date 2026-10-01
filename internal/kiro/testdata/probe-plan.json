@@ -56,7 +56,8 @@
       ],
       "meteringEvent": [
         "usage",
-        "unit"
+        "unit",
+        "unitPlural"
       ]
     },
     "usage_fields": [
@@ -276,6 +277,12 @@
       "id": "reference_request_baseline",
       "reference": "https://github.com/jwadow/kiro-gateway/tree/a5292ca04c7c6231e0b47673ac3f981f5a706e1e/kiro",
       "finding": "Selected converter and header definitions executed offline using synthetic inputs, fixed fingerprint and invocation ID, and disabled fake reasoning, truncation recovery and trimming. Independent examples in testdata/reference-requests.json SHA256 2867ae2429efc6cfdef8e2937ae0b6a2c56a29ae67b9c1563a4ea9e6170e6fcd. Prepared wire policy matches all six semantic request bodies and application headers, with every transport and credential lifecycle difference named in reference_baseline."
+    },
+    {
+      "id": "bundled_metering_schema",
+      "reference": "Installed @kiro/agent 0.3.234 dist/server/acp-server.js, lines 143003 to 143006 and 143393 to 143400",
+      "sha256": "233e4dec77cd538e35b691d1fd0e12ca64a7c90d720c4dbf6979f21b4c45482f",
+      "finding": "MeteringEvent schema names usage as number and unit and unitPlural as strings. Accept and validate optional unitPlural without retaining its value or inferring completion. This static schema gap is proven; the prior live unknown field name was not retained and is not inferred."
     }
   ],
   "request_examples": [

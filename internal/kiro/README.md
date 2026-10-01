@@ -73,6 +73,13 @@ separate; its invented `probeFixtureComplete` event is rejected by the wire deco
 
 ## Local checks
 
+The approved complete request baseline at `4de4fe96e54eee5f918d947029047421937af64b`
+received HTTP 200 and two text events, then stopped on one unknown field. The
+remaining five cases were unrun. Static SDK evidence supports adding the optional
+string `meteringEvent.unitPlural`; the prepared decoder validates and discards it.
+This is a documented schema correction, not proof of the discarded field's name.
+The outbound request baseline remains unchanged and another live run needs review.
+
 You can run the synthetic harness with:
 
 ```sh

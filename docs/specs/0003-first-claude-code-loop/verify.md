@@ -404,6 +404,36 @@ Following the instruction to proceed with the complete reference comparison, the
 
 Prepared plan SHA 256: `fe17da293c0bfebf56410f824fa20cd0234012cc13ef116f3399d7c85f476b28`. Independent fixture SHA 256: `2867ae2429efc6cfdef8e2937ae0b6a2c56a29ae67b9c1563a4ea9e6170e6fcd`. No live acceptance result exists for this new request baseline. Prior denials concern materially different requests and cannot establish this candidate's result.
 
+## Approved complete baseline received HTTP 200, October 1, 2026
+
+You approved one run at clean commit `4de4fe96e54eee5f918d947029047421937af64b` with plan SHA 256 `fe17da293c0bfebf56410f824fa20cd0234012cc13ef116f3399d7c85f476b28`. The identity and clean state checks passed before launch.
+
+| Run metadata | Observed value |
+|---|---|
+| Local run ID | `04e1b6c5-266a-435c-b6ce-c0c75b516ece` |
+| Started | `2026-10-01T13:16:18.878299Z` |
+| Platform and baseline | `darwin/arm64`, Claude Code `2.1.286`, Kiro CLI `2.8.0` |
+| Requested model | `claude-opus-5.5` |
+| Selected destination | `https://runtime.us-east-1.kiro.dev:443/generateAssistantResponse` |
+| Attempts | One dispatch attempt |
+| HTTP outcome | `ok`, HTTP 200 |
+| First case | `text`: `inconclusive`, cause `needs_evidence`, failure stage `stream` |
+| Received bytes | 380 |
+| Events | Two text events, zero tool events, zero unknown event names, one unknown field |
+| Remaining cases | `tool`, `result`, `followup`, `cancel`, and `interrupt`: `unrun` |
+| Local request assertions | Instruction placement true; controls requested false |
+| Marker, incremental assertion, model identity, usage, and completion | Unknown; case validation did not finish |
+| Output within limit | Unknown; no upstream token cap requested |
+| Cleanup | Completed |
+| Verdict and elapsed time | `needs_evidence`, 2110 milliseconds |
+| Peak reservation | 3808522 bytes |
+
+The complete reference baseline obtained acceptance and streamed text. It did not receive the previous access denial. The harness stopped at its first unreviewed field as designed, so no text content, unknown spelling, client fingerprint, or upstream identifier was retained. The byte count does not establish which event or field caused the stop. No retry, renewal, fallback, or later case occurred.
+
+The static metering schema review and prepared optional `unitPlural` decoder correction are recorded in `rationale.md`. Their next plan digest is `7f251348b878c311b777b556bfccf4fef9913826046c3526c841c87f644e0678`. That correction awaits a separate live review; it cannot retroactively identify the discarded unknown field or claim a completed first case.
+
+The corrected decoder passed formatting, vet, build, all race tests, and the complete local TLS sequence with synthetic plural unit metadata. The live tagged entry point compiled and skipped with its gate disabled. No additional account access or live request occurred during the correction.
+
 ## Later Claude Code acceptance gate
 
 After `/architect` completes the bridge design, the original scope still needs a real Claude Code `2.1.285` session against the gateway using the recorded available Sonnet model. Claude Code must read and fix a disposable Go bug, execute its file and shell tools under normal permissions, return results, finish a follow up user turn, and demonstrate cancellation and incomplete stream handling. Record Kiro CLI `2.8.0`, the actual access path, and every instruction or model control difference. None of that is claimed by this feasibility checklist.

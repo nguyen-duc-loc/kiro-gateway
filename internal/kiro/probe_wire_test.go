@@ -204,7 +204,7 @@ func wireEventFields() map[string][]string {
 		"messageMetadataEvent":   {"conversationId", "utteranceId"},
 		"metadataEvent":          {"tokenUsage"},
 		"contextUsageEvent":      {"contextUsagePercentage"},
-		"meteringEvent":          {"usage", "unit"},
+		"meteringEvent":          {"usage", "unit", "unitPlural"},
 	}
 }
 func wireUsageFields() []string {
@@ -325,9 +325,11 @@ func (s *wireTurn) observe(event string, payload []byte) error {
 				return err
 			}
 		}
-		if raw, ok := o["unit"]; ok {
-			if _, err := wireString(raw); err != nil {
-				return err
+		for _, name := range []string{"unit", "unitPlural"} {
+			if raw, ok := o[name]; ok {
+				if _, err := wireString(raw); err != nil {
+					return err
+				}
 			}
 		}
 	}
