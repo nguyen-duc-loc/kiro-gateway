@@ -31,6 +31,19 @@ type uncachedInputTokens unit unitPlural url usage useRelevantDocuments userCont
 userInputMessage userInputMessageContext utteranceId value web workspaceFolders`
 const wireMaxUnknownDetails = 4
 
+func wireDiagnosticEvents() []string {
+	return []string{"assistantResponseEvent", "reasoningContentEvent", "codeReferenceEvent", "toolUseEvent", "toolResultEvent", "metadataEvent", "meteringEvent", "contextUsageEvent", "documentCitationEvent", "error"}
+}
+
+func wireUnsupportedEventHint(event string) string {
+	for _, candidate := range wireDiagnosticEvents() {
+		if event == candidate {
+			return candidate
+		}
+	}
+	return "unlisted"
+}
+
 type wireUnknownField struct {
 	Event     string `json:"event"`
 	Location  string `json:"location"`

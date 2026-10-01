@@ -294,6 +294,12 @@
       "id": "metadata_extension_policy",
       "reference": "https://github.com/jwadow/kiro-gateway/blob/a5292ca04c7c6231e0b47673ac3f981f5a706e1e/kiro/parsers.py#L241",
       "finding": "The reference extracts only the response fields it consumes. The approved structural diagnostic located the blocker at a top-level metadataEvent string member, not response text or tool input. Prepare ignoring only additional top-level metadataEvent members after bounded JSON validation, retaining counts and finite hints. Known tokenUsage remains strict, as do other events, duplicate keys, error frames, and all semantic assertions. Metadata cannot establish text, tool, or completion success."
+    },
+    {
+      "id": "unsupported_event_hints",
+      "reference": "Installed @kiro/agent 0.3.234 dist/server/acp-server.js, ChatResponseStream schema lines 143794 to 143800 and corresponding identifier constants",
+      "sha256": "233e4dec77cd538e35b691d1fd0e12ca64a7c90d720c4dbf6979f21b4c45482f",
+      "finding": "The ten named stream members supply a finite diagnostic vocabulary for an unsupported event. Match one exact known name or emit unlisted, never the event payload or an unmatched name. Diagnostic membership does not enable the event or satisfy cancellation; the sequence still stops."
     }
   ],
   "request_examples": [
@@ -869,6 +875,23 @@
       ],
       "values": "never_output",
       "behavior": "ignore_metadata_event_extensions_otherwise_stop"
+    },
+    "unsupported_event_diagnostics": {
+      "known_names": [
+        "assistantResponseEvent",
+        "reasoningContentEvent",
+        "codeReferenceEvent",
+        "toolUseEvent",
+        "toolResultEvent",
+        "metadataEvent",
+        "meteringEvent",
+        "contextUsageEvent",
+        "documentCitationEvent",
+        "error"
+      ],
+      "unlisted_label": "unlisted",
+      "values": "never_output",
+      "behavior": "stop_without_accepting_event"
     }
   },
   "client_metadata": {

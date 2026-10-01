@@ -128,3 +128,38 @@ func TestWireMetadataExtensionsCannotHideInvalidUsageOrMakeText(t *testing.T) {
 		})
 	}
 }
+
+func TestWireUnsupportedCancellationEventHasOnlyFiniteHint(t *testing.T) {
+	for _, tc := range []struct{ name, event, want string }{
+		{name: "known schema", event: "reasoningContentEvent", want: "reasoningContentEvent"},
+		{name: "unlisted schema", event: "sentinel-private-event", want: "unlisted"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			home, _ := probeHome(t)
+			var requests atomic.Int32
+			p := localWireProbe(t, home, func(w http.ResponseWriter, r *http.Request) {
+				i := int(requests.Add(1)) - 1
+				if i > 4 {
+					t.Error("unsupported event must stop before interruption case")
+					return
+				}
+				assertWireRequest(t, r, i)
+				w.Header().Set("Content-Type", "application/vnd.amazon.eventstream")
+				if i == 4 {
+					w.Write(probeFrame(tc.event, `{"text":"sentinel-private-value"}`))
+				} else {
+					w.Write(wireResponses(i))
+				}
+			})
+			got := runWireCases(p, wireTestID, probeMaxRetained)
+			c := got.Cases[4]
+			if requests.Load() != 5 || c.UnsupportedEventHint != tc.want || c.UnknownEvents != 1 || c.Cause != "needs_evidence" || c.Assertions.InjectionReached == nil || *c.Assertions.InjectionReached || got.Cases[5].Status != "unrun" {
+				t.Errorf("runWireCases(%s) requests=%d hint=%q cause=%s, want five, %q, needs_evidence before trigger", tc.name, requests.Load(), c.UnsupportedEventHint, c.Cause, tc.want)
+			}
+			b, err := json.Marshal(got)
+			if err != nil || strings.Contains(string(b), "sentinel-private") {
+				t.Error("unsupported event diagnostic leaked a name or value")
+			}
+		})
+	}
+}

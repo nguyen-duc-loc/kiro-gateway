@@ -101,6 +101,13 @@ The metadata correction remains untested remotely. Explicitly relink the current
 saved session and restore the exact Opus mapping before another approved run;
 this source result alone does not call for signing in again.
 
+After approved relinking, the run at `b27b3c2` observed text, tool call, matching
+tool result response, and followup. Cancellation then stopped on an unsupported
+event before its trigger; interruption was unrun. The next prepared diagnostic
+reports a hint only from the inspected SDK stream event names, or `unlisted`.
+It does not accept new events or expose their payloads. The first four cases
+have positive live evidence; the two failure checks remain pending.
+
 You can run the synthetic harness with:
 
 ```sh

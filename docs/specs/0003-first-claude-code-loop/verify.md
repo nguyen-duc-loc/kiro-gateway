@@ -505,6 +505,35 @@ You approved one run at clean commit `542947fe3fd1e49b8c13abce0bc084174d35ef0d`,
 
 The selected token record differed from the linked fingerprint. No inference request, remote rejection, renewal, relinking, mapping mutation, or retry occurred. No fingerprint or credential value was retained. This does not establish why the record changed or require another sign in by itself. The metadata acceptance correction remains untested remotely. Explicit relinking, restoration of the exact Opus mapping, and a new bounded launch approval are the next prerequisites. This launch consumed its approval.
 
+## Approved relink and run observed the tool roundtrip, October 1, 2026
+
+You approved relinking, restoring the exact `claude-opus-5.5` mapping, and one unchanged bounded run. Setup used the existing lock and atomic save, configuration validation passed, the temporary helper was removed, and the working tree was clean. The run used commit `b27b3c2c3de208baa4667e79026cb9b9f492dfb8` and plan SHA 256 `4ad27507d9c8e63592c67dc41dbcd23afb034405d171a79a2b4a2bfd0de5aba3`.
+
+| Run metadata | Observed value |
+|---|---|
+| Local run ID | `3ac8306e-4483-48ac-be87-6eb263126825` |
+| Started | `2026-10-01T14:18:02.52139Z` |
+| Platform and baseline | `darwin/arm64`, Claude Code `2.1.286`, Kiro CLI `2.8.0` |
+| Model and destination | `claude-opus-5.5`, `https://runtime.us-east-1.kiro.dev:443/generateAssistantResponse` |
+| Attempts | Five; all received HTTP 200 |
+| Verdict and elapsed time | `needs_evidence`, 14526 milliseconds |
+| Peak reservation | 3818172 bytes |
+
+| Case | Outcome | Allowed observations |
+|---|---|---|
+| Text | `observed` | 695 bytes, two text events, incremental and marker assertions true |
+| Tool | `observed` | 1359 bytes, five tool events, valid arguments and matching tool name and ID true |
+| Result | `observed` | 578 bytes, one text event, marker assertion true |
+| Followup | `observed` | 576 bytes, one text event, marker assertion true |
+| Cancellation | `inconclusive`, `needs_evidence`, stage `stream` | 121 bytes, no text or tool events, one unknown event, cancellation trigger false |
+| Interruption | `unrun` | No dispatch |
+
+The first four cases each counted one metadata extension, with fixed labels `metadataEvent`, `event`, `unlisted`, and `string`. All four reached tentative completion and cleanup. The cancellation attempt completed cleanup after stopping at the unknown event, but that is not evidence that the planned cancellation trigger worked. Instruction placement was true and controls requested false for all five dispatched cases. Model identity, token usage, authoritative completion, and output token limit remained unknown. No raw text, arguments, IDs, unknown names, account metadata, or device fingerprint was retained.
+
+No retry, renewal, fallback, or sixth request followed. The first four protocol cases have positive live evidence. Cancellation and interrupted stream handling still require live evidence before the limited six case result can be declared observed. This run's approval is consumed.
+
+The next prepared diagnostic reports only a finite unsupported event hint from the inspected SDK stream vocabulary or `unlisted`. It changes no request or acceptance behavior. Its plan SHA 256 is `a188bf63b275f919445cf5b7a01eef3b789027cd1d14b5f7d762441ff38f9a4f`; it awaits another exact run review.
+
 ## Later Claude Code acceptance gate
 
 After `/architect` completes the bridge design, the original scope still needs a real Claude Code `2.1.285` session against the gateway using the recorded available Sonnet model. Claude Code must read and fix a disposable Go bug, execute its file and shell tools under normal permissions, return results, finish a follow up user turn, and demonstrate cancellation and incomplete stream handling. Record Kiro CLI `2.8.0`, the actual access path, and every instruction or model control difference. None of that is claimed by this feasibility checklist.
