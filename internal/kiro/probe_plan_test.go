@@ -15,9 +15,8 @@ import (
 
 const probeModel = "claude-sonnet-5"
 
-// The operator explicitly retained this requirement after inspecting the
-// current binary. A synthetic instructions field is not an upstream role.
-const probeInstructionPolicy = "preserve_distinct_system_role"
+// This explicit limitation applies only to the approved experiment.
+const probeInstructionPolicy = wireInstructionPolicy
 
 var (
 	errPlanInvalid        = errors.New("plan_invalid")
@@ -37,10 +36,7 @@ var (
 	errContract           = errors.New("contract_mismatch")
 )
 
-// This is an incomplete preparation artifact, not an executable request schema.
-// A future concrete candidate must add its decoder and assertions before it can
-// replace this closed gate. Editing status or supplying environment values alone
-// cannot make this implementation dispatch a live request.
+// probePlan binds a reviewable experiment to fixed implemented semantics.
 type probePlan struct {
 	SchemaVersion     int    `json:"schema_version"`
 	Status            string `json:"status"`
@@ -58,7 +54,10 @@ type probePlan struct {
 	InstructionMapping json.RawMessage   `json:"instruction_mapping"`
 	Controls           json.RawMessage   `json:"controls"`
 	Completion         json.RawMessage   `json:"completion"`
+	Limits             json.RawMessage   `json:"limits"`
+	ObservationPolicy  json.RawMessage   `json:"observation_policy"`
 	Cases              []json.RawMessage `json:"cases"`
+	RequestExamples    []json.RawMessage `json:"request_examples"`
 	MissingContract    []string          `json:"missing_contract"`
 	OfflineFraming     string            `json:"offline_framing"`
 	OfflineEventLabels []string          `json:"offline_event_labels"`
@@ -85,15 +84,14 @@ func readProbePlan(r io.Reader, expectedDigest string) (probePlan, error) {
 	}
 	d := json.NewDecoder(bytes.NewReader(b))
 	d.DisallowUnknownFields()
-	if d.Decode(&p) != nil || p.SchemaVersion != 1 || p.Status != "needs_evidence" || p.ClientMapping != probeModel || p.TargetModel != probeModel || p.InstructionPolicy != probeInstructionPolicy || p.Baseline.ClaudeCode != "2.1.285" || p.Baseline.KiroCLI != "2.8.0" {
+	if d.Decode(&p) != nil || p.SchemaVersion != 2 || p.Status != "prepared_limited" || p.ClientMapping != probeModel || p.TargetModel != probeModel || p.InstructionPolicy != probeInstructionPolicy || p.Baseline.ClaudeCode != "2.1.285" || p.Baseline.KiroCLI != "2.8.0" {
+		return probePlan{}, errPlanInvalid
+	}
+	if err := p.liveReadiness(); err != nil {
 		return probePlan{}, errPlanInvalid
 	}
 	return p, nil
 }
-
-// No live destination, request schema, or success decoder is implemented yet.
-// The gate stays closed even if someone fills the plan fields speculatively.
-func (p probePlan) liveReadiness() error { return errNeedsEvidence }
 
 func preparationPlan(t *testing.T) ([]byte, string) {
 	t.Helper()
@@ -105,31 +103,31 @@ func preparationPlan(t *testing.T) ([]byte, string) {
 	return b, hex.EncodeToString(h[:])
 }
 
-func TestPreparationPlanRemainsClosed(t *testing.T) {
+func TestPreparationPlanMatchesLimitedContract(t *testing.T) {
 	b, digest := preparationPlan(t)
 	p, err := readProbePlan(bytes.NewReader(b), digest)
 	if err != nil {
-		t.Fatalf("readProbePlan(checked artifact) error = %v, want nil", err)
+		t.Fatalf("readProbePlan(prepared limited plan) error=%v, want nil", err)
 	}
-	if got := p.liveReadiness(); !errors.Is(got, errNeedsEvidence) {
-		t.Errorf("liveReadiness(incomplete contract) = %v, want needs_evidence", got)
+	if err := p.liveReadiness(); err != nil {
+		t.Errorf("liveReadiness(limited plan) error=%v, want nil", err)
 	}
-	if len(p.MissingContract) != 8 || len(p.Cases) != 0 {
-		t.Error("preparation plan claims runnable cases, want eight explicit gaps and no cases")
+	if len(p.Cases) != 6 || len(p.RequestExamples) != 6 || len(p.MissingContract) != 0 {
+		t.Error("prepared plan does not contain six concrete cases and examples")
 	}
 }
 
 func TestProbePlanRejectsDriftAndAmbiguity(t *testing.T) {
 	b, _ := preparationPlan(t)
 	for name, value := range map[string][]byte{
-		"duplicate":                 bytes.Replace(b, []byte(`"schema_version": 1`), []byte(`"schema_version": 1, "schema_version": 1`), 1),
-		"unknown":                   bytes.Replace(b, []byte(`"schema_version": 1`), []byte(`"unknown": "sentinel", "schema_version": 1`), 1),
+		"duplicate":                 bytes.Replace(b, []byte(`"schema_version": 2`), []byte(`"schema_version": 2, "schema_version": 2`), 1),
+		"unknown":                   bytes.Replace(b, []byte(`"schema_version": 2`), []byte(`"unknown": "sentinel", "schema_version": 2`), 1),
 		"model":                     bytes.ReplaceAll(b, []byte(probeModel), []byte("other-model")),
 		"trailing":                  append(append([]byte{}, b...), []byte(`{}`)...),
 		"too large":                 bytes.Repeat([]byte(" "), (64<<10)+1),
-		"self promotion":            bytes.Replace(b, []byte(`"status": "needs_evidence"`), []byte(`"status": "ready"`), 1),
-		"instruction downgrade":     bytes.Replace(b, []byte(probeInstructionPolicy), []byte("translate_into_user_context"), 1),
-		"instruction policy absent": bytes.Replace(b, []byte(`"instruction_policy": "preserve_distinct_system_role",`), nil, 1),
+		"self promotion":            bytes.Replace(b, []byte(`"status": "prepared_limited"`), []byte(`"status": "ready"`), 1),
+		"instruction policy drift":  bytes.Replace(b, []byte(probeInstructionPolicy), []byte("preserve_distinct_system_role"), 1),
+		"instruction policy absent": bytes.Replace(b, []byte(`"instruction_policy": "translate_into_user_context",`), nil, 1),
 	} {
 		t.Run(name, func(t *testing.T) {
 			h := sha256.Sum256(value)

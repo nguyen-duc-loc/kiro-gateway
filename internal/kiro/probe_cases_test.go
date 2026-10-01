@@ -340,7 +340,7 @@ func (r *fixtureCutoffReader) Read(b []byte) (int, error) {
 	return n, err
 }
 
-func runFixtureCases(p *offlineProbe, memoryLimit int64) (out probeFixtureResult) {
+func runFixtureCases(p *protocolProbe, memoryLimit int64) (out probeFixtureResult) {
 	memory := &probeMemory{limit: memoryLimit}
 	for i, id := range fixtureCaseIDs {
 		out.Cases[i] = probeCaseResult{ID: id, Status: "unrun"}

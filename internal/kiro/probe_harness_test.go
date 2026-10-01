@@ -83,7 +83,7 @@ func probeServer(t *testing.T, h http.HandlerFunc) (*httptest.Server, *x509.Cert
 	return s, roots
 }
 
-func localProbe(t *testing.T, ctx context.Context, home string, s *httptest.Server, roots *x509.CertPool, limits probeLimits) *offlineProbe {
+func localProbe(t *testing.T, ctx context.Context, home string, s *httptest.Server, roots *x509.CertPool, limits probeLimits) *protocolProbe {
 	t.Helper()
 	p, err := openOfflineProbe(ctx, home, s.URL+"/probe", roots, limits)
 	if err != nil {

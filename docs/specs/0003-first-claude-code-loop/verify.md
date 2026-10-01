@@ -2,14 +2,14 @@
 
 All cases are pending. This file is a verification plan, not a record of passing tests. The full Claude Code coding loop remains a later gate in the same scope feature.
 
-The accepted profile amendment adds AC-9 and the profile cases below. Its implementation remains pending. The existing offline harness results are builder evidence; they do not establish these new cases or live compatibility.
+The accepted profile amendment adds AC-9 and the profile cases below. Its local implementation is complete. Builder checks cover synthetic profile and wire cases; independent verification and live compatibility remain pending. The limited experiment amendment permits explicit user context instructions and tentative EOF continuation only.
 
 ## Local checks before live review
 
 | Scenario | Expected evidence | Criteria |
 |---|---|---|
 | Normal tests with inherited live controls, absent live gate, invalid gate, or mismatched plan digest | Live entry point excluded without its build tag; otherwise skip or reject before any real credential read or external network access | AC-1, AC-8 |
-| Plan missing destination, auth source, schema, framing, completion assertion, or generated value source | Explicit stopped state; no guessed default and no credential read | AC-1, AC-7 |
+| Plan missing destination, auth source, schema, framing, explicit tentative completion policy, or generated value source | Explicit stopped state; no guessed default and no credential read | AC-1, AC-7 |
 | Wrong code commit, dirty or untracked inputs, or baseline drift | Refusal before credential access; no claim that an environment value proves human approval | AC-1, AC-8 |
 | Human workflow lacks approval for this exact launch | Operator or agent does not invoke the live harness; reviewed plan, commit, model, destinations, versions, and one run authorization are recorded in the conversation | AC-1 |
 | Missing configuration or mapping, different target ID, occupied process lock | Refusal without changing settings or calling the service | AC-2, AC-8 |
@@ -27,7 +27,7 @@ The accepted profile amendment adds AC-9 and the profile cases below. Its implem
 | Case 6 reaches its planned cutoff, or completes before that cutoff | First is an observed incomplete response assertion; second is inconclusive and makes the run `needs_evidence` | AC-5, AC-7 |
 | Required assertion fails, required evidence is absent, or only optional metadata is absent | Exact verdict table applied; absent model echo or usage alone does not fail the run | AC-4, AC-5, AC-7 |
 | Split synthetic tool arguments, escaped strings, missing IDs, mismatched results | Exact reassembly and matching, or explicit rejected case with no corrective model call | AC-4, AC-8 |
-| EOF before a frame completes, after text, or after a tool becomes visible | Incomplete result without successful terminal state or replay | AC-5, AC-8 |
+| EOF inside a frame or with incomplete tool arguments | Incomplete result without tentative completion or replay | AC-5, AC-8 |
 | Oversize body, header, event length, or accumulated history | Rejected before excessive allocation; no success from truncated data | AC-3, AC-5, AC-8 |
 | Sentinel tokens, fingerprint, account values, upstream errors, and real conversation text in every input position | None appears in stdout, stderr, saved summaries, or fixtures | AC-6, AC-8 |
 | Secret sentinel appears as an event name, JSON member name, tool ID, model string, or terminal label | Emit only reviewed labels, fixed unknown labels, local counts, and assertion results; no raw spelling or value | AC-6, AC-8 |
@@ -53,7 +53,20 @@ The accepted profile amendment adds AC-9 and the profile cases below. Its implem
 | Profile ARN, name, account component, or profile digest contains synthetic sentinel data | No values in summary, fixed errors, formatting, JSON output, or saved configuration; only approved public destination labels may be emitted | AC-6, AC-9 |
 | New approved run with a different selected profile but unchanged token | First valid combined read establishes a new in memory pin; no hidden persistent pin, forced relink, or settings mutation | AC-2, AC-9 |
 | Ordinary `account link`, `ReadSnapshot`, health, or tests with inherited live controls | Original source boundary remains unchanged; no real profile read or network dispatch | AC-1, AC-8, AC-9 |
-| Profile snapshot is valid but instruction, control, auth, or terminal contract remains missing | Live readiness remains `needs_evidence`; a passing local profile test cannot enable dispatch | AC-1, AC-7, AC-9 |
+| Profile snapshot is valid but the concrete limited plan is incomplete or differs from implemented semantics | Reject before dispatch; a passing local profile test cannot enable an unspecified contract | AC-1, AC-7, AC-9 |
+
+## Limited experiment checks
+
+| Case | Expected result | Criteria |
+|---|---|---|
+| Clean EOF after all required text or tool observations | Tentative completion only; `observed_completion` remains null and distinct system role preservation is false | AC-4, AC-5, AC-6 |
+| Valid text followed by an error frame, unknown field, or bad CRC | Stop with no tentative completion or automatic replay | AC-5, AC-7, AC-8 |
+| Six limited cases observed | `limited_candidate_observed`, never `candidate_supported`; full coding loop remains pending | AC-4, AC-7 |
+| Changed request examples, destination, instruction policy, controls, or completion policy | Plan validation fails even if its launch digest is recomputed | AC-1, AC-8 |
+| Output usage exceeds 1024, is malformed, or is absent | Above limit is contradicted, malformed is rejected, absent remains unknown; raw counts are never emitted | AC-4, AC-6 |
+| DNS returns local or reserved addresses, or the selected public address fails | Reject local destinations; one connection attempt without address fallback | AC-3, AC-8 |
+
+A clean transport end after dropping complete frames can remain indistinguishable from a complete response. Verify that the evidence states this limitation rather than claiming the harness detects it.
 
 ## Required live plan review
 
@@ -69,7 +82,7 @@ For a plan covering multiple profile regions, review every exact permitted desti
 
 | Attempt | Case | Record |
 |---|---|---|
-| 1 | Incremental text and instruction observation | Framing, field placement, control behavior, model evidence, terminal evidence |
+| 1 | Incremental text and instruction observation | Framing, explicit user content transformation, control placement, optional usage comparison, model evidence, tentative completion |
 | 2 | Synthetic tool request | Name, exact ID, schema, complete arguments, event ordering |
 | 3 | Synthetic result continuation | Result matching, preserved history, continued model response |
 | 4 | Follow up user input | Conversation continuity and instruction handling |
@@ -82,7 +95,7 @@ Stop at a missing required contract or unexpected failure. Mark later cases `unr
 
 For each run, record only its local ID, plan digest, date, checked clean code commit, platform, validated client versions, exact requested model from the plan, whether a matching model identity was evidenced, public service destination from the plan, access method, case outcomes, elapsed times, named instruction or control assertions, and unresolved contracts. Structural observations are restricted to the exact allowed output model in `index.md`. Do not include account identifiers, selected credential metadata, fingerprints, tokens, arbitrary upstream strings or field names, raw traffic, or actual prompt and response bodies.
 
-Reviewed synthetic fixtures may be referenced by case label. A fixture is written from invented content and allowed schema facts; it is not an automatically redacted recording. `candidate_supported` requires every mandatory assertion in all six live cases to be observed. An observed contradiction yields `candidate_rejected`; otherwise any missing required evidence yields `needs_evidence`. Optional model echo and usage observations limit claims without changing a passing verdict. No verdict means that Claude Code compatibility was verified.
+Reviewed synthetic fixtures may be referenced by case label. A fixture is written from invented content and allowed schema facts; it is not an automatically redacted recording. `limited_candidate_observed` requires every mandatory limited assertion in all six cases to be observed. It never establishes a distinct system role or proven model completion; `observed_completion` stays null. An observed contradiction yields `candidate_rejected`; otherwise any missing required evidence yields `needs_evidence`. Optional model echo and usage observations limit claims without changing a passing verdict. No verdict means that Claude Code compatibility was verified.
 
 ## Later Claude Code acceptance gate
 

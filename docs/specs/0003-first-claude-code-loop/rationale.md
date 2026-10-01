@@ -121,6 +121,72 @@ You approved the recommended correction. The reader design now requires exactly 
 
 You then accepted the revised amendment on October 1, 2026. This ratifies the local source design and the explicit disposition of unresolved protocol facts. The lifecycle status stays `In Progress`; profile implementation, live feasibility, and the full Claude Code proof are not claimed complete. No live run is authorized.
 
+## Additional protocol investigation, October 1, 2026
+
+You explicitly authorized further public research and static inspection of the installed binary, without credential access or live requests. This extends the earlier research boundary only. No Kiro process was launched, no credential or profile store was opened, and no inference endpoint was contacted. Public documentation and historical AWS source were fetched. The checkout began clean at `7a66898`.
+
+**Result:** The current artifact now supplies a connected candidate for destination, operation, and bearer authentication. Current official documentation also supplies a named output control, with a matching generic serialization path in the binary. Distinct system instruction semantics and positive successful turn completion remain unresolved. This is new preparation evidence, not a completed plan, a service acceptance result, or a change to the accepted requirements.
+
+### Artifact and method
+
+The inspected file is `/Applications/Kiro CLI.app/Contents/MacOS/kiro-cli-chat`. Its SHA 256 remains `2118bd89d96830a4f0e0884e4f4071fb94e4b6036c757126afe9e3f80c9d90c6`, matching the recorded 2.8.0 baseline. Addresses below are arm64 file virtual addresses, before process relocation. The arm64 slice starts at file offset `0x229e0000`.
+
+Inspection used `nm`, LLDB with startup files disabled, and direct reads of the Mach O file. LLDB created a target for disassembly but never launched or attached to a process. Function calls described below are static instructions in that file, not calls made during research. Constants were resolved from instruction operands and checked against file bytes; nearby strings alone were not treated as proof of a field's use.
+
+### Destination and authentication chain
+
+| Link | Current artifact evidence |
+|---|---|
+| Profile region enters client construction | `chat_cli_v2::api_client::ApiClient::new` starts at `0x1010904fc`. It calls `Endpoint::configured_value` at `0x1010905a8`. The previously traced selected profile ARN supplies that endpoint's region. |
+| Runtime endpoint selection | In the absence of its endpoint setting override, the same constructor calls `Endpoint::krs_for_region` at `0x101090a04` and stores the result. The streaming client reads that result's URL at `0x101091858` and passes it to its endpoint resolver at `0x1010918c4`. This connects the runtime selector to the streaming client rather than merely finding host strings. |
+| Exact regional candidates | `krs_for_region` at `0x10259ec14` selects constant record `0x11e9b5230` for `us-east-1` and `0x11e9b5260` for `eu-central-1`. Their URL bytes are `https://runtime.us-east-1.kiro.dev` and `https://runtime.eu-central-1.kiro.dev`. Other regions, overrides, and the CLI's fallback behavior are outside the gateway's finite destination policy. |
+| Operation and HTTP request | `RealApiClient::send_message` calls the GenerateAssistantResponse builder at `0x10238a410` and its operation plugins at `0x10238ba90`. Its request serializer at `0x10081fea8` uses `POST` (constant `0x105275878`, four bytes), path `/` (constant `0x11b9ca5f8`, one byte), content type `application/x-amz-json-1.0`, and `x-amz-target: AmazonCodeWhispererStreamingService.GenerateAssistantResponse`. Header values are passed at `0x1008203f0` and `0x1008206b8`. |
+| Resolver installed on that streaming client | At `0x10109175c`, the constructor registers `httpBearerAuth` with the resolver vtable at `0x11e938830`. That table points directly to `UnifiedBearerResolver::resolve_identity` at `0x1022679a4`. The scheme string is at `0x11b7f5f4a`, length 14. |
+| Current operation's auth scheme | Streaming `Client::from_conf` installs `BearerAuthScheme` at `0x100817d1c`, then creates `DefaultAuthSchemeResolver` at `0x100817d24`. The latter starts at `0x100872d38` and installs the `httpBearerAuth` default. The scheme vtable at `0x11e8b3c00` identifies its resolver and signer. This is current client wiring, not reliance on the historical operation's auth plugin. |
+| Fixed token branch | The unified resolver's async body at `0x102267a44` includes a branch that passes the exact `kirocli:odic:token` key, length 18, to `Database::get_secret` at `0x10226b590`. The key is at `0x11b84971c`. That branch decodes the record at `0x10226b7f8` and constructs an HTTP token identity at `0x10226ba20`. This is the existing selected record source; no additional credential source is proposed. |
+| Header construction | `BearerAuthSigner::sign_http_request` at `0x100d6553c` formats the token with `Bearer `, then inserts the header at `0x100d65760`. The format prefix is at `0x1052c265c`, length seven. The header name uses standard header index 16; the `StandardHeader::as_str` tables resolved through `0x100d8a534` map that index to `authorization` at `0x1052c747e`, length 13. |
+
+The normal client also contains settings reads, credential renewal, alternative credential branches, and retries. Inspecting those instructions does not authorize using them. A future gateway experiment would retain its own pinned snapshot, exact destination restrictions, and no renewal or retry policy. These observations establish a candidate request path for the selected record type, not that the operator's actual token and profile are authorized by the service. That latter fact still needs the separately reviewed live experiment.
+
+### Output control evidence
+
+The current [Kiro reasoning effort reference](https://kiro.dev/docs/models/effort/), updated September 30, 2026, explicitly describes `max_tokens` as a response output limit. It lists the Sonnet 5 range as 1024 through 128000 and shows per model configuration through `chat.modelDefaults`. This supplies a documented parameter and range that the earlier agent prompt and headless pages did not establish.
+
+The installed client provides the following path for additional model parameters:
+
+1. `RtsState::apply_model_defaults` at `0x1027a8300` reads settings and calls `AdditionalModelFields::apply_overrides` at `0x1027a85b8`.
+2. `RtsModel::make_conversation_state` reads `RtsState::additional_fields` at `0x1027a7200`.
+3. `RealApiClient::send_message` converts additional values through `value_to_document` at `0x10238a464` and calls `set_additional_model_request_fields` at `0x10238a4b8`.
+4. The input serializer at `0x100810d48` writes the `additionalModelRequestFields` member through its generic document serializer. The member name is at `0x10527fdce`; its key writer call is at `0x100810e4c`.
+
+Together, the documentation and this path support `additionalModelRequestFields.max_tokens` as a concrete candidate to test. They do not prove that this exact service and model accept or honor it. The inspected `metadataEvent` decoder recognizes `tokenUsage`, and its nested decoder at `0x1008228a0` recognizes `outputTokens` among usage fields. That is a possible observation source to assess when completing the control assertion. A short answer alone is not proof of enforcement. The plan still needs the exact chosen limit and an assertion consistent with the existing optional usage and output retention rules. No runtime output policy is expanded by this research.
+
+### Distinct instruction role remains unresolved
+
+The input serializer writes `conversationState`, `additionalModelRequestFields`, `profileArn`, and `agentMode`. The full conversation serializer at `0x100861b10` has no distinct system instruction member. The message union serializer at `0x10085bf08` selects `userInputMessage` or `assistantResponseMessage`. The user context serializer at `0x100841890` includes `additionalContext`, `toolResults`, and `tools`, alongside environment and editor context.
+
+These are observations of the typed request path. They do not rule out an undocumented field inside the generic additional model document or a different service operation. However, no inspected primary source establishes such a field or its instruction priority. The documented agent prompt cannot establish that wire contract. Sending Claude Code's system instructions as user text or `additionalContext` would remain an unapproved semantic change.
+
+### Successful turn completion remains unresolved
+
+Inspection followed the current `ChatResponseStreamUnmarshaller::unmarshall` at `0x10082eb58` into the relevant payload decoders, rather than searching for a stop string anywhere in the executable.
+
+| Examined payload | What its decoder establishes |
+|---|---|
+| `assistantResponseEvent`, decoder `0x1008771e4` | Recognizes `content` and `modelId`; other payload keys reach the skip path. These fields do not indicate turn completion. |
+| `messageMetadataEvent`, decoder `0x100869d10` | Previously established `conversationId` and `utteranceId`; identifiers do not indicate turn completion. |
+| `metadataEvent`, decoder `0x1008686d8` | Recognizes `tokenUsage`, with nested usage fields. No terminal semantics or required final ordering was established for this event. |
+| `reasoningContentEvent`, decoder `0x100876650` | Recognizes `text`, `signature`, and `redactedContent`. These describe reasoning content, not a successful turn end. |
+| Dispatcher | Separates event and error or exception handling. Its `dryRunSucceedEvent` branch is not evidence that an ordinary inference turn completed. No positive normal turn completion event was identified in this pass. |
+
+Unknown server fields may be discarded by the installed decoder. Absence from these typed paths therefore does not prove the service can never supply a terminal signal. Equally, an error free EOF, a tool stop flag, model identity, or usage metadata cannot be promoted to the positive completion guarantee required by the current spec without new evidence or a changed requirement.
+
+### Practical disposition
+
+The research narrows the problem from unidentified connection details to two unresolved compatibility guarantees, plus completing the control experiment's assertion. The candidate path and output parameter can inform the next architecture pass. The recommendation is to keep the current compatibility requirements intact and record `needs_evidence`; do not present a working transport as a verified Claude Code bridge.
+
+If you want to proceed without evidence for those guarantees, the next decision is whether to permit an explicitly limited experiment with changed instruction or completion semantics. That would be a requirement change, not more implementation detail, and is not authorized by this research request. No build checkbox, live launch permission, candidate plan readiness, or feature status changes here.
+
 ## References
 
 **Project sources**
@@ -150,3 +216,15 @@ You then accepted the revised amendment on October 1, 2026. This ratifies the lo
 5. [Kiro infrastructure security](https://kiro.dev/docs/cli/privacy-and-security/infrastructure-security/), general network security description and its inference limits.
 6. [Kiro supported regions](https://kiro.dev/docs/enterprise/supported-regions/), distinction between profile and Identity Center regions, verified during the preceding development evidence pass on October 1, 2026.
 7. [Agent configuration reference](https://kiro.dev/docs/custom-agents/configuration-reference/) and [headless mode](https://kiro.dev/docs/cli/headless/), CLI level instruction and output concepts, verified in that same evidence pass. These do not establish the required runtime wire fields.
+
+## Limited experiment approval, October 1, 2026
+
+After the additional investigation, you agreed to an experiment that carries system instructions as user context and treats clean stream end as tentative completion. This explicitly changes those two feasibility requirements only. It does not authorize a live run or claim that the production bridge preserves the original semantics. The implementation will use the documented `max_tokens` and disabled thinking controls, record optional usage comparison only as a boolean, and retain all existing budgets and account safeguards. A complete synthetic sequence can establish local behavior; the best live verdict is `limited_candidate_observed`.
+
+The advantage is a buildable, concrete experiment that can test tools and continuation. The cost is weaker instruction priority and no reliable way to detect an upstream truncation that looks like a clean transport end. Requiring the original guarantees would keep the experiment blocked on evidence; you selected the limited experiment instead. The full bridge design remains pending.
+
+### Local implementation evidence
+
+The limited request and response path is implemented in test files under `internal/kiro`. Synthetic TLS tests cover six cases, exact tool identity and result continuity, EOF distinctions, malformed framing and JSON, unknown data, profile drift, output limit observations, plan mutation, and DNS restrictions. The existing fixture suite still covers source consistency, locking, time limits, and byte budgets. A cancellation test server initially waited without consuming its request body; consuming the synthetic body fixed its teardown, and the focused cases passed with the race detector.
+
+The complete repository check subsequently passed formatting, vet, compilation, and race tests with fake live launch controls inherited. The `liveprobe` build also compiled and skipped `TestProtocolProbe` with `KIRO_GATEWAY_LIVE_PROBE=0`, before configuration or version command access. A read only implementation cross check found no actionable issue in the snapshot, transport, retention, and completion paths; it does not replace the separate GA review. No real account access or inference occurred.

@@ -10,6 +10,7 @@ import (
 	"errors"
 	"hash/crc32"
 	"io"
+	"mime"
 	"net"
 	"net/http"
 	"net/netip"
@@ -58,10 +59,9 @@ type snapshotReader interface {
 	ReadProfileSnapshot(context.Context, config.Session) (credentials.ProfileSnapshot, error)
 }
 
-// offlineProbe owns one locked config snapshot. It is deliberately restricted
-// to TLS on numeric IPv4 loopback, with a fixture body rather than a Kiro schema.
-// There is no path from TestProtocolProbe to this local fixture runner.
-type offlineProbe struct {
+// protocolProbe owns one locked configuration and one sequential run. Offline
+// factories restrict it to loopback; the tagged live factory supplies a fixed dialer.
+type protocolProbe struct {
 	ctx           context.Context
 	cancel        context.CancelFunc
 	store         *configstore.Store
@@ -75,9 +75,11 @@ type offlineProbe struct {
 	limits        probeLimits
 	attempts      int
 	stopped       bool
+	wire          bool
+	dial          func(context.Context, string) (net.Conn, error)
 }
 
-func openOfflineProbe(parent context.Context, home, endpoint string, roots *x509.CertPool, limits probeLimits) (*offlineProbe, error) {
+func openOfflineProbe(parent context.Context, home, endpoint string, roots *x509.CertPool, limits probeLimits) (*protocolProbe, error) {
 	return openRegionalOfflineProbe(parent, home, map[string]string{"us-east-1": endpoint, "eu-central-1": endpoint}, roots, limits)
 }
 
@@ -93,7 +95,7 @@ func offlineDestination(endpoint string) (*url.URL, error) {
 	return u, nil
 }
 
-func openRegionalOfflineProbe(parent context.Context, home string, endpoints map[string]string, roots *x509.CertPool, limits probeLimits) (*offlineProbe, error) {
+func openRegionalOfflineProbe(parent context.Context, home string, endpoints map[string]string, roots *x509.CertPool, limits probeLimits) (*protocolProbe, error) {
 	if len(endpoints) == 0 || len(endpoints) > 2 || roots == nil {
 		return nil, errPlanInvalid
 	}
@@ -109,6 +111,10 @@ func openRegionalOfflineProbe(parent context.Context, home string, endpoints map
 		}
 		destinations[region] = u
 	}
+	return openProbeState(parent, home, destinations, roots.Clone(), limits)
+}
+
+func openProbeState(parent context.Context, home string, destinations map[string]*url.URL, roots *x509.CertPool, limits probeLimits) (*protocolProbe, error) {
 	if limits.run <= 0 || limits.run > defaultProbeLimits.run || limits.request <= 0 || limits.request > defaultProbeLimits.request || limits.idle <= 0 || limits.idle > defaultProbeLimits.idle {
 		return nil, errPlanInvalid
 	}
@@ -125,11 +131,11 @@ func openRegionalOfflineProbe(parent context.Context, home string, endpoints map
 		return nil, errConfiguration
 	}
 	ctx, cancel := context.WithTimeout(parent, limits.run)
-	return &offlineProbe{ctx: ctx, cancel: cancel, store: store, reference: *d.Session,
-		reader: credentials.Reader{Home: home}, destinations: destinations, roots: roots.Clone(), limits: limits}, nil
+	return &protocolProbe{ctx: ctx, cancel: cancel, store: store, reference: *d.Session,
+		reader: credentials.Reader{Home: home}, destinations: destinations, roots: roots, limits: limits}, nil
 }
 
-func (p *offlineProbe) close() {
+func (p *protocolProbe) close() {
 	p.cancel()
 	p.store.Close()
 	p.stopped = true
@@ -137,7 +143,7 @@ func (p *offlineProbe) close() {
 
 type probeStreamConsumer func(context.Context, context.CancelFunc, io.Reader, *probeObservation) error
 
-func (p *offlineProbe) dispatch(body string) probeObservation {
+func (p *protocolProbe) dispatch(body string) probeObservation {
 	result, _ := p.exchange(body, func(_ context.Context, _ context.CancelFunc, r io.Reader, out *probeObservation) error {
 		return observeProbeFrames(r, out)
 	})
@@ -147,7 +153,14 @@ func (p *offlineProbe) dispatch(body string) probeObservation {
 
 // exchange owns one attempt and returns only after local request cleanup. The
 // case runner decides whether an expected injected failure permits another case.
-func (p *offlineProbe) exchange(body string, consume probeStreamConsumer) (result probeObservation, outcome error) {
+func (p *protocolProbe) exchange(body string, consume probeStreamConsumer) (probeObservation, error) {
+	if len(body) > probeMaxRequest {
+		return probeObservation{Outcome: "needs_evidence", Cause: errBudget.Error(), Attempts: p.attempts}, errBudget
+	}
+	return p.exchangeBuilt(func(credentials.ProfileSnapshot) (string, error) { return body, nil }, consume)
+}
+
+func (p *protocolProbe) exchangeBuilt(build func(credentials.ProfileSnapshot) (string, error), consume probeStreamConsumer) (result probeObservation, outcome error) {
 	result.Outcome = "needs_evidence"
 	fail := func(err error) (probeObservation, error) {
 		result.Cause = err.Error() // Only fixed category errors reach this closure.
@@ -162,9 +175,6 @@ func (p *offlineProbe) exchange(body string, consume probeStreamConsumer) (resul
 	}
 	if p.stopped {
 		return fail(errNeedsEvidence)
-	}
-	if len(body) > probeMaxRequest {
-		return fail(errBudget)
 	}
 	ctx, cancel := context.WithTimeout(p.ctx, p.limits.request)
 	var responseBody io.ReadCloser
@@ -223,6 +233,13 @@ func (p *offlineProbe) exchange(body string, consume probeStreamConsumer) (resul
 	if !config.VisibleASCII(snapshot.AccessToken(), config.MaxBytes) {
 		return fail(errSource)
 	}
+	body, err := build(selected)
+	if err != nil {
+		return fail(err)
+	}
+	if len(body) > probeMaxRequest {
+		return fail(errBudget)
+	}
 	// NopCloser prevents GetBody from enabling request replay.
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, p.endpoint.String(), io.NopCloser(strings.NewReader(body)))
 	if err != nil {
@@ -230,10 +247,15 @@ func (p *offlineProbe) exchange(body string, consume probeStreamConsumer) (resul
 	}
 	req.Header.Set("Authorization", "Bearer "+snapshot.AccessToken())
 	req.Header.Set("Content-Type", "application/json")
+	if p.wire {
+		req.Header.Set("Content-Type", wireContentType)
+		req.Header.Set("X-Amz-Target", wireTarget)
+		req.Header.Set("Accept", "application/vnd.amazon.eventstream")
+	}
 	req.ContentLength = int64(len(body))
 	start := time.Now()
 	transport = &http.Transport{
-		Proxy: nil, DisableKeepAlives: true, MaxResponseHeaderBytes: probeMaxHeaders,
+		Proxy: nil, DisableKeepAlives: true, DisableCompression: true, MaxResponseHeaderBytes: probeMaxHeaders,
 		TLSClientConfig: &tls.Config{RootCAs: p.roots, MinVersion: tls.VersionTLS12},
 		// Explicitly disable HTTP/2 as well as connection reuse and GetBody.
 		TLSNextProto: map[string]func(string, *tls.Conn) http.RoundTripper{},
@@ -241,7 +263,13 @@ func (p *offlineProbe) exchange(body string, consume probeStreamConsumer) (resul
 			if address != p.endpoint.Host {
 				return nil, errPlanInvalid
 			}
-			c, err := (&net.Dialer{}).DialContext(ctx, "tcp4", address)
+			var c net.Conn
+			var err error
+			if p.dial != nil {
+				c, err = p.dial(ctx, address)
+			} else {
+				c, err = (&net.Dialer{}).DialContext(ctx, "tcp4", address)
+			}
 			if err != nil {
 				return nil, err
 			}
@@ -260,6 +288,12 @@ func (p *offlineProbe) exchange(body string, consume probeStreamConsumer) (resul
 	responseBody = resp.Body
 	if resp.StatusCode != http.StatusOK {
 		return fail(errNeedsEvidence)
+	}
+	if p.wire {
+		media, params, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil || media != "application/vnd.amazon.eventstream" || len(params) != 0 || resp.Header.Get("Content-Encoding") != "" {
+			return fail(errContract)
+		}
 	}
 	if resp.ContentLength > probeMaxResponse {
 		return fail(errBudget)
@@ -327,6 +361,12 @@ func observeProbeFrames(input io.Reader, out *probeObservation) error {
 type probeFrameVisitor func(string, []byte) error
 
 func walkProbeFrames(input io.Reader, out *probeObservation, memory *probeMemory, visit probeFrameVisitor) error {
+	return walkFramedEvents(input, out, memory, visit, func(event string) bool {
+		return event == "assistantResponseEvent" || event == "toolUseEvent" || (visit != nil && event == fixtureCompletionEvent)
+	})
+}
+
+func walkFramedEvents(input io.Reader, out *probeObservation, memory *probeMemory, visit probeFrameVisitor, allowed func(string) bool) error {
 	r := &probeCountingReader{r: input, count: &out.ReceivedBytes}
 	for {
 		var prelude [12]byte
@@ -396,19 +436,15 @@ func walkProbeFrames(input io.Reader, out *probeObservation, memory *probeMemory
 			if kind != "event" {
 				return errNeedsEvidence
 			}
+			if !allowed(event) {
+				out.UnknownEvents++
+				return errNeedsEvidence
+			}
 			switch event {
 			case "assistantResponseEvent":
 				out.TextEvents++
 			case "toolUseEvent":
 				out.ToolEvents++
-			case fixtureCompletionEvent:
-				if visit == nil {
-					out.UnknownEvents++
-					return errNeedsEvidence
-				}
-			default:
-				out.UnknownEvents++
-				return errNeedsEvidence
 			}
 			if visit != nil {
 				return visit(event, payload)

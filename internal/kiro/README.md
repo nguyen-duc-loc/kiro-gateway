@@ -1,129 +1,121 @@
-# Offline feasibility harness
+# Limited feasibility harness
 
 This directory contains test code only. Nothing here is linked into the gateway.
-The current candidate plan selects `claude-sonnet-5` as both the client mapping and
-target. It records `needs_evidence` and cannot dispatch a live request.
+The concrete candidate plan selects `claude-sonnet-5` as both the saved mapping
+and requested model. It is prepared for review, not approved for a live run.
 
-The operator reaffirmed `preserve_distinct_system_role` on October 1, 2026. The
-plan validator rejects an absent policy or a downgrade to user context. Static
-inspection of the installed arm64 binary now records exact runtime endpoint
-selector outputs and serializer key writer calls, tied to its SHA 256 digest.
-The current serializer has an opaque `additionalModelRequestFields` document;
-this is not evidence that it accepts system instructions or output bounds.
-The inspected fields do not establish a distinct system role. That finding is
-an evidence gap, not proof that the remote service cannot support one.
+On October 1, 2026 you accepted two limitations for this experiment only:
 
-A further contract inspection on October 1, 2026 confirmed the same binary digest.
-The installed message metadata decoder recognizes `conversationId` and
-`utteranceId`, then skips other keys. That decoder does not establish successful
-turn completion. The [official region documentation](https://kiro.dev/docs/enterprise/supported-regions/)
-also distinguishes the Kiro profile region used for inference from the Identity
-Center region. A token alone cannot establish that profile region. The accepted
-profile amendment now reads the fixed selected profile alongside the token.
-Agent prompt and headless output documentation describe CLI behavior,
-without supplying the missing runtime wire contract for the 2.8.0 baseline.
-The candidate plan records these sources and their limits.
+1. Instructions are prefixed to user content. A distinct system role is not
+   preserved, and instruction priority may change.
+2. Clean HTTP body EOF after valid frames and the case assertions permits
+   tentative continuation. It never proves successful model completion. A
+   truncation that drops whole frames and still looks like clean EOF may escape
+   detection.
 
-Preparation remains `needs_evidence`. Continuing requires evidence of the exact
-destination and authentication path, distinct system instruction placement,
-generation controls, and positive turn completion. Reading sources beyond the
-accepted token and selected profile, or changing instruction roles, requires
-`/architect` to extend the decision first.
-The live dispatcher and live case bodies remain unimplemented because their
-required inputs are unresolved.
+Even six observed cases yield only `limited_candidate_observed`. The runner never
+reports `candidate_supported`, and `observed_completion` remains null. The full
+Claude Code bridge and real coding task still need their own design and evidence.
 
-You can run the offline checks with:
+## Candidate contract
+
+`testdata/probe-plan.json` contains the exact six prompts, synthetic request
+examples, fields, limits, assertions, and provenance. The code checks the plan
+against its implemented contract. Placeholders in the examples stand for the
+random local conversation ID, selected profile ARN, and observed tool ID.
+
+The current binary trace connects the streaming operation to these candidates:
+
+| Profile region | Destination |
+|---|---|
+| `us-east-1` | `https://runtime.us-east-1.kiro.dev:443/` |
+| `eu-central-1` | `https://runtime.eu-central-1.kiro.dev:443/` |
+
+Each request is POST with `application/x-amz-json-1.0` and
+`X-Amz-Target: AmazonCodeWhispererStreamingService.GenerateAssistantResponse`.
+Bearer authentication and `profileArn` come from the same fresh combined snapshot.
+The request carries `max_tokens: 1024` and `thinking.type: disabled` through
+`additionalModelRequestFields`. Optional output usage is validated and reduced to
+a boolean comparison with the requested limit. Missing usage stays unknown.
+Static evidence supplies a candidate; remote acceptance and behavior remain untested.
+
+| Attempt | Assertion or trigger |
+|---|---|
+| 1 | Assemble `PROBE_MARKER` from at least two nonempty text events. |
+| 2 | Receive one `probe_lookup` call with stable ID and complete `{"key":"alpha"}` arguments. |
+| 3 | Return the fixed result to that exact tool ID and receive `probe-value-alpha`. |
+| 4 | Retain the exchange and receive `probe-followup`. |
+| 5 | Cancel the attempt after its first nonempty text event, then check cleanup. |
+| 6 | Cut input at 256 bytes and report incomplete output. An unreached cutoff is inconclusive. |
+
+No model supplied command is executed. Cases stop at the first unexpected failure
+and never trigger corrective requests. Unknown events or fields, stream errors,
+malformed frames, duplicate JSON members, incomplete tools, and wrong identifiers
+cannot become tentative completion. A request for disabled thinking that produces
+a reasoning event stops as inconclusive. The old synthetic fixture decoder remains
+separate; its invented `probeFixtureComplete` event is rejected by the wire decoder.
+
+## Local checks
+
+You can run the synthetic harness with:
 
 ```sh
 rtk proxy env GOTOOLCHAIN=local GOWORK=off CGO_ENABLED=1 GOFLAGS= go test -mod=readonly -race ./internal/kiro ./internal/credentials ./internal/configstore
 ```
 
-The tests create temporary settings, synthetic SQLite credentials, and local TLS
-servers. They exercise one shared request path. `probe-offline-cases.json` contains
-invented response fixtures. The request envelope in `fixtureRequest`, including
-its separate instructions field, is a local test contract. Neither that field nor
-`probeFixtureComplete` is proposed as part of the Kiro protocol.
+It uses temporary homes, synthetic SQLite records, and local TLS servers.
+`probe_wire_checks_test.go` exercises the concrete request and response path,
+including the complete tool exchange, tentative completion, error precedence,
+plan drift, profile drift, DNS restrictions, output filtering, and budgets.
+The earlier fixture checks still exercise deadlines, cancellation, locking,
+source consistency, framing bounds, and malformed tool arguments.
 
-| Case | Local evidence |
-|---|---|
-| Text | Two text events assemble the instruction marker, followed by an explicit fixture completion event. |
-| Tool | Argument fragments assemble a bounded JSON object for `probe_lookup`; the observed name and ID are checked. |
-| Result | A fixed lookup result is returned to that exact ID, with the assistant tool request retained in history. No supplied command is executed. |
-| Follow up | The original instructions and completed tool exchange remain in the request. |
-| Cancel | The first text event cancels only the attempt context. Local cleanup completes and the parent permits the next case. |
-| Interrupt | A fixed 256 byte cutoff produces an incomplete frame. Completing before that cutoff is inconclusive. |
+Ordinary tests cannot select `TestProtocolProbe`, even with inherited live
+variables. You can compile the opt in entry point while explicitly disabling it:
 
-The fixture runner exercises `observed`, `contradicted`, `inconclusive`, and
-`unrun` cases, plus the spec's verdict priority. A decoded contradiction survives
-later cancellation. Missing completion, authentication failure, exhausted budget,
-or an unreached injection trigger cannot become a supported candidate. An offline
-`candidate_supported` result proves the synthetic assertions only, not Kiro model
-access or Claude Code compatibility. Optional model identity and usage metadata
-remain unknown when absent and are reduced to booleans when present.
+```sh
+rtk proxy env GOTOOLCHAIN=local GOWORK=off CGO_ENABLED=1 GOFLAGS= KIRO_GATEWAY_LIVE_PROBE=0 go test -mod=readonly -tags=liveprobe ./internal/kiro -run '^TestProtocolProbe$' -count=1 -v
+```
 
-The request path holds an existing configuration lock without creating missing
-settings. It freezes model selection and the session reference, then reads one
-fresh combined token and selected profile snapshot per attempt. Both fixed rows
-share one SQLite connection, transaction, and five second deadline. Manual
-settings edits cannot adopt a changed credential for the active run. The token
-is selected from the same bytes as the checked fingerprint.
+That command skips before reading operator configuration or running client
+version commands. It makes no inference request.
 
-The profile reader validates the exact ARN and one string valued `profileName`
-or `profile_name`, then discards the name. The ARN region selects a destination
-from a frozen synthetic map. Every map entry is restricted to local TLS. The
-first valid profile digest is pinned for the run; even whitespace or ignored
-field changes stop a later attempt before dispatch. A new run can select a new
-profile without changing the saved token reference. Profile values and digests
-have no output or settings field. Ordinary `Capture` and `ReadSnapshot` still
-read only the token record.
+## Resource and account safeguards
 
-Transport is restricted to numeric IPv4 loopback TLS with explicit fixture trust.
-It ignores environment proxies, rejects redirects, and disables connection reuse,
-HTTP/2, and request body replay. An attempted connection consumes a slot even if
-it fails. The sequence has at most six attempts, a ten minute parent deadline,
-a two minute request deadline, and a 30 second received byte idle limit. Tests
-shorten these clocks. Operator cancellation prevents subsequent dispatch.
+The runner holds the existing configuration lock through cleanup. It freezes the
+saved mapping and token reference. Each attempt reads only the fixed token and
+selected profile records in one SQLite transaction. The first profile digest is
+pinned in memory. Changed tokens or profiles stop before another dispatch. Normal
+capture and health behavior is unchanged, and settings are never written.
 
-Requests are capped at 64 KiB and responses at 8 MiB. Both HTTP headers and local
-frame headers are capped at 16 KiB. The synthetic decoder additionally caps each
-event payload at 64 KiB. It checks both EventStream CRC32 values and lengths before
-allocation. A 16 MiB reservation budget covers retained history, argument copies,
-encoded requests, observations, and conservative decoder scratch allowances.
-It reserves an additional 2 MiB for both bounded account records and their
-temporary byte and string copies.
-`peak_reserved_bytes` reports that reservation, not the process heap size. Raw
-payloads, credentials, tool IDs, arguments, unknown spellings, and error text have
-no summary output field.
+The finite live destination map rejects overrides. DNS resolves once per attempt,
+rejects local and reserved IPv4 results, and chooses one public address without
+fallback. TLS still validates the fixed service hostname. Environment proxies,
+redirects, compression, connection reuse, HTTP/2, and request replay are disabled.
+Local tests use a separate factory restricted to numeric IPv4 loopback TLS.
 
-`TestProtocolProbe` exists only with the `liveprobe` tag. It skips before access
-unless its explicit gate is set. With the gate set, preflight checks the exact
-clean commit, tracked input inventory (including files Git might ignore), plan
-digest, Go environment, and client version baselines. It then rejects the missing
-candidate contract before configuration, credential access, or network state.
-Changing a plan status or environment value cannot enable a live dispatcher.
-Ordinary tests exercise preflight with synthetic command results, not installed
-client commands or operator state.
+The run has at most six sequential attempts in ten minutes, with two minutes per
+request, 30 seconds of received byte inactivity, and five seconds for cleanup.
+Requests are at most 64 KiB, HTTP and frame headers 16 KiB, response bodies 8 MiB,
+and individual event payloads 64 KiB. A conservative 16 MiB reservation budget
+covers source copies, requests, decoding, history, and observations.
+`peak_reserved_bytes` measures that reservation, not the process heap.
 
-The following work remains before a live review:
+Only fixed labels, public plan values, local counts, and validated boolean
+assertions enter the summary. Tokens, fingerprints, account metadata, prompts,
+response text, tool identifiers, arguments, results, upstream IDs, and raw errors
+are never printed or saved. Runtime evidence stays in memory until reduced to the
+allowed summary.
 
-1. Establish the current IAM Identity Center destination and token scheme
-   without adding an unapproved credential source. The profile region source
-   is implemented, but the live destination and authentication trace is pending.
-2. Establish instruction placement, requested model controls, and positive model
-   turn completion from current evidence. The fixture fields cannot fill these
-   gaps. The evidence and missing fields are in `testdata/probe-plan.json`.
-3. Implement the concrete wire requests and response decoder, then exercise them
-   through these controls. Add the exact six live cases and reviewed observation
-   labels. The current framing and fixture semantics cannot substitute for them.
-4. Commit that complete candidate and its offline evidence, then present its plan
-   digest and clean commit for the operator's one run review under spec 0003.
-   This offline checkpoint is not a live approval or live result.
+## Live review
 
-Local builder checks on October 1, 2026 passed `scripts/check`, including the race
-detector, with fake live controls inherited by the ordinary suite. A separate
-build with `liveprobe` selected and the live gate unset compiled and skipped
-`TestProtocolProbe`. No real configuration or credential store was read, and no
-live inference ran. The scope records the completed offline checkpoint separately
-from the incomplete live preparation. Its independent verification, tests, review,
-and documentation steps remain pending; the existing spec verification checklist
-remains the acceptance checklist.
+The live entry point requires `liveprobe` plus all four explicit launch controls.
+It verifies the exact clean commit, tracked probe inputs, plan digest, saved
+mapping, Go environment, and client baselines. Then it may access the selected
+account and run once. Runtime checks detect drift; they do not establish consent.
+
+The [spec](../../docs/specs/0003-first-claude-code-loop/index.md) requires review of
+the concrete plan and clean code commit before one explicit launch. A new launch,
+changed plan, code, baseline, model, or destination set needs a new review. No live
+run has been performed during implementation. Live requests may consume account
+credits, and local cancellation cannot establish that remote computation stopped.

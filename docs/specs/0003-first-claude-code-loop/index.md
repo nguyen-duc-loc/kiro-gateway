@@ -2,13 +2,13 @@
 
 **Date**: 2026-10-01
 **Status**: In Progress
-**Revision review**: Profile sourcing amendment accepted on 2026-10-01 after independent review and the approved profile name correction. No live run is authorized.
+**Revision review**: On 2026-10-01 you accepted a limited feasibility experiment with instructions carried in user context and clean stream end treated only as tentative completion. This supersedes the strict preparation gate for this experiment only. The prior profile amendment remains accepted. No live run is authorized.
 
 ## Summary
 
 You first test whether the current Kiro connection can carry the instructions, tool calls, and results that Claude Code needs. An explicitly invoked development harness limits the experiment to one selected Sonnet model and six inference attempts. You review the exact destination and synthetic request plan before any live run. This spec defines that feasibility milestone; the full bridge design and real Claude Code coding loop remain pending its evidence.
 
-The profile amendment obtains the inference region from Kiro's selected profile, read alongside the pinned credential in one SQLite transaction. It makes that local source buildable with synthetic data. Authentication, system instruction placement, output controls, and successful turn completion still need protocol evidence before live work.
+The profile amendment obtains the inference region from Kiro's selected profile, read alongside the pinned credential in one SQLite transaction. It makes that local source buildable with synthetic data. New static evidence identifies the candidate destination, authentication, and model control path. The limited experiment below deliberately measures changed instruction semantics and tentative completion; it cannot establish full compatibility.
 
 ## Requirements
 
@@ -19,8 +19,8 @@ The following criteria apply to the feasibility milestone only. Satisfying them 
 1. **AC-1**: Ordinary tests, the check script, and normal gateway commands neither use real credentials nor invoke live inference. The development harness needs an explicitly selected live entry point and a reviewed, exact experiment plan before any live request.
 2. **AC-2**: Each live attempt uses one exact mapping from the saved configuration and one validated credential snapshot matching the saved fingerprint. A missing mapping, changed snapshot, expired credential, or unsupported source stops the run without renewal, fallback, or configuration changes.
 3. **AC-3**: A live run attempts at most six inference requests, sequentially, within ten minutes. Each request has a two minute deadline and a 30 second stream idle limit. Cancellation stops local work promptly. No layer retries, replays, changes endpoints, or substitutes a model automatically.
-4. **AC-4**: The experiment separately evaluates incremental text, instruction placement and behavior, tool definitions and identifiers, complete arguments, tool result continuation, and a subsequent user turn. A text response alone never establishes tool compatibility or preservation of instruction roles.
-5. **AC-5**: The experiment evaluates cancellation, interrupted output, and the evidence for successful upstream completion. A connection closing, valid JSON, a completed tool argument, or an HTTP 200 alone never proves a successful model turn.
+4. **AC-4**: The experiment separately evaluates incremental text, instruction placement and behavior, tool definitions and identifiers, complete arguments, tool result continuation, and a subsequent user turn. A text response alone never establishes tool compatibility. This limited experiment carries the fixed instruction prefix in user content and explicitly reports that the distinct system role is not preserved.
+5. **AC-5**: The experiment evaluates cancellation, interrupted output, and the evidence for successful upstream completion. A clean HTTP body end at a validated frame boundary may permit the next experimental case only after its text or tool assertions pass. It is tentative completion, never proof of a successful model turn. Truncation, stream exceptions, unknown events, and incomplete arguments still stop the run.
 6. **AC-6**: Results retain run metadata, individual case outcomes, and reviewed synthetic protocol examples. Raw traffic, real credentials, fingerprints, account metadata, and ordinary coding conversations are not saved or printed.
 7. **AC-7**: Missing or contradictory evidence stops the run and produces an explicit unresolved contract. No exhausted budget triggers another run. The full bridge remains blocked until this spec is extended through a new architecture decision using the evidence.
 8. **AC-8**: Synthetic local checks prove the harness's credential selection, network restrictions, budgets, cancellation, incomplete result handling, and output filtering. Existing health and configuration behavior and the repository checks continue to pass.
@@ -46,22 +46,33 @@ The implementation recommendations below select an explicit Go test entry point,
 
 This milestone can produce either a supported candidate for further design or a documented reason to stop. It does not add `/v1/messages`, token counting, a model catalogue, automatic sign in, or a production stream translator. No inference readiness assertion is added to `/healthz`.
 
-Preparation and synthetic harness work may proceed from this spec after ratification. Live work additionally needs the completed candidate plan described below and your explicit review of that concrete plan. If a candidate cannot be specified without inventing credential sources or silently changing instruction roles, preparation ends with that missing evidence. The gate is a required input to an experiment, not permission for the builder to invent the production protocol.
+Preparation and synthetic harness work may proceed from this spec after ratification. Live work additionally needs the completed candidate plan described below and your explicit review of that concrete plan. If a candidate cannot be specified within the approved account sources and the explicit limitations below, preparation ends with that missing evidence. The gate is a required input to an experiment, not permission for the builder to invent the production protocol.
 
 After feasibility, `/architect` extends this same spec with the actual client endpoint inventory, field support, upstream request and event types, stream state machine, completion semantics, usage handling, model resolution, and real Claude Code verification. The original scope feature stays planned and needs a decision until that full design exists. The eventual proof still requires Claude Code to execute file and shell tools under its normal permissions.
 
-### Contract disposition at this revision
+### Limited experiment contract
 
-| Gap | Decision and next evidence |
+You approved these two temporary limitations on October 1, 2026. They apply only to the development harness. The full bridge still owes its own instruction and completion design. This approval covers preparing the revised plan and local implementation, not reading your account or launching inference.
+
+| Input or behavior | Exact source and rule |
 |---|---|
-| Profile region source | Use the fixed local record and combined snapshot below. This confirmed local slice is ready to build using synthetic fixtures. |
-| Inference destination and authentication | Region derivation is settled locally. The chosen operation's destination, method, path, header names, and IAM Identity Center bearer resolver branch must still be traced together in the current artifact or a current primary protocol source. The generic bearer signer and available host strings are insufficient. |
-| Distinct system instructions | Keep `preserve_distinct_system_role`. Require an evidenced wire field and its role semantics. Agent configuration prompts and generic `additionalModelRequestFields` do not establish either. User content, tool text, and invented field names are not substitutes. |
-| Output controls | Require a named wire control, its value source, and an observable assertion. The local response byte limit cannot substitute for a generation limit. A decision to run without such a control would require your explicit change to this requirement. |
-| Successful turn completion | Require a positive decoded terminal condition with framing and error precedence. EOF, HTTP 200, tool argument completion, and metadata identifiers cannot establish success. |
-| Live cases | Keep them blocked until the preceding contract is concrete. Preserve the six case allocation and all existing limits. |
+| Destination | The current binary trace in `rationale.md` links GenerateAssistantResponse to `https://runtime.us-east-1.kiro.dev:443/` or `https://runtime.eu-central-1.kiro.dev:443/`, selected solely by the validated profile region. HTTPS POST, no override or fallback. |
+| Authentication | `Authorization: Bearer <access_token>` from that attempt's combined snapshot; `profileArn` from the same snapshot. No other account record. |
+| Operation | `Content-Type: application/x-amz-json-1.0` and `X-Amz-Target: AmazonCodeWhispererStreamingService.GenerateAssistantResponse`. Require an EventStream response content type and HTTP 200 before decoding. |
+| Model and controls | Exact saved `claude-sonnet-5` mapping. Send `additionalModelRequestFields.max_tokens = 1024` and `thinking.type = disabled`, using the documented additional model field path. Record requested control placement. If `metadataEvent.tokenUsage.outputTokens` is present, validate a finite nonnegative integer and compare with 1024 in memory. Emit only a nullable `output_within_limit` boolean. Absence remains unknown; neither a short answer nor an accepted request proves enforcement. |
+| Instructions | Policy `translate_into_user_context`. Prepend the exact synthetic instruction text and two newlines to every current user message's `content`. Keep that content in history. Emit transformation label `instructions_in_user_content` and `distinct_system_role_preserved = false`. No equivalence or precedence claim. |
+| Conversation | `conversationState` contains `conversationId`, `chatTriggerType: MANUAL`, `history`, and `currentMessage.userInputMessage`. The user message has `content`, `modelId`, `origin: CLI`, and, when needed, `userInputMessageContext`. Generate one UUID v4 with `crypto/rand` per run and reuse it across cases. No upstream identifier supplies a URL or changes the local conversation ID. |
+| Tool definition | Cases 2 through 4 offer only `probe_lookup`, with description `Return the fixed value for key alpha.` and `inputSchema.json` containing an object schema, required string `key`, enum `["alpha"]`, and no additional properties. The `tools` array contains `toolSpecification`. |
+| Tool continuation | Assemble at most one observed tool call from `toolUseEvent` fields `toolUseId`, `name`, `input` string fragments, and `stop` boolean. Require exact name, stable ID, stop true, and exactly `{"key":"alpha"}` after bounded JSON decoding. In history use `assistantResponseMessage.toolUses` with the observed ID, name, and decoded input. Case 3 sends `userInputMessageContext.toolResults` with that ID, `status: success`, and `content: [{"text":"probe-value-alpha"}]`. Never execute a supplied command. |
+| Text assertions | Case 1 must assemble `PROBE_MARKER` in at least two nonempty text events. Case 3 must assemble `probe-value-alpha`; case 4 must assemble `probe-followup`. Ignore only surrounding whitespace for these marker comparisons. Missing text or a requested tool is inconclusive; a mismatched observed marker, tool, model, or argument schema is contradicted. No corrective request. |
+| Cancellation and interruption | Case 5 cancels its child context after the first nonempty assistant text event. Case 6 cuts the received stream after 256 bytes. An unreached trigger is inconclusive. Both use separate synthetic prompts and no prior history, and neither contributes continuation history. |
+| Completion | Label `clean_stream_end_tentative`. Only error free EOF at a CRC validated frame boundary, at least one expected text or complete tool result, no decoder failure, no cancellation, and successful local cleanup can permit continuation. `observed_completion` stays null; `tentative_completion` may be true. No stop reason is invented. A connection that ends cleanly after dropping whole frames may be undetectable, an accepted limitation of this experiment. |
+| Event handling | Allow only the finite event and field sets in the concrete plan. Unknown names produce fixed counts and stop. Malformed JSON, duplicate members, changed tool IDs, unexpected tools, invalid model echoes, and any eventstream exception take precedence over tentative completion. Reasoning content is not carried into history; thinking is requested disabled, and a reasoning event stops as inconclusive. |
+| Verdict | All six cases observed gives `limited_candidate_observed`. A contradicted assertion gives `candidate_rejected`; otherwise `needs_evidence`. This runner never emits `candidate_supported`. A limited result cannot close the full bridge or scope feature 4. |
 
-The evidence currently yields `needs_evidence`, not a rejected protocol and not a supported candidate. Preparation may inspect public artifacts without credentials and implement the local profile slice. It must not open the real store, send exploratory requests, launch Kiro chat, or expand its source set to resolve these gaps. After the local slice, `/develop` stops with the named unresolved contract if no new evidence has arrived. Repeating `/architect` or `/develop` against unchanged evidence is not a resolution step. Resume wire implementation only when new evidence supplies those inputs, or when you explicitly revise the requirements. No additional live run is authorized by this amendment.
+The exact six prompts, synthetic example bodies, decoded field sets, resource limits, and source references live in `internal/kiro/testdata/probe-plan.json`. Code validates those plan semantics against the implemented contract before account access. Example placeholders represent the random local conversation ID, selected profile ARN, and observed tool ID; examples contain no account data. The supplied SHA 256 binds all plan bytes, including examples and provenance, and the clean commit binds the runner.
+
+The output record adds only fixed transformation and completion labels, nullable booleans for tentative completion, controls requested, and output within the requested limit, plus local event counts. Numeric usage, upstream identifiers, prompts, arguments, results, and profile data never enter output. Keep the generic fixture runner's invented completion event isolated from this wire decoder.
 
 ### Data model and lifetime
 
@@ -96,9 +107,9 @@ The plan is a concrete artifact the operator can review before real credentials 
 | Observation labels | Finite allowed event names, field paths, terminal labels, transformation labels, and assertion IDs. Each names the decoded field or local measurement behind it. Unknown strings are never added automatically. |
 | Provenance and review | Installed version or primary source behind each claim, local fixture results, and unresolved hypotheses. The plan does not contain its own digest or the commit that contains it. Approval binds both separately through the procedure below. |
 
-No candidate plan is approved at spec creation. In particular, the hostname strings and historical `GenerateAssistantResponse` operation in the rationale do not authorize sending a token to either a legacy host or a newer runtime host. The plan must settle the sign in path first.
+The static trace settles a candidate sign in path. It does not grant live approval: the exact completed plan, commit, and one run budget still require your review.
 
-Hypotheses about service behavior are appropriate experiment inputs when clearly stated and reviewed. Guessing an authentication destination, reading an additional credential source, suppressing instructions, or treating EOF as success is not. If the inspection cannot produce the required plan fields, record `needs_evidence` and stop before live access. A changed plan, mapping, baseline, destination set, or execution code needs a new review before another launch.
+Hypotheses about service behavior are appropriate experiment inputs when clearly stated and reviewed. Guessing an authentication destination, reading an additional credential source, suppressing instructions, or claiming proven success from EOF is not. The explicit user context and tentative EOF policies above are permitted only for this limited experiment. If the inspection cannot produce the required plan fields, record `needs_evidence` and stop before live access. A changed plan, mapping, baseline, destination set, or execution code needs a new review before another launch.
 
 Approval is a human workflow gate. First commit the complete harness, fixtures, plan, and offline evidence locally, leaving a clean checkout. Present its full Git commit ID, plan digest, exact mapping and target, permitted destinations, baseline versions, and six attempt budget. Your approval in the current conversation authorizes one launch of those reviewed inputs. A second launch needs fresh approval, including after a failed or canceled run. Copy that approval and the run result into this spec afterward, so recording it does not dirty the reviewed checkout before execution. There is no approval receipt file or runtime approval counter, and the Go harness does not parse conversation or spec prose to infer consent.
 
@@ -118,7 +129,7 @@ Before every attempt, validate the token and its existing saved fingerprint, the
 
 The combined transaction prevents mixing rows from different SQLite snapshots. It does not prove that Kiro wrote both records atomically or that the account owns the selected profile. Remote authorization remains unverified until an approved request is accepted. The experiment neither repairs stale selections nor falls back to another record. Changing Kiro's saved profile through its own controls takes effect only in a separately approved run. No gateway configuration migration, relink requirement for a profile only change, or persistent profile fingerprint is introduced.
 
-Static evidence identifies two candidate runtime hosts, `runtime.us-east-1.kiro.dev` and `runtime.eu-central-1.kiro.dev`, for their matching regions. They remain candidates until the operation and authentication trace closes the destination gate. The local profile slice can test region selection against synthetic destinations; it cannot promote either candidate to a live allowlist. The legacy default host and Kiro endpoint settings are not read or inherited.
+Static evidence identifies two candidate runtime hosts, `runtime.us-east-1.kiro.dev` and `runtime.eu-central-1.kiro.dev`, for their matching regions. The new operation and authentication trace supports these two candidates in the limited plan. Live use still requires review of that plan and an explicit launch. The legacy default host and Kiro endpoint settings are not read or inherited.
 
 ### Development surface
 
@@ -178,10 +189,10 @@ The harness emits only the following observation fields. Every variable label co
 | Case and ordering | Reviewed case and assertion IDs, attempt index, and locally counted event order. |
 | Structure | Event names and field paths only when they exactly match a reviewed plan entry; value kinds from fixed enums such as `string`, `number`, `object`, `array`, `boolean`, and `null`. Unknown names become the fixed labels `unknown_event` or `unknown_field` with counts. No unknown spelling or value is emitted. |
 | Measurements | Locally measured received bytes, retained bytes, argument bytes, event counts, request counts, and durations, checked against the experiment's resource bounds. Do not copy unvalidated numeric metadata from an upstream response. |
-| Assertions | Boolean or null results for marker match, instruction placement, valid arguments, matching tool name and ID, matching model identity, usage presence, observed completion, reached injection trigger, and completed cleanup. Null means not established. Terminal and transformation labels must match the reviewed plan's finite list; otherwise record `unknown`. |
+| Assertions | Boolean or null results for marker match, instruction placement, distinct system role preservation, controls requested, output within limit, valid arguments, matching tool name and ID, matching model identity, usage presence, observed completion, tentative completion, reached injection trigger, and completed cleanup. Null means not established. Terminal and transformation labels must match the reviewed plan's finite list; otherwise record `unknown`. |
 | Outcome | The fixed case status, run verdict, and failure category defined in this spec. |
 
-stdout may contain the run summary and these structured observations. stderr is limited to fixed progress and failure categories, case labels, attempt indices, and local durations. Do not use arbitrary response text, raw tool names or IDs, arguments, result contents, upstream request IDs, raw model strings, unknown field names, or raw errors in either stream. Usage presence can be recorded; token counts are not needed for this experiment and are not emitted.
+stdout may contain the run summary and these structured observations. stderr is limited to fixed progress and failure categories, case labels, attempt indices, and local durations. Do not use arbitrary response text, raw tool names or IDs, arguments, result contents, upstream request IDs, raw model strings, unknown field names, or raw errors in either stream. Usage presence and a validated comparison against the requested output limit can be recorded; token counts are not emitted.
 
 The reviewed evidence in `verify.md` may retain those allowed records, fixture labels, and human explanations grounded in them. Explain instruction or control differences by the named plan assertion and its outcome, not by copying a response excerpt. Write regression examples from invented content and allowed schema facts. Never turn a raw live body into a fixture by redaction or reencoding. New live fields remain unknown until a separate reviewed source establishes a safe label; runtime discovery cannot enlarge the output policy.
 
@@ -205,10 +216,10 @@ Each case is `observed`, `contradicted`, `inconclusive`, or `unrun`. `observed` 
 | Condition, evaluated in this order | Run verdict |
 |---|---|
 | A required protocol assertion is contradicted | `candidate_rejected`, preserving that evidence even if later cases were not run. |
-| Every required assertion in all six cases is observed, including the expected cancellation and incomplete stream outcomes | `candidate_supported`. Optional metadata limits remain stated. |
+| Every required assertion in all six cases is observed, including the expected cancellation and incomplete stream outcomes | `limited_candidate_observed`. Instruction and completion limitations, plus optional metadata limits, remain stated. |
 | Any other result, including an unreached case 6 cutoff, spontaneous truncation, budget exhaustion, local cleanup failure, or operator cancellation | `needs_evidence`, with the fixed cause and remaining unrun cases. |
 
-Required assertions cover incremental output, the instruction mapping assessment, intact tools and result continuation, follow up history, identified successful terminal semantics for cases 1 through 4, and the deliberate failure behavior of cases 5 and 6. The only optional observations are an upstream model identity echo and usage metadata. Their absence cannot make a run fail, but it limits the resulting claims. A spontaneous failure is not a substitute for the planned injection trigger. A missing terminal indicator or instruction role mapping blocks `candidate_supported`; it cannot be patched by treating connection close as completion or prepending a system instruction as ordinary user text.
+Required assertions cover incremental output, the instruction mapping assessment, intact tools and result continuation, follow up history, the explicitly limited tentative completion checks for cases 1 through 4, and the deliberate failure behavior of cases 5 and 6. The only optional observations are an upstream model identity echo and usage metadata. Their absence cannot make a run fail, but it limits the resulting claims. A spontaneous failure is not a substitute for the planned injection trigger. The approved transformation and tentative EOF policy permit this limited experiment to proceed without those two guarantees. They never justify `candidate_supported` or full compatibility.
 
 Keep the instruction mapping assessment separate from a prompt following test. Likewise, a model request accepted under an exact configured ID is evidence of that request's acceptance, not independent proof of the model's internal identity. Usage presence is recorded as observed or unavailable. No token counts or pricing estimate are added.
 
@@ -219,11 +230,11 @@ stateDiagram-v2
     Preparation --> AwaitingReview: Concrete plan and offline checks
     AwaitingReview --> Ready: Operator approves exact plan
     Ready --> Running: Explicit launch and matching inputs
-    Running --> CandidateSupported: Required assertions observed
+    Running --> LimitedCandidateObserved: Limited assertions observed
     Running --> CandidateRejected: Required contract contradicted
     Running --> NeedsEvidence: Missing evidence, error, or budget
     Running --> NeedsEvidence: Operator cancellation without a prior contradiction
-    CandidateSupported --> AwaitingBridgeDesign
+    LimitedCandidateObserved --> AwaitingBridgeDesign
 ```
 
 No terminal state starts another run. A successful experiment permits further architecture work, not automatic promotion of the adapter.
@@ -232,7 +243,7 @@ No terminal state starts another run. A successful experiment permits further ar
 
 | Action | Value | Named source |
 |---|---|---|
-| Prepare experiment | Destination, authentication, schema, framing, terminal hypothesis | Exact inspected artifact or recorded primary source identified in the reviewed candidate plan; no current approved value exists. Absence blocks live execution. |
+| Prepare experiment | Destination, authentication, schema, framing, terminal hypothesis | Current binary and primary documentation recorded in the candidate plan, plus the explicitly approved instruction and tentative completion policies above. The completed plan still needs one run review. |
 | Bind run | Plan digest and immutable plan | Read `probe-plan.json` once, verify SHA 256 of that buffer against the explicit launch value, then parse and retain it. Human review names that same digest separately. |
 | Check code | Reviewed commit and clean state | Explicit `KIRO_GATEWAY_PROBE_CODE_COMMIT`, equality with Git `HEAD`, and no staged, unstaged, or untracked changes before credential access. Human review names the same commit. |
 | Identify run | Run ID, start time, elapsed time | `crypto/rand` local ID, wall clock date, and monotonic timing; injected in local tests. |
@@ -262,7 +273,7 @@ Critical cases include a complete synthetic tool result and follow up exchange (
 
 Follow the Tracer Bullet approach by proving one bounded path through the harness before broadening the cases.
 
-**Resume point for the amendment**: The six case synthetic harness already exists. First implement one synthetic path from the two fixed SQLite records through token verification, profile parsing, region selection, and filtered outcome. Then exercise changed profiles, concurrent writers, invalid metadata, unsupported ARNs, cancellation, and output sentinels. Keep normal token capture behavior and the closed live gate intact. This is the independently buildable slice for **AC-1**, **AC-2**, **AC-6**, **AC-8**, **AC-9**. Its completion does not tick the whole feasibility milestone. Wire tasks below remain blocked by the contract disposition until new evidence exists; do not rebuild the completed synthetic sequence.
+**Resume point for the limited amendment**: The six case synthetic harness and profile snapshot reader are complete. Build the concrete limited wire contract through that shared snapshot and transport path, preserving its safeguards and generic fixture checks. Then present the exact plan and clean commit for one run review. Live execution, independent GA verification, and the full Claude Code bridge remain separate pending work.
 
 1. **Prepare the concrete experiment and one offline thread.** Inspect the candidate contract without credential access, prepare the plan, and implement the opt in runner from synthetic configuration through snapshot comparison, transport, and filtered result. Exercise a single text stream locally, including an incomplete response. If the plan cannot be completed, report the missing contract and stop before live work. Satisfies **AC-1**, **AC-2**, **AC-5**, **AC-6**, **AC-7**, **AC-8**.
 2. **Complete controls, then review the live plan.** Verify exact destination restrictions, immutable inputs, snapshot consistency, sequential budgets, separate run and attempt cancellation, verdict rules, and allowed observations using local fixtures. Commit the complete candidate harness and plan, then present that clean code commit, plan digest, synthetic bodies, and passing local checks for your review. Approval is for one bounded run and does not authorize implementation of an assumed production bridge. Satisfies **AC-1**, **AC-2**, **AC-3**, **AC-5**, **AC-6**, **AC-8**.
@@ -281,12 +292,12 @@ Follow the Tracer Bullet approach by proving one bounded path through the harnes
 
 ## Follow-up
 
-1. Complete and review the candidate plan before any live credential access. Its exact destination, authentication, wire schema, and terminal evidence remain experiment inputs to establish, not accepted production decisions.
+1. Complete and review the candidate plan before any live credential access. Its exact destination, authentication, wire schema, and limited completion policy remain experiment inputs, not accepted production decisions.
 2. Return to `/architect first real Claude Code coding loop` with the experiment results. Extend this spec with the complete bridge design or document why the selected access path cannot meet the accepted architecture.
 3. The later live proof must use Claude Code `2.1.285`, Kiro CLI `2.8.0`, the recorded available Sonnet model, and a disposable Go bug fixture. Preserve the original scope's file edits, shell tools, permission ownership, follow up turn, and failure evidence.
 4. Scope feature 4 remains planned and needs a decision. Finishing this preparatory milestone does not advance its full design checkbox or mark the feature done.
 5. Any durable context change after implementation belongs to `/sync`. No new tool installation or previously declined tooling offer is needed for this design.
-6. Implement the confirmed profile snapshot slice and verify AC-9 with synthetic fixtures. Its independent design review is complete. The live contract remains `needs_evidence`; bring new protocol evidence before resuming wire implementation.
+6. Use the completed profile snapshot slice for the limited wire preparation. Present the plan digest and clean commit after synthetic verification. The two full compatibility guarantees remain unresolved even if the limited experiment observes all six cases.
 
 ## Rationale
 

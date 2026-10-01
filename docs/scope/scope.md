@@ -99,13 +99,15 @@ Connect an authenticated Kiro account to a local gateway and complete a small re
 
 **Confirmed profile amendment:** You accepted the selected profile source on October 1, 2026, after independent review and its name validation correction. The next local slice reads the fixed token and `state["api.codewhisperer.profile"]` records in one transaction, derives region from the profile ARN, and pins profile bytes for the run. Synthetic implementation can proceed. Destination and authentication, distinct system instructions, output controls, and successful turn completion still need new evidence before live work.
 
+**Confirmed limited experiment:** After the additional protocol investigation on October 1, 2026, you approved carrying instructions in user context and treating clean stream end as tentative completion for feasibility only. Static evidence now connects the regional runtime operation and bearer token path, and documented model controls supply the bounded request. Even six observed cases yield only `limited_candidate_observed`; the distinct system role and proven model completion guarantees remain unresolved. Your approval covers preparation, not live account access or inference.
+
 - [x] Plan the feasibility milestone: `/architect first real Claude Code coding loop`
 - [ ] Build the feasibility milestone only: `/develop first real Claude Code coding loop: feasibility milestone only`
-  - [ ] Prepare the concrete experiment and prove one offline path through the harness (AC-1, AC-2, AC-5, AC-6, AC-7, AC-8, AC-9).
+  - [x] Prepare the concrete experiment and prove one offline path through the harness (AC-1, AC-2, AC-5, AC-6, AC-7, AC-8, AC-9).
     - [x] Complete the six case synthetic harness, including exact snapshot selection, tool result continuation, local failure controls, and passing repository checks.
     - [x] Build the combined token and selected profile snapshot with synthetic verification: `/develop first real Claude Code coding loop: selected profile snapshot only` (AC-1, AC-2, AC-6, AC-8, AC-9).
-    - [ ] Complete the current upstream contract and the concrete live request plan from evidence.
-  - [ ] Complete the safeguards and present the exact plan and clean code commit for live review (AC-1, AC-2, AC-3, AC-5, AC-6, AC-8).
+    - [x] Complete the limited candidate contract and concrete request plan from evidence and the approved instruction and completion limitations.
+  - [x] Complete the safeguards and present the exact plan and clean code commit for live review (AC-1, AC-2, AC-3, AC-5, AC-6, AC-8).
   - [ ] After approval and explicit launch, run the bounded cases and record evidence or the unresolved contract (AC-2 through AC-8).
 - [ ] Verify the feasibility milestone: `/check verify first real Claude Code coding loop: feasibility milestone only`
 - [ ] Test the feasibility milestone: `/test first real Claude Code coding loop: feasibility milestone only`
@@ -113,7 +115,7 @@ Connect an authenticated Kiro account to a local gateway and complete a small re
 - [ ] Document the feasibility milestone: `/document changelog first real Claude Code coding loop: feasibility milestone only`
 - [ ] Design it (spec): `/architect first real Claude Code coding loop`
 
-**Code:** The six case offline feasibility harness is in `internal/kiro`, with combined token and selected profile snapshots in `internal/credentials/profile.go` and existing store locking in `internal/configstore`. The harness selects a synthetic destination from the profile ARN region and pins the exact profile bytes for each run. Synthetic checks cover profile validation, concurrent SQLite writers, changed profiles, tool continuation, budgets, cancellation, interruption, code and baseline drift, and output filtering. Repository checks pass, including the race detector. The incomplete candidate plan records `claude-sonnet-5` and the installed metadata decoder's identifier fields. Destination and authentication, distinct system instructions, controls, and completion still need new evidence. No live dispatcher or live result exists; the preparation milestone remains unchecked until its concrete contract is complete.
+**Code:** The test only harness in `internal/kiro` now includes the concrete limited wire plan, request builder, bounded decoder, six case runner, and opt in live entry point. It reuses the combined snapshot reader in `internal/credentials/profile.go` and existing store locking. Local TLS tests prove tool result continuity, profile drift rejection, budgets, cancellation, interruption, plan drift, output filtering, and tentative completion without a proven completion claim. The complete repository checks pass with the race detector and fake live controls inherited; the tagged live entry compiles and skips with its gate disabled. No real account was accessed and no live request ran. Live review and execution, independent GA checks, and the full Claude Code bridge remain pending.
 
 ## Slice 2: Keep access working
 

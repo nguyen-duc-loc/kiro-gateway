@@ -1,31 +1,137 @@
 {
-  "schema_version": 1,
-  "status": "needs_evidence",
+  "schema_version": 2,
+  "status": "prepared_limited",
   "client_mapping": "claude-sonnet-5",
   "target_model": "claude-sonnet-5",
-  "instruction_policy": "preserve_distinct_system_role",
+  "instruction_policy": "translate_into_user_context",
   "baseline": {
     "claude_code": "2.1.285",
     "kiro_cli": "2.8.0"
   },
-  "destination": null,
-  "region_rule": null,
-  "authentication": null,
-  "request_schema": null,
-  "instruction_mapping": null,
-  "controls": null,
-  "completion": null,
-  "cases": [],
-  "missing_contract": [
-    "destination",
-    "region_rule",
-    "authentication",
-    "request_schema",
-    "instruction_mapping",
-    "controls",
-    "completion",
-    "cases"
+  "destination": {
+    "scheme": "https",
+    "port": 443,
+    "method": "POST",
+    "path": "/",
+    "content_type": "application/x-amz-json-1.0",
+    "target": "AmazonCodeWhispererStreamingService.GenerateAssistantResponse",
+    "accept": "application/vnd.amazon.eventstream"
+  },
+  "region_rule": {
+    "us-east-1": "https://runtime.us-east-1.kiro.dev:443/",
+    "eu-central-1": "https://runtime.eu-central-1.kiro.dev:443/"
+  },
+  "authentication": {
+    "header": "Authorization",
+    "scheme": "Bearer",
+    "token_source": "selected_snapshot.access_token",
+    "profile_source": "selected_snapshot.profile_arn"
+  },
+  "request_schema": {
+    "conversation_id_source": "crypto/rand UUID v4, generated once per run",
+    "history": "prior synthetic user messages and observed assistant text or validated tool calls, cases 1 through 4 only",
+    "tool_result": "fixed lookup for alpha, paired with the exact observed tool ID",
+    "examples": "request_examples, with placeholders for the selected profile ARN, generated conversation ID, and observed tool ID",
+    "framing": "amazon_eventstream_crc32",
+    "event_fields": {
+      "assistantResponseEvent": [
+        "content",
+        "modelId"
+      ],
+      "toolUseEvent": [
+        "toolUseId",
+        "name",
+        "input",
+        "stop"
+      ],
+      "messageMetadataEvent": [
+        "conversationId",
+        "utteranceId"
+      ],
+      "metadataEvent": [
+        "tokenUsage"
+      ],
+      "contextUsageEvent": [
+        "contextUsagePercentage"
+      ],
+      "meteringEvent": [
+        "usage",
+        "unit"
+      ]
+    },
+    "usage_fields": [
+      "inputTokens",
+      "outputTokens",
+      "totalTokens",
+      "cacheReadInputTokens",
+      "cacheWriteInputTokens",
+      "uncachedInputTokens",
+      "contextUsagePercentage",
+      "normalizedTokenUsage"
+    ],
+    "unknown_policy": "count_and_stop",
+    "exception_policy": "stop_before_tentative_completion"
+  },
+  "instruction_mapping": {
+    "policy": "translate_into_user_context",
+    "prefix": "Synthetic experiment instructions: follow the current request exactly. Use only the offered probe_lookup tool when requested.",
+    "separator": "\n\n",
+    "field": "conversationState.currentMessage.userInputMessage.content",
+    "label": "instructions_in_user_content"
+  },
+  "controls": {
+    "max_tokens": 1024,
+    "thinking_type": "disabled",
+    "field": "additionalModelRequestFields",
+    "observation": "metadataEvent.tokenUsage.outputTokens <= 1024 when present; absence is unknown"
+  },
+  "completion": {
+    "policy": "clean_stream_end_tentative",
+    "requires": [
+      "HTTP 200",
+      "valid EventStream content type",
+      "CRC checked frames",
+      "clean HTTP body EOF",
+      "case assertions met",
+      "no errors or unknown fields",
+      "local cleanup completed"
+    ],
+    "observed_completion": null,
+    "best_verdict": "limited_candidate_observed"
+  },
+  "cases": [
+    {
+      "id": "text",
+      "prompt": "Reply with exactly PROBE_MARKER and no other text.",
+      "trigger": "none"
+    },
+    {
+      "id": "tool",
+      "prompt": "Call probe_lookup with key alpha. Do not answer instead of calling the tool.",
+      "trigger": "none"
+    },
+    {
+      "id": "result",
+      "prompt": "Reply with exactly the value returned by probe_lookup and no other text.",
+      "trigger": "none"
+    },
+    {
+      "id": "followup",
+      "prompt": "Using the prior conversation and tool exchange, reply with exactly probe-followup and no other text.",
+      "trigger": "none"
+    },
+    {
+      "id": "cancel",
+      "prompt": "Write a long sequence of numbered synthetic words, one word per line.",
+      "trigger": "cancel child after first nonempty text event"
+    },
+    {
+      "id": "interrupt",
+      "prompt": "Write a long sequence of numbered synthetic words, one word per line.",
+      "trigger": "interrupt after 256 response bytes"
+    }
   ],
+  "missing_contract": [],
   "offline_framing": "amazon_eventstream",
   "offline_event_labels": [
     "assistantResponseEvent",
@@ -118,6 +224,466 @@
       "reference": "Installed arm64 de_message_metadata_event_payload, function 0x100869d10, key length and byte comparisons 0x100869f4c through 0x10086a00c, unknown value skip at 0x10086a01c; reinspected 2026-10-01",
       "sha256": "2118bd89d96830a4f0e0884e4f4071fb94e4b6036c757126afe9e3f80c9d90c6",
       "finding": "The message metadata decoder recognizes conversationId and utteranceId and skips other keys. This decoder supplies identifiers, not a positive model turn completion field. This is a finding about one installed decoder, not proof that the service has no completion signal elsewhere. The artifact digest was rechecked before inspection. No process was launched and no credential store was accessed."
+    },
+    {
+      "id": "current_connected_runtime_trace",
+      "reference": "docs/specs/0003-first-claude-code-loop/rationale.md, Additional protocol investigation, October 1, 2026",
+      "sha256": "2118bd89d96830a4f0e0884e4f4071fb94e4b6036c757126afe9e3f80c9d90c6",
+      "finding": "ApiClient::new at 0x1010904fc connects profile region to runtime endpoint and installs UnifiedBearerResolver. GenerateAssistantResponse uses POST / and its target header. The resolver selects the fixed token record; the signer writes Authorization: Bearer. Service acceptance remains a hypothesis."
+    },
+    {
+      "id": "documented_model_controls",
+      "reference": "https://kiro.dev/docs/models/effort/",
+      "finding": "Inspected on 2026-10-01, page updated 2026-09-30. Sonnet 5 exposes max_tokens from 1024 to 128000 and thinking.type disabled. The installed additional model fields path supports these candidate request controls; enforcement is unproven."
+    },
+    {
+      "id": "operator_limited_experiment",
+      "reference": "Conversation on 2026-10-01, recorded in spec 0003 Limited experiment contract",
+      "finding": "The operator approved instructions in user context and tentative completion after clean stream end for feasibility only. This supersedes the earlier strict instruction policy for this experiment. No live run is approved."
+    },
+    {
+      "id": "historical_tool_shapes",
+      "reference": "https://github.com/aws/amazon-q-developer-cli/tree/main/crates/amzn-codewhisperer-streaming-client/src/types",
+      "finding": "ToolSpecification, UserInputMessage, ToolUseEvent, ToolResult and MeteringEvent supply candidate shapes. Current serializer observations support tool context and continuation. Exact remote behavior is a hypothesis tested by this limited plan."
     }
-  ]
+  ],
+  "request_examples": [
+    {
+      "conversationState": {
+        "conversationId": "{{conversation_id}}",
+        "chatTriggerType": "MANUAL",
+        "history": [],
+        "currentMessage": {
+          "userInputMessage": {
+            "content": "Synthetic experiment instructions: follow the current request exactly. Use only the offered probe_lookup tool when requested.\n\nReply with exactly PROBE_MARKER and no other text.",
+            "modelId": "claude-sonnet-5",
+            "origin": "CLI"
+          }
+        }
+      },
+      "profileArn": "{{selected_profile_arn}}",
+      "additionalModelRequestFields": {
+        "max_tokens": 1024,
+        "thinking": {
+          "type": "disabled"
+        }
+      }
+    },
+    {
+      "conversationState": {
+        "conversationId": "{{conversation_id}}",
+        "chatTriggerType": "MANUAL",
+        "history": [
+          {
+            "userInputMessage": {
+              "content": "Synthetic experiment instructions: follow the current request exactly. Use only the offered probe_lookup tool when requested.\n\nReply with exactly PROBE_MARKER and no other text.",
+              "modelId": "claude-sonnet-5",
+              "origin": "CLI"
+            }
+          },
+          {
+            "assistantResponseMessage": {
+              "content": "PROBE_MARKER"
+            }
+          }
+        ],
+        "currentMessage": {
+          "userInputMessage": {
+            "content": "Synthetic experiment instructions: follow the current request exactly. Use only the offered probe_lookup tool when requested.\n\nCall probe_lookup with key alpha. Do not answer instead of calling the tool.",
+            "modelId": "claude-sonnet-5",
+            "origin": "CLI",
+            "userInputMessageContext": {
+              "tools": [
+                {
+                  "toolSpecification": {
+                    "name": "probe_lookup",
+                    "description": "Return the fixed value for key alpha.",
+                    "inputSchema": {
+                      "json": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string",
+                            "enum": [
+                              "alpha"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "key"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "profileArn": "{{selected_profile_arn}}",
+      "additionalModelRequestFields": {
+        "max_tokens": 1024,
+        "thinking": {
+          "type": "disabled"
+        }
+      }
+    },
+    {
+      "conversationState": {
+        "conversationId": "{{conversation_id}}",
+        "chatTriggerType": "MANUAL",
+        "history": [
+          {
+            "userInputMessage": {
+              "content": "Synthetic experiment instructions: follow the current request exactly. Use only the offered probe_lookup tool when requested.\n\nReply with exactly PROBE_MARKER and no other text.",
+              "modelId": "claude-sonnet-5",
+              "origin": "CLI"
+            }
+          },
+          {
+            "assistantResponseMessage": {
+              "content": "PROBE_MARKER"
+            }
+          },
+          {
+            "userInputMessage": {
+              "content": "Synthetic experiment instructions: follow the current request exactly. Use only the offered probe_lookup tool when requested.\n\nCall probe_lookup with key alpha. Do not answer instead of calling the tool.",
+              "modelId": "claude-sonnet-5",
+              "origin": "CLI",
+              "userInputMessageContext": {
+                "tools": [
+                  {
+                    "toolSpecification": {
+                      "name": "probe_lookup",
+                      "description": "Return the fixed value for key alpha.",
+                      "inputSchema": {
+                        "json": {
+                          "type": "object",
+                          "properties": {
+                            "key": {
+                              "type": "string",
+                              "enum": [
+                                "alpha"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "key"
+                          ],
+                          "additionalProperties": false
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "assistantResponseMessage": {
+              "content": "",
+              "toolUses": [
+                {
+                  "toolUseId": "{{observed_tool_id}}",
+                  "name": "probe_lookup",
+                  "input": {
+                    "key": "alpha"
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "currentMessage": {
+          "userInputMessage": {
+            "content": "Synthetic experiment instructions: follow the current request exactly. Use only the offered probe_lookup tool when requested.\n\nReply with exactly the value returned by probe_lookup and no other text.",
+            "modelId": "claude-sonnet-5",
+            "origin": "CLI",
+            "userInputMessageContext": {
+              "tools": [
+                {
+                  "toolSpecification": {
+                    "name": "probe_lookup",
+                    "description": "Return the fixed value for key alpha.",
+                    "inputSchema": {
+                      "json": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string",
+                            "enum": [
+                              "alpha"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "key"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  }
+                }
+              ],
+              "toolResults": [
+                {
+                  "toolUseId": "{{observed_tool_id}}",
+                  "status": "success",
+                  "content": [
+                    {
+                      "text": "probe-value-alpha"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      },
+      "profileArn": "{{selected_profile_arn}}",
+      "additionalModelRequestFields": {
+        "max_tokens": 1024,
+        "thinking": {
+          "type": "disabled"
+        }
+      }
+    },
+    {
+      "conversationState": {
+        "conversationId": "{{conversation_id}}",
+        "chatTriggerType": "MANUAL",
+        "history": [
+          {
+            "userInputMessage": {
+              "content": "Synthetic experiment instructions: follow the current request exactly. Use only the offered probe_lookup tool when requested.\n\nReply with exactly PROBE_MARKER and no other text.",
+              "modelId": "claude-sonnet-5",
+              "origin": "CLI"
+            }
+          },
+          {
+            "assistantResponseMessage": {
+              "content": "PROBE_MARKER"
+            }
+          },
+          {
+            "userInputMessage": {
+              "content": "Synthetic experiment instructions: follow the current request exactly. Use only the offered probe_lookup tool when requested.\n\nCall probe_lookup with key alpha. Do not answer instead of calling the tool.",
+              "modelId": "claude-sonnet-5",
+              "origin": "CLI",
+              "userInputMessageContext": {
+                "tools": [
+                  {
+                    "toolSpecification": {
+                      "name": "probe_lookup",
+                      "description": "Return the fixed value for key alpha.",
+                      "inputSchema": {
+                        "json": {
+                          "type": "object",
+                          "properties": {
+                            "key": {
+                              "type": "string",
+                              "enum": [
+                                "alpha"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "key"
+                          ],
+                          "additionalProperties": false
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "assistantResponseMessage": {
+              "content": "",
+              "toolUses": [
+                {
+                  "toolUseId": "{{observed_tool_id}}",
+                  "name": "probe_lookup",
+                  "input": {
+                    "key": "alpha"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "userInputMessage": {
+              "content": "Synthetic experiment instructions: follow the current request exactly. Use only the offered probe_lookup tool when requested.\n\nReply with exactly the value returned by probe_lookup and no other text.",
+              "modelId": "claude-sonnet-5",
+              "origin": "CLI",
+              "userInputMessageContext": {
+                "tools": [
+                  {
+                    "toolSpecification": {
+                      "name": "probe_lookup",
+                      "description": "Return the fixed value for key alpha.",
+                      "inputSchema": {
+                        "json": {
+                          "type": "object",
+                          "properties": {
+                            "key": {
+                              "type": "string",
+                              "enum": [
+                                "alpha"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "key"
+                          ],
+                          "additionalProperties": false
+                        }
+                      }
+                    }
+                  }
+                ],
+                "toolResults": [
+                  {
+                    "toolUseId": "{{observed_tool_id}}",
+                    "status": "success",
+                    "content": [
+                      {
+                        "text": "probe-value-alpha"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "assistantResponseMessage": {
+              "content": "probe-value-alpha"
+            }
+          }
+        ],
+        "currentMessage": {
+          "userInputMessage": {
+            "content": "Synthetic experiment instructions: follow the current request exactly. Use only the offered probe_lookup tool when requested.\n\nUsing the prior conversation and tool exchange, reply with exactly probe-followup and no other text.",
+            "modelId": "claude-sonnet-5",
+            "origin": "CLI",
+            "userInputMessageContext": {
+              "tools": [
+                {
+                  "toolSpecification": {
+                    "name": "probe_lookup",
+                    "description": "Return the fixed value for key alpha.",
+                    "inputSchema": {
+                      "json": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string",
+                            "enum": [
+                              "alpha"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "key"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "profileArn": "{{selected_profile_arn}}",
+      "additionalModelRequestFields": {
+        "max_tokens": 1024,
+        "thinking": {
+          "type": "disabled"
+        }
+      }
+    },
+    {
+      "conversationState": {
+        "conversationId": "{{conversation_id}}",
+        "chatTriggerType": "MANUAL",
+        "history": [],
+        "currentMessage": {
+          "userInputMessage": {
+            "content": "Synthetic experiment instructions: follow the current request exactly. Use only the offered probe_lookup tool when requested.\n\nWrite a long sequence of numbered synthetic words, one word per line.",
+            "modelId": "claude-sonnet-5",
+            "origin": "CLI"
+          }
+        }
+      },
+      "profileArn": "{{selected_profile_arn}}",
+      "additionalModelRequestFields": {
+        "max_tokens": 1024,
+        "thinking": {
+          "type": "disabled"
+        }
+      }
+    },
+    {
+      "conversationState": {
+        "conversationId": "{{conversation_id}}",
+        "chatTriggerType": "MANUAL",
+        "history": [],
+        "currentMessage": {
+          "userInputMessage": {
+            "content": "Synthetic experiment instructions: follow the current request exactly. Use only the offered probe_lookup tool when requested.\n\nWrite a long sequence of numbered synthetic words, one word per line.",
+            "modelId": "claude-sonnet-5",
+            "origin": "CLI"
+          }
+        }
+      },
+      "profileArn": "{{selected_profile_arn}}",
+      "additionalModelRequestFields": {
+        "max_tokens": 1024,
+        "thinking": {
+          "type": "disabled"
+        }
+      }
+    }
+  ],
+  "limits": {
+    "attempts": 6,
+    "run_seconds": 600,
+    "request_seconds": 120,
+    "idle_seconds": 30,
+    "cleanup_seconds": 5,
+    "request_bytes": 65536,
+    "header_bytes": 16384,
+    "response_bytes": 8388608,
+    "event_bytes": 65536,
+    "retained_bytes": 16777216,
+    "cutoff_bytes": 256
+  },
+  "observation_policy": {
+    "raw_values": "never_output",
+    "instruction_label": "instructions_in_user_content",
+    "completion_label": "clean_stream_end_tentative",
+    "assertions": [
+      "incremental",
+      "instruction_placement",
+      "marker_match",
+      "valid_arguments",
+      "matching_tool_name",
+      "matching_tool_id",
+      "matching_model_identity",
+      "usage_present",
+      "observed_completion",
+      "tentative_completion",
+      "controls_requested",
+      "output_within_limit",
+      "reached_injection_trigger",
+      "completed_cleanup"
+    ]
+  }
 }
