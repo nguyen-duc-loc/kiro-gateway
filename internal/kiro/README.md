@@ -1,7 +1,7 @@
 # Limited feasibility harness
 
 This directory contains test code only. Nothing here is linked into the gateway.
-The proposed comparison plan selects `claude-opus-5.5` as both the saved mapping
+The comparison plan selects `claude-opus-5.5` as both the saved mapping
 and requested model. It is prepared for review, not approved for a live run.
 
 On October 1, 2026 you accepted two limitations for this experiment only:
@@ -194,3 +194,10 @@ mappings through the existing link rule; unchanged bytes preserve them. The prev
 requested output and thinking controls are hypotheses for Opus 5.5, not a claim
 that its service accepts them. No fallback, renewal, or implicit model change is
 added to the runner.
+
+The operator approved the Opus mapping and one comparison run. Explicit relinking
+and local validation succeeded, but the first Opus request also returned HTTP 403
+with `access_denied`. Five dependent cases remained unrun. Matching the native
+model did not resolve the denial. No raw response was retained and no retry
+occurred. The next investigation should trace the native authentication and
+request path; another live operation needs its own review.

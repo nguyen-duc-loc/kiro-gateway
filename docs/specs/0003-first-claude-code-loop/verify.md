@@ -1,6 +1,6 @@
 # Verify: First loop protocol feasibility, spec 0003
 
-Three separately approved dispatch attempts have occurred, with no decoded inference events. The latest received HTTP 403 and the recognized service error class `access_denied`; it remains inconclusive. This file contains the verification plan and the launch records below; it does not claim independent verification passed. The full Claude Code coding loop remains a later gate in the same scope feature.
+Four separately approved dispatch attempts have occurred, with no decoded inference events. The latest Opus comparison also received HTTP 403 and the recognized service error class `access_denied`; it remains inconclusive. This file contains the verification plan and the launch records below; it does not claim independent verification passed. The full Claude Code coding loop remains a later gate in the same scope feature.
 
 The accepted profile amendment adds AC-9 and the profile cases below. Its local implementation is complete. Builder checks cover synthetic profile and wire cases; independent verification and live compatibility remain pending. The limited experiment amendment permits explicit user context instructions and tentative EOF continuation only.
 
@@ -276,6 +276,34 @@ Do not repeat this unchanged request solely to obtain the same class again. A co
 The operator reported successful native use, supplied a session reference, and then clarified that the test used Opus 5.5. A bounded read of only `session.json` confirmed the recognized `modelId` value `claude-opus-5.5`. The separate conversation and history files were not read. No session identifier, title, workspace path, conversation, or account metadata is retained here.
 
 The earlier probe used `claude-sonnet-5`, so these are different model observations. Opus success does not establish Sonnet availability or prove a cause for its denial. The next prepared candidate pins the confirmed Opus identifier while retaining the exact request protocol and limits. Explicit relinking of the current fixed snapshot, the exact Opus mapping addition, and one new run require review of the changed model, code, and plan. Relinking must retain the existing rule that changed token bytes clear old mappings. No Opus gateway request has occurred. Controls remain explicit hypotheses for Opus; unsupported controls stop rather than being dropped.
+
+## Approved Opus comparison returned access denied, October 1, 2026
+
+You approved explicit relinking, saving the exact `claude-opus-5.5` mapping, and one bounded run at commit `d1fdd1a05ad7b6b9a112ed47ff756b14fa960bbe`, with plan SHA 256 `2eefec0fec9e8bd600bfac2f3867538049a64f05e51f960c64d2fa26771f5600`.
+
+The existing `account link` command captured the current fixed IAM Identity Center snapshot and reported that mappings were empty. A temporary local helper saved and reloaded the exact Opus mapping under the existing lock, preserving the new reference. It was removed before launch. `config check` passed, and the code commit and plan digest matched the approved clean checkpoint. No sign in or automatic renewal occurred during setup.
+
+| Run metadata | Observed value |
+|---|---|
+| Local run ID | `376971aa-a8de-4e68-8d7d-49cf4bd0edd8` |
+| Started | `2026-10-01T11:35:16.00959Z` |
+| Platform and baseline | `darwin/arm64`, Claude Code `2.1.286`, Kiro CLI `2.8.0` |
+| Requested model | `claude-opus-5.5` |
+| Selected destination | `https://runtime.us-east-1.kiro.dev:443/` |
+| Attempts | One dispatch attempt |
+| First case | `text`: `inconclusive`, cause `needs_evidence`, failure stage `http_status`, HTTP status category `forbidden` |
+| Error observation | `service_error: access_denied`, `error_response_format: json` |
+| Received bytes | 119 error response bytes inspected in memory; zero decoded text or tool events |
+| Remaining cases | `tool`, `result`, `followup`, `cancel`, and `interrupt`: `unrun` |
+| Local request assertions | Instruction placement and controls requested true; no service acceptance claim |
+| Model identity, usage, and completion | Unknown |
+| Cleanup | Completed |
+| Verdict and elapsed time | `needs_evidence`, 1017 milliseconds |
+| Peak reservation | 3735552 bytes |
+
+The exact model string now matches the operator confirmed native Opus test, but the gateway request still received an access denial. Changing the model did not resolve this candidate's denial. This does not prove the two clients used the same profile, authentication branch, operation, or controls, nor identify the service's failed access rule. Matching byte counts do not establish identical discarded error messages.
+
+No raw message, body, header, upstream identifier, token, fingerprint, or account value was retained. No retry, model fallback, endpoint change, renewal, or second request followed. The next productive investigation is the native client's actual authentication and request path, using the successful native session as operator evidence. Another unchanged gateway request is not recommended. Any native live comparison or changed inference candidate still needs its own concrete review.
 
 ## Later Claude Code acceptance gate
 
