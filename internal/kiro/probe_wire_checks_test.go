@@ -213,7 +213,7 @@ func TestWireCleanEndNeverOverridesErrors(t *testing.T) {
 		{name: "one text event", body: probeFrame("assistantResponseEvent", `{"content":"PROBE_MARKER"}`), status: "inconclusive", cause: "needs_evidence"},
 		{name: "partial frame", body: append(wireResponses(0), 1, 2, 3), status: "inconclusive", cause: "stream_incomplete"},
 		{name: "fixture completion", body: append(wireResponses(0), probeFrame(fixtureCompletionEvent, `{"complete":true}`)...), status: "inconclusive", cause: "needs_evidence"},
-		{name: "unknown field", body: append(wireResponses(0), probeFrame("metadataEvent", `{"sentinel-secret":"private"}`)...), status: "inconclusive", cause: "needs_evidence"},
+		{name: "unknown semantic field", body: append(wireResponses(0), probeFrame("assistantResponseEvent", `{"content":"","sentinel-secret":"private"}`)...), status: "inconclusive", cause: "needs_evidence"},
 		{name: "wrong model", body: probeFrame("assistantResponseEvent", `{"content":"PROBE_MARKER","modelId":"sentinel-model"}`), status: "contradicted", cause: "contract_mismatch"},
 		{name: "fractional output", body: append(wireResponses(0), probeFrame("metadataEvent", `{"tokenUsage":{"outputTokens":1.5}}`)...), status: "inconclusive", cause: "contract_mismatch"},
 		{name: "duplicate JSON", body: probeFrame("assistantResponseEvent", `{"content":"PROBE_MARKER","content":"other"}`), status: "inconclusive", cause: "contract_mismatch"},

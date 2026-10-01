@@ -458,6 +458,31 @@ The added metering member did not resolve the unknown field stop. Neither the ev
 
 The prepared structural diagnostic and finite vocabulary are described in `rationale.md`. Its plan digest is `ffed93d9e9089568d095506f490e9924d5c96c683ad9a8e1eeb387af6d0d3ef5`. It preserves the request and stop behavior while adding bounded event, location, known name hint, and JSON kind labels. It awaits a new exact run review.
 
+## Approved diagnostic identified metadata extension, October 1, 2026
+
+You approved one run at clean commit `f7870e86dc6f782b886899ccefa5a6a974785c83`, plan SHA 256 `ffed93d9e9089568d095506f490e9924d5c96c683ad9a8e1eeb387af6d0d3ef5`.
+
+| Run metadata | Observed value |
+|---|---|
+| Local run ID | `25f46680-aa1b-4704-8ffe-0bb28d9f5f24` |
+| Started | `2026-10-01T13:36:47.170438Z` |
+| Platform and baseline | `darwin/arm64`, Claude Code `2.1.286`, Kiro CLI `2.8.0` |
+| Model and destination | `claude-opus-5.5`, `https://runtime.us-east-1.kiro.dev:443/generateAssistantResponse` |
+| Attempts and HTTP outcome | One attempt, HTTP 200 |
+| First case | `text`: `inconclusive`, `needs_evidence`, stage `stream` |
+| Received bytes and events | 380 bytes, two text events, zero tool events, zero unknown events, one unknown field |
+| Structural detail | `event: metadataEvent`, `location: event`, `known_name: unlisted`, `kind: string` |
+| Remaining cases | Five unrun |
+| Local assertions | Instruction placement true; controls requested false |
+| Marker, incremental assertion, model, usage, completion, token limit | Unknown |
+| Cleanup | Completed |
+| Verdict and elapsed time | `needs_evidence`, 2221 milliseconds |
+| Peak reservation | 3808522 bytes |
+
+The diagnostic locates a string extension in the top level of a metadata event. Neither its actual name nor its value was retained. There was no retry, refresh, fallback, account mutation, or second request. This approval is consumed.
+
+The prepared correction ignores only additional top level `metadataEvent` members while retaining their fixed diagnostics and validating known usage. Its rationale and regression boundaries are recorded in `rationale.md`; plan SHA 256 is `4ad27507d9c8e63592c67dc41dbcd23afb034405d171a79a2b4a2bfd0de5aba3`. It has no live result yet and needs a new exact review.
+
 ## Later Claude Code acceptance gate
 
 After `/architect` completes the bridge design, the original scope still needs a real Claude Code `2.1.285` session against the gateway using the recorded available Sonnet model. Claude Code must read and fix a disposable Go bug, execute its file and shell tools under normal permissions, return results, finish a follow up user turn, and demonstrate cancellation and incomplete stream handling. Record Kiro CLI `2.8.0`, the actual access path, and every instruction or model control difference. None of that is claimed by this feasibility checklist.

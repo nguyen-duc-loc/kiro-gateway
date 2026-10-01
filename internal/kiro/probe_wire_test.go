@@ -223,7 +223,10 @@ func wireKnown(name string, names []string) bool {
 
 type wireTurn struct {
 	fixtureTurn
-	textEvents     int
+	textEvents int
+	// Metadata extensions belong to wire diagnostics, not the strict fixture
+	// tool parser's unknown-field state.
+	unknownFields  int
 	unknownDetails []wireUnknownField
 }
 
@@ -251,6 +254,7 @@ func (s *wireTurn) observe(event string, payload []byte) error {
 	if err != nil {
 		return errContract
 	}
+	unknownBefore := s.unknownFields
 	names := make([]string, 0, len(o))
 	for name := range o {
 		names = append(names, name)
@@ -261,7 +265,7 @@ func (s *wireTurn) observe(event string, payload []byte) error {
 			s.noteUnknownField(event, "event", name, o[name])
 		}
 	}
-	if s.unknownFields != 0 {
+	if s.unknownFields != unknownBefore && event != "metadataEvent" {
 		return errNeedsEvidence
 	}
 	switch event {

@@ -47,7 +47,7 @@ func wireUnknownPolicy() map[string]any {
 		"unlisted_label": "unlisted",
 		"kinds":          []string{"string", "number", "boolean", "null", "object", "array", "unknown"},
 		"values":         "never_output",
-		"behavior":       "stop_without_accepting_unknown_fields",
+		"behavior":       "ignore_metadata_event_extensions_otherwise_stop",
 	}
 }
 

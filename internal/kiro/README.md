@@ -65,7 +65,7 @@ were unrun; no retry or automatic refresh followed.
 | 6 | Cut input at 256 bytes and report incomplete output. An unreached cutoff is inconclusive. |
 
 No model supplied command is executed. Cases stop at the first unexpected failure
-and never trigger corrective requests. Unknown events or fields, stream errors,
+and never trigger corrective requests. Unknown events or semantic fields, stream errors,
 malformed frames, duplicate JSON members, incomplete tools, and wrong identifiers
 cannot become tentative completion. Reasoning is not explicitly disabled; an
 unsupported reasoning event stops as inconclusive. The old synthetic fixture decoder remains
@@ -86,6 +86,14 @@ structural diagnostics: recognized event, location, JSON kind, and a field hint
 only if it matches the fixed schema vocabulary. Unmatched names become `unlisted`;
 values never enter the summary. Unknown fields still stop the sequence. This
 diagnostic change is prepared for review, with no further live run yet.
+
+The approved structural run at `f7870e8` located an unlisted string at the top
+level of `metadataEvent`. The next prepared policy counts and discards only
+extensions in that metadata object, matching the reference's unused metadata
+handling. Known usage, nested usage fields, text, tools, error frames, duplicate
+JSON checks, and resource limits remain strict. Diagnostics remain bounded and
+values remain private. This policy has passed synthetic verification but still
+needs a live review.
 
 You can run the synthetic harness with:
 

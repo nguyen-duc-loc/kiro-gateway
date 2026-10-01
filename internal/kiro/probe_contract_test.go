@@ -26,13 +26,13 @@ func wirePlanParts() map[string]any {
 			"examples":               "request_examples, with placeholders for the selected profile ARN, generated conversation ID, and observed tool ID",
 			"framing":                "amazon_eventstream_crc32",
 			"event_fields":           wireEventFields(), "usage_fields": wireUsageFields(),
-			"unknown_policy": "count_and_stop", "exception_policy": "stop_before_tentative_completion",
+			"unknown_policy": "count_ignore_metadata_event_extensions_otherwise_stop", "exception_policy": "stop_before_tentative_completion",
 		},
 		"instruction_mapping": map[string]string{"policy": wireInstructionPolicy, "prefix": wireInstructions, "separator": "\n\n", "field": "first user content of each independent conversation; retained once in history", "label": "instructions_in_user_content"},
 		"controls":            map[string]any{"policy": "omit_additional_model_fields", "controls_requested": false, "output_within_limit": nil, "observation": "validate usage when present without claiming an upstream token cap or disabled thinking"},
 		"limits":              map[string]int{"attempts": probeMaxAttempts, "run_seconds": 600, "request_seconds": 120, "idle_seconds": 30, "cleanup_seconds": 5, "request_bytes": probeMaxRequest, "header_bytes": probeMaxHeaders, "response_bytes": probeMaxResponse, "event_bytes": probeMaxEvent, "retained_bytes": probeMaxRetained, "cutoff_bytes": fixtureCutoff},
 		"observation_policy":  map[string]any{"raw_values": "never_output", "instruction_label": "instructions_in_user_content", "completion_label": wireCompletionPolicy, "assertions": []string{"incremental", "instruction_placement", "marker_match", "valid_arguments", "matching_tool_name", "matching_tool_id", "matching_model_identity", "usage_present", "observed_completion", "tentative_completion", "controls_requested", "output_within_limit", "reached_injection_trigger", "completed_cleanup"}},
-		"completion":          map[string]any{"policy": wireCompletionPolicy, "requires": []string{"HTTP 200", "valid EventStream content type", "CRC checked frames", "clean HTTP body EOF", "case assertions met", "no errors or unknown fields", "local cleanup completed"}, "observed_completion": nil, "best_verdict": "limited_candidate_observed"},
+		"completion":          map[string]any{"policy": wireCompletionPolicy, "requires": []string{"HTTP 200", "valid EventStream content type", "CRC checked frames", "clean HTTP body EOF", "case assertions met", "no errors or unknown fields outside metadataEvent extensions", "local cleanup completed"}, "observed_completion": nil, "best_verdict": "limited_candidate_observed"},
 	}
 }
 

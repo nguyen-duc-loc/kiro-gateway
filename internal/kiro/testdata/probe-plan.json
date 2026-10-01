@@ -70,7 +70,7 @@
       "contextUsagePercentage",
       "normalizedTokenUsage"
     ],
-    "unknown_policy": "count_and_stop",
+    "unknown_policy": "count_ignore_metadata_event_extensions_otherwise_stop",
     "exception_policy": "stop_before_tentative_completion"
   },
   "instruction_mapping": {
@@ -94,7 +94,7 @@
       "CRC checked frames",
       "clean HTTP body EOF",
       "case assertions met",
-      "no errors or unknown fields",
+      "no errors or unknown fields outside metadataEvent extensions",
       "local cleanup completed"
     ],
     "observed_completion": null,
@@ -289,6 +289,11 @@
       "reference": "Installed @kiro/agent 0.3.234 dist/server/acp-server.js schema constants lines 142733 to 143095; pinned jwadow parsers.py followupPrompt handling; prior reviewed usage and message metadata fields",
       "sha256": "233e4dec77cd538e35b691d1fd0e12ca64a7c90d720c4dbf6979f21b4c45482f",
       "finding": "Finite identifier vocabulary supplies only known-name diagnostic hints for a rejected field, plus a known event, fixed location and JSON kind. Unmatched names become unlisted. At most four details are retained, no values are emitted, and the decoder still stops. Vocabulary membership does not authorize decoding the field."
+    },
+    {
+      "id": "metadata_extension_policy",
+      "reference": "https://github.com/jwadow/kiro-gateway/blob/a5292ca04c7c6231e0b47673ac3f981f5a706e1e/kiro/parsers.py#L241",
+      "finding": "The reference extracts only the response fields it consumes. The approved structural diagnostic located the blocker at a top-level metadataEvent string member, not response text or tool input. Prepare ignoring only additional top-level metadataEvent members after bounded JSON validation, retaining counts and finite hints. Known tokenUsage remains strict, as do other events, duplicate keys, error frames, and all semantic assertions. Metadata cannot establish text, tool, or completion success."
     }
   ],
   "request_examples": [
@@ -863,7 +868,7 @@
         "unknown"
       ],
       "values": "never_output",
-      "behavior": "stop_without_accepting_unknown_fields"
+      "behavior": "ignore_metadata_event_extensions_otherwise_stop"
     }
   },
   "client_metadata": {

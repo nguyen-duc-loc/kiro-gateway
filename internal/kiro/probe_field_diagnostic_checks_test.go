@@ -22,8 +22,12 @@ func TestWireUnknownFieldDiagnosticsNeverExposeValues(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			turn := wireTurn{fixtureTurn: fixtureTurn{memory: &probeMemory{limit: probeMaxRetained}}}
-			if err := turn.observe(tc.event, []byte(tc.payload)); !errors.Is(err, errNeedsEvidence) {
-				t.Fatalf("observe(%s) error=%v, want needs_evidence", tc.name, err)
+			var wantError error
+			if tc.event != "metadataEvent" || tc.location != "event" {
+				wantError = errNeedsEvidence
+			}
+			if err := turn.observe(tc.event, []byte(tc.payload)); !errors.Is(err, wantError) {
+				t.Fatalf("observe(%s) error=%v, want %v", tc.name, err, wantError)
 			}
 			if len(turn.unknownDetails) != 1 || turn.unknownFields != 1 {
 				t.Fatalf("observe(%s) details=%d count=%d, want one each", tc.name, len(turn.unknownDetails), turn.unknownFields)
@@ -44,8 +48,8 @@ func TestWireUnknownFieldDiagnosticsNeverExposeValues(t *testing.T) {
 func TestWireUnknownFieldDetailsAreBounded(t *testing.T) {
 	turn := wireTurn{fixtureTurn: fixtureTurn{memory: &probeMemory{limit: probeMaxRetained}}}
 	err := turn.observe("metadataEvent", []byte(`{"a_private":1,"b_private":2,"c_private":3,"d_private":4,"e_private":5}`))
-	if !errors.Is(err, errNeedsEvidence) || turn.unknownFields != 5 || len(turn.unknownDetails) != 4 {
-		t.Errorf("observe(five unknowns) error=%v count=%d details=%d, want needs_evidence, five, four", err, turn.unknownFields, len(turn.unknownDetails))
+	if err != nil || turn.unknownFields != 5 || len(turn.unknownDetails) != 4 {
+		t.Errorf("observe(five metadata extensions) error=%v count=%d details=%d, want nil, five, four", err, turn.unknownFields, len(turn.unknownDetails))
 	}
 	turn.release()
 }
@@ -65,5 +69,62 @@ func TestWireUnknownFieldSummaryStillStopsSequence(t *testing.T) {
 	b, err := json.Marshal(got)
 	if err != nil || strings.Contains(string(b), "sentinel-private") {
 		t.Error("unknown field summary exposed raw response data or failed encoding")
+	}
+}
+
+func TestWireMetadataExtensionsDoNotInterruptToolsOrClaimCompletion(t *testing.T) {
+	home, _ := probeHome(t)
+	var requests atomic.Int32
+	p := localWireProbe(t, home, func(w http.ResponseWriter, r *http.Request) {
+		i := int(requests.Add(1)) - 1
+		if i >= 6 {
+			t.Error("metadata extension sequence exceeded six attempts")
+			return
+		}
+		assertWireRequest(t, r, i)
+		w.Header().Set("Content-Type", "application/vnd.amazon.eventstream")
+		w.Write(probeFrame("metadataEvent", `{"sentinel_private_name":"sentinel-private-value","tokenUsage":{"outputTokens":3}}`))
+		w.Write(wireResponses(i))
+		w.(http.Flusher).Flush()
+		if i == 4 {
+			<-r.Context().Done()
+		}
+	})
+	got := runWireCases(p, wireTestID, probeMaxRetained)
+	if got.Verdict != "limited_candidate_observed" || requests.Load() != 6 {
+		t.Fatalf("runWireCases(metadata extensions) verdict=%s attempts=%d, want six observed cases", got.Verdict, requests.Load())
+	}
+	for _, c := range got.Cases {
+		if c.UnknownFields != 1 || len(c.UnknownFieldDetails) != 1 || c.Assertions.Completion != nil {
+			t.Errorf("case %s lost metadata diagnostics or inferred completion", c.ID)
+		}
+	}
+	b, err := json.Marshal(got)
+	if err != nil || strings.Contains(string(b), "sentinel_private_name") || strings.Contains(string(b), "sentinel-private-value") {
+		t.Error("accepted metadata extensions leaked names or values into summary")
+	}
+}
+
+func TestWireMetadataExtensionsCannotHideInvalidUsageOrMakeText(t *testing.T) {
+	for _, tc := range []struct {
+		name, payload string
+		want          error
+	}{
+		{name: "extension only", payload: `{"unlisted":"synthetic"}`},
+		{name: "malformed usage", payload: `{"unlisted":"synthetic","tokenUsage":"invalid"}`, want: errContract},
+		{name: "negative usage", payload: `{"unlisted":"synthetic","tokenUsage":{"outputTokens":-1}}`, want: errContract},
+		{name: "unknown usage member", payload: `{"unlisted":"synthetic","tokenUsage":{"unexpected":1}}`, want: errNeedsEvidence},
+		{name: "duplicate", payload: `{"unlisted":"a","unlisted":"b"}`, want: errContract},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			turn := wireTurn{fixtureTurn: fixtureTurn{memory: &probeMemory{limit: probeMaxRetained}}}
+			if err := turn.observe("metadataEvent", []byte(tc.payload)); !errors.Is(err, tc.want) {
+				t.Errorf("observe(%s) error=%v, want %v", tc.name, err, tc.want)
+			}
+			if err := turn.validate(0); !errors.Is(err, errNeedsEvidence) {
+				t.Errorf("validate(metadata only, %s) error=%v, want needs_evidence", tc.name, err)
+			}
+			turn.release()
+		})
 	}
 }
