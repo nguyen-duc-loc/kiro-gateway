@@ -97,6 +97,27 @@
       "reference": "Installed arm64 BearerAuthSigner::sign_http_request, function 0x100d6553c, request header insertion at 0x100d65760; UnifiedBearerResolver::resolve_identity at 0x1022679a4",
       "sha256": "2118bd89d96830a4f0e0884e4f4071fb94e4b6036c757126afe9e3f80c9d90c6",
       "finding": "The installed runtime contains a bearer signer that formats credential material and inserts a request header. The unified resolver handles multiple credential variants. These functions alone do not establish the GenerateAssistantResponse auth selection or the source branch for the selected IAM Identity Center token."
+    },
+    {
+      "id": "documented_profile_region",
+      "reference": "https://kiro.dev/docs/enterprise/supported-regions/ (page updated 2026-08-04, inspected 2026-10-01)",
+      "finding": "Kiro documents that inference occurs in the Kiro profile region, which can differ from the IAM Identity Center instance region. A credential region alone therefore does not establish the inference destination. The current source boundary exposes no profile region. This does not authorize reading profile metadata or selecting a default endpoint."
+    },
+    {
+      "id": "documented_agent_prompt",
+      "reference": "https://kiro.dev/docs/custom-agents/configuration-reference/ (inspected 2026-10-01)",
+      "finding": "The agent configuration prompt supplies high level context similar to a system prompt. This describes agent configuration, not the GenerateAssistantResponse wire field or instruction precedence. It does not close the distinct system role gap for the installed 2.8.0 baseline."
+    },
+    {
+      "id": "documented_headless_output",
+      "reference": "https://kiro.dev/docs/cli/headless/ (inspected 2026-10-01)",
+      "finding": "The documentation describes CLI stream-json run output and an interruption record for V3. It does not establish a successful runtime model turn event or inference output token control for the installed 2.8.0 baseline. CLI run records cannot substitute for an upstream completion contract."
+    },
+    {
+      "id": "current_message_metadata_decoder",
+      "reference": "Installed arm64 de_message_metadata_event_payload, function 0x100869d10, key length and byte comparisons 0x100869f4c through 0x10086a00c, unknown value skip at 0x10086a01c; reinspected 2026-10-01",
+      "sha256": "2118bd89d96830a4f0e0884e4f4071fb94e4b6036c757126afe9e3f80c9d90c6",
+      "finding": "The message metadata decoder recognizes conversationId and utteranceId and skips other keys. This decoder supplies identifiers, not a positive model turn completion field. This is a finding about one installed decoder, not proof that the service has no completion signal elsewhere. The artifact digest was rechecked before inspection. No process was launched and no credential store was accessed."
     }
   ]
 }

@@ -110,7 +110,7 @@ Connect an authenticated Kiro account to a local gateway and complete a small re
 - [ ] Document the feasibility milestone: `/document changelog first real Claude Code coding loop: feasibility milestone only`
 - [ ] Design it (spec): `/architect first real Claude Code coding loop`
 
-**Code:** The six case offline feasibility harness is in `internal/kiro`, with exact snapshot reads in `internal/credentials` and existing store locking in `internal/configstore`. Synthetic checks cover tool continuation, budgets, cancellation, interruption, code and baseline drift, and output filtering. The incomplete candidate plan records `claude-sonnet-5` and the remaining protocol evidence gaps. No live dispatcher or live result exists; the preparation milestone remains unchecked until its concrete contract is complete.
+**Code:** The six case offline feasibility harness is in `internal/kiro`, with exact snapshot reads in `internal/credentials` and existing store locking in `internal/configstore`. Synthetic checks cover tool continuation, budgets, cancellation, interruption, code and baseline drift, and output filtering. The incomplete candidate plan records `claude-sonnet-5`, the distinction between profile and Identity Center regions, and the installed metadata decoder's identifier fields. Destination, authentication, distinct system instructions, controls, and completion still need evidence. No live dispatcher or live result exists; the preparation milestone remains unchecked until its concrete contract is complete.
 
 ## Slice 2: Keep access working
 

@@ -13,6 +13,23 @@ this is not evidence that it accepts system instructions or output bounds.
 The inspected fields do not establish a distinct system role. That finding is
 an evidence gap, not proof that the remote service cannot support one.
 
+A further contract inspection on October 1, 2026 confirmed the same binary digest.
+The installed message metadata decoder recognizes `conversationId` and
+`utteranceId`, then skips other keys. That decoder does not establish successful
+turn completion. The [official region documentation](https://kiro.dev/docs/enterprise/supported-regions/)
+also distinguishes the Kiro profile region used for inference from the Identity
+Center region. The current credential snapshot cannot establish that profile
+region. Agent prompt and headless output documentation describe CLI behavior,
+without supplying the missing runtime wire contract for the 2.8.0 baseline.
+The candidate plan records these sources and their limits.
+
+Preparation remains `needs_evidence`. Continuing requires evidence of the exact
+destination and authentication path, distinct system instruction placement,
+generation controls, and positive turn completion. Reading another profile source
+or changing instruction roles requires `/architect` to extend the decision first.
+The live dispatcher and live case bodies remain unimplemented because their
+required inputs are unresolved.
+
 You can run the offline checks with:
 
 ```sh
