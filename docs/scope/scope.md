@@ -93,6 +93,19 @@ Connect an authenticated Kiro account to a local gateway and complete a small re
 
 **Done when:** Claude Code receives streamed output, runs its own file and shell tools under its normal permissions, sends tool results back, and completes a follow up turn; instructions and tool identifiers survive translation; the local endpoint requires a credential; errors and cancellation are visible; evidence records the exact access path and tested versions.
 
+**Spec:** [0003. First Claude Code loop, protocol feasibility](../specs/0003-first-claude-code-loop/index.md)
+
+**Confirmed preparation:** You accepted the bounded feasibility design on October 1, 2026, after independent review and its four corrections. A development harness will investigate one exact saved Sonnet mapping, with at most six inference attempts and explicit review of the concrete plan before each live run. The initial baseline is Claude Code `2.1.285` and Kiro CLI `2.8.0`. The full bridge still needs protocol evidence and another architecture pass; its design checkbox and feature status remain pending.
+
+- [x] Plan the feasibility milestone: `/architect first real Claude Code coding loop`
+- [ ] Build the feasibility milestone only: `/develop first real Claude Code coding loop: feasibility milestone only`
+  - [ ] Prepare the concrete experiment and prove one offline path through the harness (AC-1, AC-2, AC-5, AC-6, AC-7, AC-8).
+  - [ ] Complete the safeguards and present the exact plan and clean code commit for live review (AC-1, AC-2, AC-3, AC-5, AC-6, AC-8).
+  - [ ] After approval and explicit launch, run the bounded cases and record evidence or the unresolved contract (AC-2 through AC-8).
+- [ ] Verify the feasibility milestone: `/check verify first real Claude Code coding loop: feasibility milestone only`
+- [ ] Test the feasibility milestone: `/test first real Claude Code coding loop: feasibility milestone only`
+- [ ] Review the feasibility milestone (fresh model): `/check review first real Claude Code coding loop: feasibility milestone only`
+- [ ] Document the feasibility milestone: `/document changelog first real Claude Code coding loop: feasibility milestone only`
 - [ ] Design it (spec): `/architect first real Claude Code coding loop`
 
 ## Slice 2: Keep access working
