@@ -318,3 +318,29 @@ The [current Kiro model reference](https://kiro.dev/docs/models/) lists Opus 5.5
 You approved relinking the current fixed snapshot, adding the exact Opus mapping, and one run at `d1fdd1a05ad7b6b9a112ed47ff756b14fa960bbe`, with plan digest `2eefec0fec9e8bd600bfac2f3867538049a64f05e51f960c64d2fa26771f5600`. Setup and local source validation succeeded. The first `claude-opus-5.5` request received HTTP 403 and the fixed `access_denied` class. Five dependent cases were unrun, and no retry followed. The allowed summary is in `verify.md`.
 
 The named model difference was removed, but the candidate remained denied. This makes the model change insufficient as a remedy; it does not establish a particular authentication defect or prove exact account and profile equivalence with the native session. Raw server messages were not retained. The next investigation should trace the successful native client's actual authentication and request path before another candidate is proposed. Automatic endpoint switches, alternate credentials, header guesses, and repeated unchanged requests remain outside the approved experiment.
+
+## Bundled agent identifies a different operation target
+
+The next investigation inspected installed software files only. It did not launch Kiro, access credentials or conversations, change account settings, or send inference. The CLI binary contains the KAS launch path and references `KIRO_KAS_SERVER_PATH`, `KIRO_KAS_NODE_PATH`, and the ACP server entry point. The extracted software directory is `~/Library/Application Support/kiro-cli/kas/node_modules/`. Its `@kiro/agent/package.json` reports version `0.3.234`. The inspected `@kiro/agent/dist/server/acp-server.js` has SHA 256 `233e4dec77cd538e35b691d1fd0e12ca64a7c90d720c4dbf6979f21b4c45482f`. Line numbers below count newline bytes in that artifact.
+
+The [current CLI V3 documentation](https://kiro.dev/docs/cli/v3/) confirms that V3 uses a shared agent implementation. This supports inspecting the bundled agent as a distinct implementation, but neither that page nor the supplied session metadata proves which code executed the operator's successful turn.
+
+### Follow the bundled client, not the operation schema alone
+
+| Evidence in the ACP server bundle | Finding |
+|---|---|
+| `createACPQClientFactory`, lines 432418 to 432455 | The default host is `https://runtime.${region}.kiro.dev`. The factory gets a token from its auth provider and constructs `KiroRuntimeClient` with that token and endpoint. |
+| Client import at line 430527 and command import at line 431323 | Both resolve to the bundled `require_dist_cjs39()` runtime package, whose exports at lines 144694 onward lead to the inspected client and command. |
+| Bundled runtime settings, lines 143951 to 143962 | Bearer authentication and `AwsJson1_0Protocol` are selected. The service target is `KiroRuntimeService`. |
+| RPC serializer, lines 127426 and 127461; AWS JSON serializer, lines 137498 to 137504 | The request uses root path POST, `application/x-amz-json-1.0`, and an `x-amz-target` formed from service target and operation name. For this command it is `KiroRuntimeService.GenerateAssistantResponse`. |
+| `GenerateAssistantResponse` schema at line 143894 | The schema also contains `/generateAssistantResponse`, but the selected RPC serializer does not use that HTTP binding. The schema alone is insufficient evidence to change the request path. |
+| Response middleware, lines 144643 to 144659 | Despite its `addKrsSseMiddleware` name, this operation consumes a binary event stream through `parseBinaryEventStream`. It does not establish that this operation uses text SSE. |
+| `AcpCallbackAuthProvider`, lines 432675 onward, especially 432798 | This provider requests the token from its host through `_kiro/auth/getAccessToken` and derives region from the cached profile ARN. This research did not invoke that callback or establish that its selected token and profile equal the gateway snapshot. |
+
+The neighboring standalone `@amzn/kiro-runtime-service-typescript-client` package is materially different: its `dist-cjs/runtimeConfig.shared.js` selects REST JSON and no authentication by default. Its SHA 256 is `943b24680da6794f4351ca4152f03bdd451c3bc7b761fa11bfecb28948ca6fb5`. That package must not be substituted for the bundled code when inferring the ACP server's behavior. Early inspection of the operation schema suggested a path difference; tracing the actual bundled serializer corrected that interpretation.
+
+### Recommended next comparison
+
+The current probe sends `AmazonCodeWhispererStreamingService.GenerateAssistantResponse`. The bundled agent supplies concrete evidence for comparing `KiroRuntimeService.GenerateAssistantResponse` instead, while retaining the reviewed root path, content type, bearer source, exact Opus model, synthetic cases, limits, and no replay policy. This is a specific operation target difference, not evidence that login must be repeated or that the account lacks Opus access.
+
+Prepare that single target change with a synthetic request assertion and an updated plan digest before requesting another live launch. A successful comparison could isolate the target as sufficient to resolve the denial for that run. A further denial would leave native credential selection and other request differences unresolved. The current finding does not prove the cause of the recorded 403, native session engine, or complete protocol equivalence. No probe code or approved run plan changed in this investigation, and no new live launch is authorized by this record.
