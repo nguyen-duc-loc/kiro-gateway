@@ -48,5 +48,19 @@
     "Live operator permission procedure",
     "Live cancellation and injected interruption",
     "GA compatibility"
-  ]
+  ],
+  "interactive_terminal_loop": {
+    "synthetic_tls_dispatches": 5,
+    "matched_tool_results": 3,
+    "client_success": true,
+    "real_kiro_dispatches": 0,
+    "edit_permission_prompt_displayed": true,
+    "bash_permission_prompt_displayed": true,
+    "permission_mode": "manual",
+    "fixture_permission_responses": "Individual terminal selections for exact invented fixture operations. No session wide approval or permission bypass.",
+    "followup_turn_completed": true,
+    "optional_plugin_dialog": "Dismissed without installation.",
+    "terminal_streams": "Concrete controlling terminal device for stdin, stdout, and stderr.",
+    "elapsed_seconds": 124.71
+  }
 }

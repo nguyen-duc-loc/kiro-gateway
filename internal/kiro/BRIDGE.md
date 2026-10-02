@@ -57,3 +57,20 @@ That approval is consumed. Before another run, the operator can renew the sessio
 After the operator confirmed renewed sign in, explicit `account link` succeeded. The exact `claude-opus-5.5` mapping was restored through the existing locked, validated configuration store, and `config check` passed. Both client artifacts still match the plan digests. No inference or profile inspection was performed during recovery, and no account values were retained in this record.
 
 The current plan prepares a third launch under the same prompts, destinations, manual permission procedure, and 20 dispatch / 20 minute limits. It requires its own explicit run review. Earlier approvals remain consumed.
+
+## Third live launch outcome and terminal streams
+
+The separately approved recovered session run reached Kiro and consumed three dispatches. It ended with `coding_assertion_failed` and completed cleanup within the deadline. The client received model output, but its edit and shell permissions were not granted. No interactive permission prompt was available to the operator. The sanitized record is in `testdata/bridge-run-2026-10-02-03.json`.
+
+The client inherited captured output streams in this execution channel and selected noninteractive behavior. The launcher now resolves the concrete terminal device behind stdin and connects all three client streams to it. It keeps separate process group cancellation and restores foreground ownership and terminal settings. The `/dev/tty` indirection was unsuitable for the pinned Bun runtime, so the concrete device is used instead. A synthetic regression reproduces captured stdout and stderr and checks all three client streams, input, cancellation, and foreground restoration.
+
+The installed client also passed a fully interactive offline exercise through synthetic SQLite and TLS. It displayed individual Edit and Bash approval prompts, completed three matching tool results, and completed a followup turn across five synthetic dispatches. The optional LSP installation dialog was dismissed. No live Kiro dispatch occurred during these checks. You can run that offline exercise in a terminal:
+
+```sh
+rtk proxy go test -c -tags 'livebridge clientbridge' -o bin/bridge-live.test ./internal/kiro
+rtk proxy ./bin/bridge-live.test -test.run '^TestInstalledClientInteractiveOffline$' -test.v -client-bridge -terminal-launch-check
+```
+
+For that disposable exercise, the initial task edits `value.go` and runs its tests. After the first response, enter `Confirm the completed fixture change on this subsequent turn.` After the second response, use `/exit`. Approve only the individual fixture operations, and dismiss optional plugin installation. The three minute offline deadline covers setup and interaction.
+
+The third live approval is consumed. The corrected launcher must be pinned in a new plan before another reviewed launch. The live prompts, destinations, manual permission mode, and budget remain the same.

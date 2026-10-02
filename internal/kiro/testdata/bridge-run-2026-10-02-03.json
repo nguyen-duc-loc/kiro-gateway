@@ -1,0 +1,30 @@
+{
+  "date": "2026-10-02",
+  "verdict": "needs_evidence",
+  "launch_commit": "6ba4157ccfed567d5cb8fec615778b84e73d654d",
+  "implementation_commit": "62990971e2581cc4aff0617030fc7aa730178cbf",
+  "plan_sha256": "41afbae3799b4ef7ff41d3ba3b7ac637b482076141fa6dfa64977e54231c11a1",
+  "authorization": "Operator approved this exact recovered session plan. This one launch is complete.",
+  "dispatches": 3,
+  "first_failure_category": "coding_assertion_failed",
+  "elapsed_seconds": 17.79,
+  "cleanup_within_deadline": true,
+  "observation": "The client received model output but exited without presenting interactive tool permission prompts. The edit and shell permissions were not granted. Captured output streams made the client select noninteractive behavior.",
+  "completed": [
+    "Plan and artifact preflight",
+    "Source validation",
+    "Three inference dispatches",
+    "Client model output",
+    "Runner cleanup"
+  ],
+  "not_established": [
+    "Successful fixture edit",
+    "Passing fixture tests through the client",
+    "Interactive operator tool permission exchange",
+    "Followup user turn",
+    "Cancellation after live text",
+    "Injected live interruption",
+    "GA acceptance"
+  ],
+  "next_step": "Connect all client streams to the concrete controlling terminal device, verify actual interactive permissions offline, then pin the corrected code for a separate run review. No automatic live retry occurred."
+}

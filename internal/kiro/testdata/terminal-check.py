@@ -4,12 +4,17 @@ import pty
 import select
 import signal
 import sys
+import subprocess
 import time
 
 pid, master = pty.fork()
 if pid == 0:
     binary = os.path.abspath(sys.argv[1])
-    os.execv(binary, [binary, "-test.run=^TestInteractiveClientTerminal", "-test.v", "-terminal-launch-check"])
+    # Match the execution channel: terminal stdin with captured stdout/stderr.
+    child = subprocess.Popen([binary, "-test.run=^TestInteractiveClientTerminal", "-test.v", "-terminal-launch-check"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    while chunk := child.stdout.read1(4096):
+        os.write(1, chunk)
+    os._exit(child.wait())
 
 output = bytearray()
 sent = False

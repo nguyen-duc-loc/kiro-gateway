@@ -29,6 +29,18 @@ import (
 var wireClientBridge = flag.Bool("client-bridge", false, "explicit offline client through synthetic wire adapter")
 
 func TestInstalledClientWireLoopOffline(t *testing.T) {
+	installedClientWireLoop(t, false)
+}
+
+func TestInstalledClientInteractiveOffline(t *testing.T) {
+	if !*terminalLaunchCheck {
+		t.Skip("requires explicit terminal fixture")
+	}
+	installedClientWireLoop(t, true)
+}
+
+func installedClientWireLoop(t *testing.T, interactive bool) {
+	t.Helper()
 	if !*wireClientBridge {
 		t.Skip("requires explicit -client-bridge flag")
 	}
@@ -113,6 +125,21 @@ func TestInstalledClientWireLoopOffline(t *testing.T) {
 		handler.ServeHTTP(w, r)
 	}))
 	t.Cleanup(srv.Close)
+	if interactive {
+		ctx, cancel := context.WithTimeout(t.Context(), 3*time.Minute)
+		defer cancel()
+		args := []string{"--model", bridge.Model, "--effort", "high", "--safe-mode", "--tools", "Read,Edit,Bash", "--permission-mode", "manual", "--prompt-suggestions", "false", "Read value.go, change Value to return 2, and run the fixture tests."}
+		cmd := exec.CommandContext(ctx, binary, args...)
+		cmd.Dir = repo
+		cmd.Env = wireClientEnv(srv.URL, strings.Repeat("dummy", 8), cfg)
+		err := runInteractiveClient(cmd)
+		got, readErr := os.ReadFile(file)
+		t.Logf("interactive_loop calls=%d matched_results=%d invalid=%d client_success=%t real_kiro_dispatches=0", generated.Load(), matched.Load(), invalid.Load(), err == nil)
+		if err != nil || readErr != nil || !strings.Contains(string(got), "return 2") || matched.Load() != 3 || generated.Load() != 5 || invalid.Load() != 0 {
+			t.Error("interactive offline coding and followup exchange incomplete")
+		}
+		return
+	}
 	ctx, cancel := context.WithTimeout(t.Context(), 45*time.Second)
 	defer cancel()
 	args := []string{"-p", "--no-session-persistence", "--model", bridge.Model, "--effort", "high", "--safe-mode", "--tools", "Read,Edit,Bash", "--permission-mode", "manual", "--prompt-suggestions", "false", "--input-format", "stream-json", "--output-format", "stream-json", "--verbose", "--permission-prompt-tool", "stdio"}
