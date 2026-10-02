@@ -23,7 +23,6 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-	"syscall"
 	"testing"
 	"time"
 
@@ -232,12 +231,9 @@ func TestLiveBridge(t *testing.T) {
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-	cmd.Cancel = func() error { return syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL) }
-	cmd.WaitDelay = 5 * time.Second
 	// This is interactive client output, never copied into the evidence record.
 	t.Log("In Claude Code, review each Read, Edit, and Bash permission. After the first answer, enter the followup prompt from the reviewed plan. After the second answer, exit Claude Code.")
-	if cmd.Run() != nil {
+	if runInteractiveClient(cmd) != nil {
 		fail("client_incomplete")
 		return
 	}

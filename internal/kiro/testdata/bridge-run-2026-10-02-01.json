@@ -1,0 +1,31 @@
+{
+  "date": "2026-10-02",
+  "verdict": "needs_evidence",
+  "launch_commit": "ee70ebeac542727499c8f9840d0f695fdfd6a869",
+  "implementation_commit": "36ffb645dab5479850a15cbdc1f29131ccd1d4ce",
+  "plan_sha256": "4ea54bdfcfe60a9eba2ac859a2bd85dc83614ca1536031d282094a5166fa2a7a",
+  "authorization": "Operator approved this exact prepared plan in the conversation. This one launch is complete.",
+  "dispatches": 0,
+  "first_failure_category": "client_incomplete",
+  "elapsed_seconds": 89.4,
+  "cleanup_within_deadline": true,
+  "observation": "The interactive child was suspended in a background terminal process group before displaying a permission prompt. Only the verified runner owned child group was terminated, allowing the runner to report failure and clean up.",
+  "completed": [
+    "Plan and artifact preflight",
+    "Disposable fixture setup",
+    "Runner cleanup"
+  ],
+  "unrun": [
+    "Real coding task",
+    "Tool permission exchange",
+    "Tool results",
+    "Followup user turn",
+    "Cancellation after live text",
+    "Injected live stream interruption"
+  ],
+  "not_claimed": [
+    "Live coding compatibility",
+    "GA acceptance"
+  ],
+  "next_step": "A local terminal regression reproduces the launch bug. A foreground ownership fix requires a newly pinned code commit and a separate review before another live run."
+}

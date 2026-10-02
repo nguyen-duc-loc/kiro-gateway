@@ -32,3 +32,16 @@ rtk proxy ./bin/bridge-live.test -test.run '^TestLiveBridge$' -test.v -live-brid
 Client output stays in the interactive terminal and is not copied into an evidence file. The runner reports fixed verdict, dispatch count, first failure category, and cleanup outcome. Temporary client configuration and the fixture are removed. It changes neither gateway settings nor Kiro's store.
 
 `experimental_loop_observed` requires the coding and followup assertions, both expected faults, and cleanup within the budget. Any other outcome remains `needs_evidence`. Neither means GA acceptance. The separate behavior verification, test workflow, fresh model review, and change documentation remain pending.
+
+## First live launch outcome
+
+The approved launch on October 2, 2026 ended with `needs_evidence`, zero dispatches, and cleanup within the deadline. The child process was suspended because the runner gave it a separate process group without foreground terminal ownership. No coding or live failure assertion ran. The sanitized record is in `testdata/bridge-run-2026-10-02-01.json`; its original plan and commit remain in Git history.
+
+The focused fix gives the child foreground ownership and restores the prior terminal group after exit or cancellation. It retains group cancellation and manual tool permissions. The synthetic terminal regression fails with the original launch and passes with the fix, including cancellation and foreground restoration. You can reproduce that local check without Claude or account access:
+
+```sh
+rtk proxy go test -c -race -tags livebridge -o bin/bridge-live.test ./internal/kiro
+rtk proxy python3 internal/kiro/testdata/terminal-check.py bin/bridge-live.test
+```
+
+The first approval was consumed by that launch. The corrected code and updated plan need a separate run review. No automatic live retry is performed.
