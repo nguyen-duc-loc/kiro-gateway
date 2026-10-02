@@ -148,7 +148,7 @@ func (h *messagesHandler) serve(w http.ResponseWriter, r *http.Request, id strin
 		return
 	}
 	state := bridge.NewResponse(request)
-	sse := streamWriter{w: w, state: state, id: messageID}
+	sse := streamWriter{w: w, state: state, id: messageID, ctx: ctx}
 	end, err := h.generator.Generate(ctx, request, func(e bridge.Event) error {
 		if err := ctx.Err(); err != nil {
 			return err
@@ -159,6 +159,9 @@ func (h *messagesHandler) serve(w http.ResponseWriter, r *http.Request, id strin
 		if request.Stream {
 			if err := sse.emit(e); err != nil {
 				category = "response_write"
+				if ctx.Err() != nil {
+					category = canceledCategory(ctx, r.Context())
+				}
 				bridge.Observe(ctx, "failure", category, false)
 				cancel()
 				return err
@@ -204,14 +207,24 @@ func (h *messagesHandler) serve(w http.ResponseWriter, r *http.Request, id strin
 	if request.Stream {
 		err = sse.finish()
 	} else {
-		err = writeJSON(w, 200, state.Message(messageID, true))
+		err = writeJSONWithin(ctx, w, 200, state.Message(messageID, true))
 	}
 	if err != nil {
 		category = "response_write"
+		if ctx.Err() != nil {
+			category = canceledCategory(ctx, r.Context())
+		}
 		bridge.Observe(ctx, "failure", category, true)
 		panic(http.ErrAbortHandler)
 	}
 	bridge.Observe(ctx, "terminal", "success", true)
+}
+
+func canceledCategory(ctx, request context.Context) string {
+	if errors.Is(context.Cause(request), context.Canceled) {
+		return "canceled"
+	}
+	return bridge.SafeFailure(context.Cause(ctx)).Category
 }
 
 func validateHeaders(r *http.Request) error {
@@ -282,24 +295,49 @@ func writeAPIError(w http.ResponseWriter, id string, f *bridge.Failure) {
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) error {
-	_ = http.NewResponseController(w).SetWriteDeadline(time.Now().Add(5 * time.Second))
+	return writeJSONWithin(context.Background(), w, status, v)
+}
+
+func writeJSONWithin(ctx context.Context, w http.ResponseWriter, status int, v any) error {
+	if err := ctx.Err(); err != nil {
+		return context.Cause(ctx)
+	}
+	_ = http.NewResponseController(w).SetWriteDeadline(responseDeadline(ctx))
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	_, err := w.Write(append(bridge.Canonical(v), '\n'))
 	return err
 }
 
+func responseDeadline(ctx context.Context) time.Time {
+	limit := time.Now().Add(5 * time.Second)
+	if deadline, ok := ctx.Deadline(); ok && deadline.Before(limit) {
+		return deadline
+	}
+	return limit
+}
+
 type streamWriter struct {
 	w                 http.ResponseWriter
 	state             *bridge.Response
 	id                string
+	ctx               context.Context
 	started, textOpen bool
 	index             int
 }
 
 func (s *streamWriter) send(kind string, v any) error {
+	ctx := s.ctx
+	// A fixed error may use the cleanup window; successful events may not
+	// extend the inference deadline while writing their terminal sequence.
+	if kind == "error" {
+		ctx = context.Background()
+	}
+	if err := ctx.Err(); err != nil {
+		return context.Cause(ctx)
+	}
 	c := http.NewResponseController(s.w)
-	_ = c.SetWriteDeadline(time.Now().Add(5 * time.Second))
+	_ = c.SetWriteDeadline(responseDeadline(ctx))
 	if _, err := s.w.Write(append(append([]byte("event: "+kind+"\ndata: "), bridge.Canonical(v)...), '\n', '\n')); err != nil {
 		return err
 	}

@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"kiro-gateway/internal/bridge"
 )
@@ -183,4 +184,23 @@ func TestBusyCountsAndCancellation(t *testing.T) {
 	}
 	cancel()
 	<-finished
+}
+
+func TestTerminalWritesRespectInferenceDeadline(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	w := httptest.NewRecorder()
+	s := streamWriter{w: w, ctx: ctx}
+	if err := s.send("message_stop", map[string]string{"type": "message_stop"}); !errors.Is(err, context.Canceled) || w.Body.Len() != 0 {
+		t.Errorf("send(terminal after cancel) err=%v bytes=%d, want canceled with no terminal", err, w.Body.Len())
+	}
+	if err := writeJSONWithin(ctx, w, 200, map[string]string{"type": "message"}); !errors.Is(err, context.Canceled) || w.Body.Len() != 0 {
+		t.Errorf("writeJSONWithin(canceled) err=%v bytes=%d, want canceled without success", err, w.Body.Len())
+	}
+	deadline := time.Now().Add(time.Second)
+	short, stop := context.WithDeadline(context.Background(), deadline)
+	defer stop()
+	if got := responseDeadline(short); !got.Equal(deadline) {
+		t.Errorf("responseDeadline(short)=%v, want request deadline=%v", got, deadline)
+	}
 }
