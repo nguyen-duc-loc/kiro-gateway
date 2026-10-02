@@ -45,3 +45,9 @@ rtk proxy python3 internal/kiro/testdata/terminal-check.py bin/bridge-live.test
 ```
 
 The first approval was consumed by that launch. The corrected code and updated plan need a separate run review. No automatic live retry is performed.
+
+## Second live launch outcome
+
+The corrected plan was separately approved and launched on October 2, 2026. Claude Code reached the production source read, which failed with `credential_expired`. The runner retained that first cause, stopped the client, and completed cleanup within the deadline. Dispatches remained zero. The coding task, tool permission exchange, followup, and live failure checks remain unrun. The sanitized record is in `testdata/bridge-run-2026-10-02-02.json`.
+
+That approval is consumed. Before another run, the operator can renew the session through the normal Kiro CLI sign in flow. Explicit relinking and restoration of the exact model mapping require authorization; neither happened during this run. A new concrete plan and run review follow that recovery. The saved plan currently describes the consumed second launch, not a ready or authorized third launch.

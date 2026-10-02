@@ -1,0 +1,34 @@
+{
+  "date": "2026-10-02",
+  "verdict": "needs_evidence",
+  "launch_commit": "75e9a56b9074acfc74beac63b987d1f17ffcfe71",
+  "implementation_commit": "18ca0edb1297489f5add1aff851d42c7750b1046",
+  "plan_sha256": "e6d9fc7e2c31106ad535c90ce2c03c9ea946c8a38d57dbb8955e1acbdc355eb2",
+  "authorization": "Operator approved this exact corrected plan in the conversation. This one launch is complete.",
+  "dispatches": 0,
+  "first_failure_category": "credential_expired",
+  "client_outcome": "client_incomplete",
+  "elapsed_seconds": 1.09,
+  "cleanup_within_deadline": true,
+  "observation": "The corrected terminal launch reached the production source read. Credential expiry stopped the run before upstream dispatch. No raw credential or account metadata was retained.",
+  "completed": [
+    "Plan and artifact preflight",
+    "Disposable fixture setup",
+    "Interactive client launch",
+    "Source expiry rejection before dispatch",
+    "Runner cleanup"
+  ],
+  "unrun": [
+    "Real coding task",
+    "Tool permission exchange",
+    "Tool results",
+    "Followup user turn",
+    "Cancellation after live text",
+    "Injected live stream interruption"
+  ],
+  "not_claimed": [
+    "Live coding compatibility",
+    "GA acceptance"
+  ],
+  "next_step": "Renew the session through the normal Kiro CLI sign in flow. Explicitly relink and restore the exact model mapping under separate authorization, then prepare and review another concrete live plan. No automatic renewal, relinking, or retry occurred."
+}
