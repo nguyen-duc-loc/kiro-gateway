@@ -62,4 +62,8 @@ Specs live in `docs/specs/<number>-<name>/index.md`, with supporting rationale a
 MCP servers: gopls (configured in `.codex/config.toml`; local paths need adjustment if the checkout moves).
 Declined during spec 0002: `eduardo-sl/go-agent-skills` skills `go-database` and `go-context`, and `liliang-cn/mcp-sqlite-server`. Do not offer these again without a new need or user request.
 
+## Context files
+
+* [internal/credentials/AGENTS.md](internal/credentials/AGENTS.md): Fixed SQLite records, snapshot validation, and profile boundaries.
+
 _Drafted by /audit from the repo, worth a quick human pass. Edit freely: once a line stops matching this draft, later runs treat it as curated and will flag rather than overwrite it._
