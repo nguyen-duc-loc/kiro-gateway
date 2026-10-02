@@ -26,7 +26,7 @@ Your stated priorities are Claude Code as the coding agent, Kiro as the source o
 | 1 | Stack and architecture | Foundation | done |
 | 2 | Coding standards and tooling | Foundation | done |
 | 3 | Local configuration and credential data model | Foundation | done |
-| 4 | First real Claude Code coding loop | Slice 1 | planned |
+| 4 | First real Claude Code coding loop | Slice 1 | in-progress |
 | 5 | Sign in and credential renewal | Slice 2 | planned |
 | 6 | Long conversations and model selection | Slice 3 | planned |
 | 7 | Interrupted sessions and safe recovery | Slice 4 | planned |
@@ -87,15 +87,17 @@ Define how settings, credential references, model mappings, and diagnostic recor
 
 ## Slice 1: Prove the coding loop
 
-### 4. First real Claude Code coding loop · planned · needs a decision · GA
+### 4. First real Claude Code coding loop · in-progress · GA
 
 Connect an authenticated Kiro account to a local gateway and complete a small real coding task in Claude Code with one available Claude model. This is the working skeleton and the first product proof.
 
 **Done when:** Claude Code receives streamed output, runs its own file and shell tools under its normal permissions, sends tool results back, and completes a follow up turn; instructions and tool identifiers survive translation; the local endpoint requires a credential; errors and cancellation are visible; evidence records the exact access path and tested versions.
 
-**Spec:** [0003. First Claude Code loop, protocol feasibility](../specs/0003-first-claude-code-loop/index.md)
+**Spec:** [0004. Experimental Claude Code coding bridge](../specs/0004-claude-code-bridge/index.md). The completed preparation remains recorded in [0003. First Claude Code loop, protocol feasibility](../specs/0003-first-claude-code-loop/index.md).
 
-**Confirmed preparation:** You accepted the bounded feasibility design on October 1, 2026, after independent review and its four corrections. A development harness will investigate one exact saved Sonnet mapping, with at most six inference attempts and explicit review of the concrete plan before each live run. The initial baseline is Claude Code `2.1.285` and Kiro CLI `2.8.0`. The full bridge still needs protocol evidence and another architecture pass; its design checkbox and feature status remain pending.
+**Confirmed bridge design:** You accepted spec 0004 on October 2, 2026, after independent review and its corrections. The next milestone adds `serve --experimental-bridge`, the exact Opus 5.5 mapping, both Messages response modes, local token estimation, and one active inference request. It uses Claude Code `2.1.287` and Kiro CLI `2.8.0` as the proposed baseline. Instructions become user context, completion is inferred, reasoning is discarded, usage is estimated, and `max_tokens` is advisory. The later live proof requires its own concrete run review and permits at most 20 dispatches over 20 minutes, including five seconds reserved for cleanup. The build and verification boxes below cover this experimental milestone; GA completion remains pending the separate guarantees identified in the spec.
+
+**Confirmed preparation:** You accepted the bounded feasibility design on October 1, 2026, after independent review and its four corrections. Its initial plan used one exact saved Sonnet mapping, at most six inference attempts, and explicit review of the concrete plan before each live run. The initial baseline was Claude Code `2.1.285` and Kiro CLI `2.8.0`. At that stage, the full bridge still needed protocol evidence and another architecture pass; its design checkbox and feature status remained pending.
 
 **Confirmed profile amendment:** You accepted the selected profile source on October 1, 2026, after independent review and its name validation correction. The next local slice reads the fixed token and `state["api.codewhisperer.profile"]` records in one transaction, derives region from the profile ARN, and pins profile bytes for the run. Synthetic implementation can proceed. Destination and authentication, distinct system instructions, output controls, and successful turn completion still need new evidence before live work.
 
@@ -113,9 +115,19 @@ Connect an authenticated Kiro account to a local gateway and complete a small re
 - [x] Test the feasibility milestone: `/test first real Claude Code coding loop: feasibility milestone only`
 - [x] Review the feasibility milestone (fresh model): `/check review first real Claude Code coding loop: feasibility milestone only`
 - [x] Document the feasibility milestone: `/document changelog first real Claude Code coding loop: feasibility milestone only`
-- [ ] Design it (spec): `/architect first real Claude Code coding loop`
+- [x] Design it (spec): `/architect first real Claude Code coding loop`
+- [ ] Build it: `/develop first real Claude Code coding loop: experimental bridge only`
+  - [ ] Prove the installed client through the authenticated local API and a scripted adapter (AC-1, AC-3, AC-7, AC-9).
+  - [ ] Connect the production wire adapter through synthetic credentials and TLS fixtures, including source changes and cancellation (AC-2, AC-5, AC-6, AC-8, AC-9).
+  - [ ] Complete tool results, followup, estimates, limits, and deterministic failure checks; prepare the concrete live plan (AC-3 through AC-10).
+  - [ ] After review and an authorized launch, complete the bounded coding proof and record its experimental outcome (AC-1 through AC-10).
+- [ ] Verify it: `/check verify first real Claude Code coding loop: experimental bridge only`
+- [ ] Test it: `/test first real Claude Code coding loop: experimental bridge only`
+- [ ] Review it (fresh model): `/check review first real Claude Code coding loop: experimental bridge only`
+- [ ] Document it: `/document changelog first real Claude Code coding loop: experimental bridge only`
+- [ ] Resolve remaining GA guarantees before feature completion: `/architect first real Claude Code coding loop: GA promotion`
 
-**Code:** The test only harness in `internal/kiro` and combined snapshot reader in `internal/credentials` have positive six case live evidence for the requested Opus 5.5 mapping. The final run used the reference request baseline, metadata extension tolerance, and reasoning discard only for independent failure checks. It observed streamed text, tool call, matching result, followup, cancellation, and the 256 byte interruption in one run. The verdict is `limited_candidate_observed`, with explicit instruction, completion, model identity, usage, and token control limits. Sanitized evidence is in spec 0003's verification record. Repository checks pass. Independent GA checks and full bridge design and implementation remain pending; feature 4 is not complete.
+**Code:** The test only harness in `internal/kiro` and combined snapshot reader in `internal/credentials` have positive six case live evidence for the requested Opus 5.5 mapping. The final run used the reference request baseline, metadata extension tolerance, and reasoning discard only for independent failure checks. It observed streamed text, tool call, matching result, followup, cancellation, and the 256 byte interruption in one run. The verdict is `limited_candidate_observed`, with explicit instruction, completion, model identity, usage, and token control limits. Sanitized evidence is in spec 0003's verification record. Repository checks pass. The experimental bridge now has the confirmed design above; its implementation and GA promotion remain pending, so feature 4 is not complete.
 
 ## Slice 2: Keep access working
 

@@ -1,0 +1,75 @@
+# Verification plan for the experimental coding bridge
+
+No implementation or acceptance result is recorded yet. This is the future verification plan for [spec 0004](index.md).
+
+## Deterministic verification
+
+Use invented credentials, temporary settings and SQLite stores, ephemeral loopback listeners, and controllable clocks and streams. The operator's real store is never an ordinary fixture.
+
+| Criteria | Required proof |
+|---|---|
+| AC-1 | Plain serve retains health and returns authenticated 404 for inference. Experimental startup rejects absent links or wrong mappings without account reads. Health remains responsive and has no inference assertion. |
+| AC-2 | Instrument source and dispatch calls. Prove authentication, validation, model checks, and admission precede source access. Replace token bytes, expire credentials, change only profile whitespace, and make the source busy. Exercise every typed source error and an unknown failure against the complete HTTP status, fixed category, and fixed message table. Each boundary has zero dispatch. |
+| AC-3 | Exercise strings and text arrays, system prefix placement with and without history, multiple tool definitions, preserved schema keywords, success and error results, empty results, multiple calls, and followup. Compare ordinary JSON content with reconstructed SSE content. Count estimation is consistent across endpoints. |
+| AC-3 | Reject duplicate JSON members, case variants, trailing JSON, invalid UTF 8, unsupported blocks and controls, unmatched or duplicate results, mixed tool ordering, changed IDs, and unknown models before account access. Distinguish supported discarded metadata from unsupported semantic fields. |
+| AC-4 | Script an adapter requesting Read, Edit, and Bash on the invented Go fixture. Use the real Claude Code client to return exact IDs and tool results and perform a followup. The gateway contains no command execution path. |
+| AC-5 | Check complete frame boundaries, all CRC failures, invalid announced sizes, unknown semantic events, malformed metadata and reasoning, unexpected model echo, incomplete JSON arguments, missing tool stop, duplicate tool stop, post tool text, exceptions, and metadata only EOF. No failed sequence emits a successful terminal update. |
+| AC-5 | Fail after visible text and after buffered tool fragments. Confirm text is partial, no incomplete or rejected tool call reaches the client, and an SSE error is followed by closure without message_stop. A clean EOF case is labelled inferred. |
+| AC-6 | Hold one inference open and reject a second before a source read. Continue health and counts. Cancel while resolving, dialing, reading credentials, reading a frame, and writing to a slow client. Prove worker exit, body close, slot ownership, and bounded shutdown under the race detector. |
+| AC-6 | Use a transport that detects every dial and body send. A failed request, redirect, stale connection, response error, and client write error produce no replay. Cleanup failure disables further inference. |
+| AC-2, AC-6 | Distinguish a disconnected client from a canceled source with a writable client, process shutdown, inference timeout, run deadline, and another request stopping the runner. Assert response suppression or the specified error, fixed outcome precedence, and bounded cleanup. |
+| AC-7 | Assert the fixed notice, headers, and source labels. Reasoning is discarded without becoming text or history. An input max_tokens value does not create a fabricated max_tokens stop reason or a claim about upstream enforcement. |
+| AC-8 | Place distinct sentinels in secrets, profile fields, schema descriptions, arguments, results, and error bodies. They must not reach logs or retained artifacts. Settings and synthetic source bytes are unchanged. |
+| AC-9 | Run `rtk proxy ./scripts/check`. No ordinary test can invoke live inference through inherited variables. Test the production code with synthetic TLS and SQLite, separately from the old probe helpers. |
+| AC-10 | Drive the live runner with synthetic endpoints first. Start its clock at the accepted launch flag and stall each preflight, server setup, client setup, and permission waiting phase. At 19 minutes 55 seconds, admission stops and active work is canceled; the final five seconds are reserved for cleanup inside the absolute 20 minute budget. Exercise an active request at the work cutoff and failed cleanup at the absolute deadline. The 21st dispatch is impossible. |
+| AC-10 | Inject authenticated validation failure, busy admission, source failure, dispatch failure, stream failure, client write failure after upstream EOF, and assertion failure. Each synchronously stops the controller and cancels active work. A racing later request cannot receive a new source or dispatch admission, and client retries cannot consume an attempt. Preserve the first cause rather than the resulting cancellation. |
+| AC-10 | Bind deliberate fault expectations to an exact case and admitted request. Prove that the same fault on another request stops the run. Keep admission closed during fault verification, reject client retries locally, and reopen only when the driver advances after passing trigger and cleanup assertions. |
+
+## Offline installed client baseline
+
+Use Claude Code `2.1.287`, a disposable private configuration directory, the selected tool list and manual permission mode, a dummy local token, and a scripted loopback adapter. This is an explicitly invoked characterization, separate from unit tests. Do not provide real Kiro or Anthropic credentials.
+
+1. Record the version and client artifact digest. Inspect the prepared child environment without printing secret values. Clear conflicting provider choices, user hooks, plugins, MCP configuration, and normal client session data using the specified isolation controls.
+2. Exercise a text turn, each tool type, returned success and error results, and a subsequent user turn. Record endpoint and method categories, known field presence, shapes, and bounded counts. Recreate any retained examples with invented content.
+3. Confirm that the exact model reaches the gateway, beta fields and unsupported reasoning controls are absent, normal permissions still apply, and no discovered model route is required. Test streaming and ordinary JSON request handling even if the real client uses only one mode for the fixture.
+4. Inject local 429, 502, and a stream failure. Compare observed attempts with and without the candidate `CLAUDE_CODE_MAX_RETRIES=0`. Do not claim the setting works merely because the environment contains it. Verify the independent live runner latch stops extra upstream dispatch regardless.
+5. Observe any required `/v1/messages/count_tokens` behavior and the client's handling of estimated usage. If the pinned client requires unsupported fields such as `output_config`, preserve only sanitized shape evidence and return the decision to architecture before live work.
+
+This milestone has no permission to add extra account sources, drop unknown semantics, change the model, or quietly expand the supported surface.
+
+## Concrete live plan
+
+After implementation, prepare a reviewable development plan containing the items below. Values derived during preparation are evidence inputs, not choices for the live runner to discover and silently adopt.
+
+| Plan item | Required content |
+|---|---|
+| Code binding | Clean full Git commit ID, live runner entry point, exact plan file SHA 256, and completed deterministic checks |
+| Baseline | Gateway build, Go, macOS architecture, exact Claude Code and Kiro CLI versions and relevant executable digests |
+| Access | Fixed saved token and profile source, exact client and target model mapping, two permitted destination URLs, no renewal or fallback |
+| Client launch | Exact environment keys, dummy or real gateway token source without values in evidence, arguments, temporary configuration location rule, and normal permission procedure |
+| Coding fixture | Invented Go module, initial failing test, known expected fix, followup request adding a boundary test, and exact commands with no external modules |
+| Budget | At most 20 dispatches over 20 minutes, starting at the accepted launch flag before runtime preflight and setup. Include permission waiting, failures, auxiliary client inference, and cleanup. Stop work by 19 minutes 55 seconds and reserve the final five seconds for cleanup, with no extension. |
+| Fault cases | Client cancellation after visible text and deterministic truncation inside a later frame, explicit trigger rules and expected assertions |
+| Output policy | Only approved versions, public destinations, exact configured model, local IDs, timings, counts, fixed categories, and boolean assertion results |
+| Stop rules | One controller observes typed boundary outcomes and assertion results; first unexpected failure stops admission and cancels active work. The dispatcher is the final budget guard. Expected faults are bound to a case and request, with admission closed until verified. No automatic retry, relink, renewal, model change, or additional run. |
+
+The user reviews this complete plan after implementation. This design document is not that launch approval. Existing permission for feasibility setup does not expand into a new live bridge launch.
+
+## Required live assertions
+
+The first request is part of the coding task rather than a disconnected hello world request. The source starts with an intentionally wrong result for a boundary input, and a deterministic test demonstrates that error before Claude Code begins.
+
+1. The client reaches the authenticated local endpoint and receives incremental text through the production adapter.
+2. Claude Code reads and edits the intended fixture files under its normal permission decisions. No gateway process executes a model tool.
+3. Claude Code runs `go test ./...`; the fixture changes from failing to passing, and the exact returned tool result IDs are accepted in continuation.
+4. A subsequent user turn adds a boundary test and passes the suite again. The system prefix is retained once per translated history, with its weaker role semantics recorded.
+5. An explicit cancellation after visible text ends gateway work within the cleanup bound and does not report completion. This is local cancellation evidence, not a billing claim.
+6. An injected partial frame is reported as incomplete without a successful terminal event, replay, or delivered incomplete tool call. An unreached trigger is an unobserved assertion.
+7. Logs and the final evidence contain no raw conversation, arguments, results, account metadata, or secrets. Client owned temporary session data is separately identified and is not copied into the repository evidence.
+8. Dispatch and elapsed counters remain within the budget, including client helper requests. The final response labels usage and completion according to the experimental contract.
+
+## Result record
+
+Use `experimental_loop_observed` only when every required assertion is observed. Otherwise use `needs_evidence`, with the fixed cause and completed, failed, and unrun assertions distinguished. Keep requested model and optional identity evidence separate. Keep estimated usage and verified model controls separate.
+
+Record the reviewed commit, plan digest, exact versions, requested model, selected public destination, local run ID, elapsed time, dispatch count, test pass booleans, tool and result matching booleans, and fault cleanup outcomes. Retain no raw client or upstream traffic. A later independent GA review can assess this experimental implementation without declaring the full product GA compatible.
