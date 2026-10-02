@@ -112,7 +112,7 @@ Connect an authenticated Kiro account to a local gateway and complete a small re
 - [x] Verify the feasibility milestone: `/check verify first real Claude Code coding loop: feasibility milestone only`
 - [x] Test the feasibility milestone: `/test first real Claude Code coding loop: feasibility milestone only`
 - [x] Review the feasibility milestone (fresh model): `/check review first real Claude Code coding loop: feasibility milestone only`
-- [ ] Document the feasibility milestone: `/document changelog first real Claude Code coding loop: feasibility milestone only`
+- [x] Document the feasibility milestone: `/document changelog first real Claude Code coding loop: feasibility milestone only`
 - [ ] Design it (spec): `/architect first real Claude Code coding loop`
 
 **Code:** The test only harness in `internal/kiro` and combined snapshot reader in `internal/credentials` have positive six case live evidence for the requested Opus 5.5 mapping. The final run used the reference request baseline, metadata extension tolerance, and reasoning discard only for independent failure checks. It observed streamed text, tool call, matching result, followup, cancellation, and the 256 byte interruption in one run. The verdict is `limited_candidate_observed`, with explicit instruction, completion, model identity, usage, and token control limits. Sanitized evidence is in spec 0003's verification record. Repository checks pass. Independent GA checks and full bridge design and implementation remain pending; feature 4 is not complete.
