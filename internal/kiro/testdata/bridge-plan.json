@@ -1,0 +1,39 @@
+{
+  "status": "prepared_pending_run_review",
+  "client_version": "2.1.287",
+  "client_sha256": "6eab8333fe2121553100d8f40bfada384a3e989b94f947e18ba6677a6fcb41ea",
+  "kiro_version": "2.8.0",
+  "kiro_sha256": "5114a52f8bd9ec485700adf73644cd0edc54d8e26410723e8f091ad5949e39f1",
+  "code_commit": "36ffb645dab5479850a15cbdc1f29131ccd1d4ce",
+  "mapping": {
+    "claude-opus-5.5": "claude-opus-5.5"
+  },
+  "destinations": [
+    "https://runtime.us-east-1.kiro.dev:443/generateAssistantResponse",
+    "https://runtime.eu-central-1.kiro.dev:443/generateAssistantResponse"
+  ],
+  "limits": {
+    "dispatches": 20,
+    "total_seconds": 1200,
+    "work_seconds": 1195,
+    "cleanup_seconds": 5,
+    "request_seconds": 120
+  },
+  "files": {
+    "go.mod": "module bridgefixture\n\ngo 1.27.1\n",
+    "clamp.go": "package bridgefixture\n\nfunc Clamp(value, lower, upper int) int {\n\tif value < lower { return upper }\n\tif value > upper { return upper }\n\treturn value\n}\n",
+    "clamp_test.go": "package bridgefixture\n\nimport \"testing\"\n\nfunc TestClampLower(t *testing.T) {\n\tif got := Clamp(-1, 0, 10); got != 0 { t.Fatalf(\"Clamp(-1,0,10) = %d, want 0\", got) }\n}\n"
+  },
+  "initial_prompt": "Read clamp.go and clamp_test.go. Fix the lower boundary bug in Clamp with the smallest edit. Use Read, Edit, and Bash only. Run rtk proxy go test ./... and explain the change. Keep all work inside this disposable repository. Do not access the network or install dependencies.",
+  "followup_prompt": "Add TestClampUpperBoundary in clamp_test.go to check that Clamp(11, 0, 10) returns 10. Use Edit and Bash, run rtk proxy go test ./... again, and report the result. Keep the existing test. Do not access the network or install dependencies.",
+  "cancel_prompt": "Write a long numbered sequence of synthetic words, one word per line.",
+  "interrupt_prompt": "Write a long numbered sequence of synthetic words, one word per line.",
+  "faults": {
+    "cancel": "Cancel the local request after the first nonempty SSE text delta. Require matching canceled observation and completed cleanup.",
+    "interrupt": "After the first validated nonempty text event, allow exactly 13 decoded HTTP body bytes, then inject an incomplete read in the next EventStream frame. Require text, stream error, no message_stop, and cleanup. An unreached trigger is incomplete evidence."
+  },
+  "permissions": "Interactive Claude Code, permission-mode manual. The operator reviews each requested file edit and shell command, enters the exact followup prompt after the first answer, and exits after the second answer. No permission bypass or automatic approval is enabled for the live run.",
+  "environment": "liveClientEnv in internal/kiro/live_bridge_test.go, temporary private CLAUDE_CONFIG_DIR, HOME unchanged, dummy random local bearer, only baseline keys inherited. Exact model aliases, effort high, safe mode, Read/Edit/Bash, prompt suggestions false, MAX_RETRIES=0 verified offline.",
+  "evidence": "Fixed verdict, dispatch count, first failure category, and cleanup deadline outcome only. No raw client transcript or account metadata is saved.",
+  "offline_evidence": "internal/gateway/testdata/claude-code-2.1.287-offline-loop.json"
+}
