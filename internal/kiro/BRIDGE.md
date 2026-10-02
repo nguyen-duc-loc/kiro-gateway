@@ -74,3 +74,13 @@ rtk proxy ./bin/bridge-live.test -test.run '^TestInstalledClientInteractiveOffli
 For that disposable exercise, the initial task edits `value.go` and runs its tests. After the first response, enter `Confirm the completed fixture change on this subsequent turn.` After the second response, use `/exit`. Approve only the individual fixture operations, and dismiss optional plugin installation. The three minute offline deadline covers setup and interaction.
 
 The third live approval is consumed. The corrected launcher must be pinned in a new plan before another reviewed launch. The live prompts, destinations, manual permission mode, and budget remain the same.
+
+## Fourth live launch outcome
+
+The separately approved plan at `ee3f89b` passed on October 2, 2026 with `experimental_loop_observed`. The run made 8 dispatches and finished in 805.64 seconds, including manual permission waiting. Cleanup completed within the 20 minute budget. The sanitized evidence is `testdata/bridge-run-2026-10-02-04.json`.
+
+Claude Code read the fixture, fixed the lower boundary bug, ran the tests, received the results, and answered. On the subsequent user turn it added the upper boundary regression test, kept the existing test, ran the tests again, and completed its response. The operator individually approved two edits and three shell commands. The runner independently checked the fixture and confirmed the required tool result exchange. Both cancellation after visible text and the injected incomplete frame passed their matching fault and cleanup assertions.
+
+The preserved `testdata/bridge-plan.json` is the exact plan used by this completed run. Its approval is consumed, and its original preparation status describes the artifact before launch. It does not authorize another run. The three earlier failed runs remain separate evidence; none is relabeled as successful.
+
+This completes the experimental build milestone. Separate behavior verification, the test workflow, fresh model code review, and change documentation remain pending. Instruction transformation, inferred completion, discarded reasoning, estimated usage, advisory controls, unsupported betas, and unverified serving model identity remain the same. GA acceptance is not claimed.

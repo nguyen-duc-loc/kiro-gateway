@@ -17,4 +17,4 @@ rtk proxy go test -race -tags clientbridge ./internal/kiro -run TestInstalledCli
 
 Ordinary repository checks do not launch Claude Code or contact Kiro. The original mismatch capture remains historical evidence in `internal/gateway/testdata/claude-code-2.1.287-bridge.json`. The new outcomes are in `internal/gateway/testdata/claude-code-2.1.287-offline-loop.json`.
 
-The bounded live runner and its concrete plan are described in `internal/kiro/BRIDGE.md`. That run still needs the separate review required by spec 0004. No live coding verdict or GA completion is claimed.
+The separately approved live proof passed on October 2, 2026 with `experimental_loop_observed`, 8 dispatches in 805.64 seconds, and cleanup within budget. Claude Code completed the coding and followup test loop under individual operator permissions. Cancellation and injected stream interruption also passed. The sanitized record is `internal/kiro/testdata/bridge-run-2026-10-02-04.json`. The runner and preserved plan are described in `internal/kiro/BRIDGE.md`. This launch approval is consumed. The separate verification workflow and GA acceptance remain pending.

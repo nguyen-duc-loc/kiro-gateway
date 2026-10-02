@@ -1,0 +1,51 @@
+{
+  "date": "2026-10-02",
+  "verdict": "experimental_loop_observed",
+  "launch_commit": "ee3f89bc4612c8bc0f337934af36f1f1420cbb94",
+  "implementation_commit": "f95c757ce2d281c5781e42fec4b515f0aa5b867c",
+  "plan_sha256": "aaa3dc908be53b8cf41f1f956cfaabccb3bb79057b54080c294a520089dc71e7",
+  "client_version": "2.1.287",
+  "kiro_cli_version": "2.8.0",
+  "authorization": "Operator approved this exact plan and individually approved the two fixture edits and three shell commands. This one run is complete.",
+  "dispatches": 8,
+  "elapsed_seconds": 805.64,
+  "first_failure_category": null,
+  "cleanup_within_deadline": true,
+  "assertions": {
+    "production_handlers_and_adapter": true,
+    "streamed_client_output": true,
+    "client_read_edit_bash_exchange": true,
+    "matching_tool_results": true,
+    "manual_permission_mode": true,
+    "operator_tool_approvals": 5,
+    "initial_fixture_test_failed": true,
+    "coding_fix_completed": true,
+    "followup_user_turn_completed": true,
+    "boundary_regression_test_added": true,
+    "fixture_tests_passed": true,
+    "cancellation_after_visible_text": true,
+    "injected_incomplete_frame_after_visible_text": true,
+    "failed_stream_withheld_successful_terminal_event": true,
+    "expected_fault_cleanup_completed": true,
+    "within_dispatch_and_time_limits": true
+  },
+  "evidence_basis": "The production live runner passed its coding, followup, fault, and cleanup assertions. The terminal showed the individual permission prompts, client tool execution, and the subsequent response. Only fixed outcomes are retained here; no raw transcript or account metadata is saved.",
+  "compatibility_limits": [
+    "Instructions are translated into user context without guaranteed system priority or replacement",
+    "Completion is inferred from validated clean EOF",
+    "Whole missing frames at a clean boundary may escape detection",
+    "Reasoning is discarded",
+    "Token usage is estimated",
+    "max_tokens is advisory and effort is ignored",
+    "Beta features are unsupported",
+    "Serving model identity remains unverified"
+  ],
+  "ga_accepted": false,
+  "remaining": [
+    "Separate behavior verification",
+    "Separate test workflow",
+    "Fresh model code review",
+    "Change documentation",
+    "GA architecture decisions"
+  ]
+}
