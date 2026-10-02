@@ -51,7 +51,7 @@ The research check opened the environment and settings pages plus the streaming 
 
 The environment reference names `CLAUDE_CODE_MAX_RETRIES`, but the checked text did not establish whether zero is accepted. The spec therefore tests that candidate offline and contains an independent dispatcher latch for the later live runner. It does not claim a documented switch disables every retry.
 
-No real credential store, profile, conversation, or account configuration was read during this design. No live request or native Kiro chat was launched. Version and help commands were the only client executions. The repository had 42 source files and no commits missing from `origin/main` after the freshness check.
+During the original design, no real credential store, profile, conversation, or account configuration was read. No live request or native Kiro chat was launched. Version and help commands were the only client executions in that original design pass. The repository had 42 source files and no commits missing from `origin/main` after its freshness check.
 
 ## Independent review, October 2, 2026
 
@@ -62,6 +62,60 @@ You selected the recommended fixes. The revised spec starts the clock at the acc
 The same reviewer confirmed the source mapping and observer corrections, then identified a cleanup edge in the clock amendment. Canceling active work only at the absolute deadline would leave no time for its already specified five second cleanup bound. The author reserved the last five seconds of the approved 20 minute total, stopping work at 19 minutes 55 seconds, and added the corresponding boundary test. This preserves the chosen total rather than adding a cleanup extension.
 
 You then accepted the complete revised spec on October 2, 2026. The design is confirmed and linked to scope feature 4, with the experimental build milestones ready. This ratification neither claims implementation completion nor authorizes a live run. The spec remains `Proposed` until development begins, and the full feature retains its separate GA completion requirements.
+
+## Client contract amendment, October 2, 2026
+
+### Observation
+
+The first `/develop` characterization stopped at an initial client request that violates the original contract. Its [sanitized shape record](../../../internal/gateway/testdata/claude-code-2.1.287-shape.json) records `output_config.effort` as a string and a nonempty beta header. It does not retain the effort value or beta names. No production bridge was built, and no build milestone was completed.
+
+This architecture pass repeated the same isolated characterization to identify those public protocol constants, then repeated it with the proposed `--effort high` launch. Each launch used Claude Code `2.1.287`, an ephemeral numeric loopback receiver, a dummy bearer, a disposable Git directory, and a private temporary `CLAUDE_CONFIG_DIR`. The receiver always returned one fixed HTTP 400 JSON error. It was a shape receiver, not an implementation of the bridge or a successful adapter. Both launches exited with code 1 after one local request each, with zero Kiro dispatches. The checkout was zero commits behind `origin/main` after fetching.
+
+| Evidence item | Observed value or rule |
+|---|---|
+| Client artifact SHA 256 | `6eab8333fe2121553100d8f40bfada384a3e989b94f947e18ba6677a6fcb41ea`, obtained for the installed executable during the initial characterization |
+| Method and route | `POST /v1/messages?beta=true` |
+| Authentication | Matching dummy bearer, no `x-api-key`, API version `2023-06-01` |
+| Requested model | Exactly `claude-opus-5.5` |
+| Top level fields | `model`, `messages`, `system`, `tools`, `metadata`, `max_tokens`, `output_config`, `stream` |
+| Output configuration | Exactly one member, `effort`, with string value `high` in both new captures |
+| Beta header | One header containing exactly the four tokens in the table below, in that order |
+| Reasoning request | No top level `thinking` field in either new capture |
+| Difference between launches | The second added `--effort high`; the recorded protocol constants stayed the same |
+| Unproved behavior | Complete body validation, successful responses, tool execution, permission ownership, followup, counts, cancellation, and retries after 429, 502, or interrupted streams |
+
+| Observed beta token |
+|---|
+| `claude-code-20250219` |
+| `interleaved-thinking-2025-05-14` |
+| `mid-conversation-system-2026-04-07` |
+| `effort-2025-11-24` |
+
+To reproduce the shape probe, use the initial record's environment and arguments, without retaining its raw prompt or traffic. That launch uses print mode with `--no-session-persistence` and the normal client system prompt. A synthetic text input suffices. The child environment starts with only `HOME`, `PATH`, `TMPDIR`, `USER`, `LOGNAME`, and `SHELL` when present, then adds the explicit client variables in the record; `HOME` stays unchanged. Add `--effort high` for the amended launch. Observe only known field shapes, exact model equality, bearer match as a boolean, public beta identifiers, and effort from a fixed enum. Do not retain client stdout, stderr, system text, metadata values, tool definitions, or raw request bytes. The temporary receiver and child configuration are removed after exit. These two architecture observations were not added to the historical initial JSON fixture.
+
+The controls suppress neither every beta token nor the effort object in this installed client. That is a narrow observed result, not a finding about all versions or every code path. A returned local 400 establishes neither retry suppression under other failures nor that every emitted field is supported. The coding loop must still pass through the production handlers and scripted adapter before live work.
+
+### Recommended amendment and alternatives
+
+**Recommended, amend in place.** Tolerate only the observed `high` effort object and the four literal beta tokens, validate them strictly, discard them locally, and expose the ignored semantics. Pin the client flag to the observed value. This removes the two initial structural blockers while preserving the successful Kiro request. Its cost is a deliberate API semantic difference: the client can request high effort or advertise a beta without obtaining that behavior. You accepted this extension to the existing experimental exceptions after independent review on October 2, 2026. No migration or new dependency is needed. (basis: the offline observations above, the original experimental control decision, and the Go security skill's bounded validation rules)
+
+**Runner up, keep the original rejection contract and change the client launch or version.** This would avoid a new semantic exception if a supported launch can omit these fields. The prescribed controls already failed to do so on the pinned binary, and no verified omission control was found in this pass. A different version would require a new baseline and its full characterization. It remains a valid choice if honoring effort becomes a requirement. (basis: the two concrete launches and the pinned client requirement)
+
+**Implement equivalent effort and beta features.** This would better match the Anthropic surface, but the Kiro baseline has no evidenced equivalent for these controls. A second adapter or a replacement gateway would not supply that missing evidence and would broaden this decision into provider, state, and reasoning support. Do not invent upstream fields or map `high` into instructions. (basis: spec 0003's wire evidence and the fixed adapter boundary)
+
+The official [effort reference](https://platform.claude.com/docs/en/build-with-claude/effort) describes effort as a behavioral control affecting output, tools, and thinking. The official [beta header reference](https://platform.claude.com/docs/en/api/beta-headers) describes feature opt in and accepts comma separated names or repeated headers. Those are Anthropic semantics, not proof of Kiro support. The confirmed bridge exception knowingly differs and therefore uses explicit `ignored` and `unsupported` labels. The header parser can handle both documented representations while still rejecting unknown names and duplicates. (basis: these two official references, checked October 2, 2026)
+
+No assumption is made that the four beta names are harmless on arbitrary bodies. In particular, `interleaved-thinking-2025-05-14` cannot admit thinking history, and `mid-conversation-system-2026-04-07` cannot admit system messages within history. The complete body contract remains the gate. If later client turns need those features, development returns to architecture with structural evidence instead of stripping them.
+
+### Verification impact
+
+The amended matrix checks both endpoints, all repeated header values, malformed and unknown controls, and absence of account reads on failure. It also proves that the tolerated fields do not affect normalized content, estimates, upstream semantic requests, or fixed response labels. The first real client success and full tool exchange remain pending. Review and acceptance of this amendment do not authorize a live run.
+
+### Independent amendment review
+
+At your request, `gpt-6-sol` reviewed the amendment for decision completeness and soundness. It found no material decision gaps. The literal effort shape, beta token set, parser bounds, validation order, discard boundaries, upstream omissions, fixed errors and policy headers, launch flag, and return to architecture for future unsupported shapes are specified.
+
+The reviewer noted that the newer exact enum and token observations are retained here, while the original JSON fixture records presence only. A second sanitized fixture could improve auditability, but the reviewer did not consider it a blocker: the implementation contract is explicit and the full offline exercise through production handlers remains required. No new capture or fixture was created by the reviewer. You then accepted the amendment on October 2, 2026. That acceptance confirms its design and verification plan. The feature linked spec remains `Proposed` until implementation begins; live execution still requires its separate concrete run review.
 
 ## References
 
@@ -84,5 +138,7 @@ Explicit trust boundaries, bounded resource ownership, deterministic local verif
 2. [Claude Code settings](https://code.claude.com/docs/en/settings), checked October 2, 2026.
 3. [Streaming Messages](https://platform.claude.com/docs/en/build-with-claude/streaming), checked October 2, 2026.
 4. [Define tools](https://platform.claude.com/docs/en/agents-and-tools/tool-use/define-tools), checked October 2, 2026. The auto and none selection boundary uses this page's described model restrictions. (basis: official tool definition reference)
+5. [Effort](https://platform.claude.com/docs/en/build-with-claude/effort), checked for the client contract amendment on October 2, 2026.
+6. [Beta headers](https://platform.claude.com/docs/en/api/beta-headers), checked for the client contract amendment on October 2, 2026.
 
 These links are retained for human inspection. Later build and review work uses this recorded evidence and the offline client exercise rather than fetching them again by default.

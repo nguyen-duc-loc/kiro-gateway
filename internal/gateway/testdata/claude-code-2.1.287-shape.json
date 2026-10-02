@@ -1,0 +1,79 @@
+{
+  "purpose": "Preliminary offline client contract characterization for spec 0004",
+  "date": "2026-10-02",
+  "client_version": "2.1.287",
+  "client_sha256": "6eab8333fe2121553100d8f40bfada384a3e989b94f947e18ba6677a6fcb41ea",
+  "receiver": "Temporary loopback shape receiver returning a fixed HTTP 400 JSON error",
+  "production_bridge_exercised": false,
+  "configuration": "Private temporary CLAUDE_CONFIG_DIR and disposable Git repository",
+  "environment_policy": "Child environment retained only HOME, PATH, TMPDIR, USER, LOGNAME, SHELL when present, plus the explicit values below. HOME was unchanged. Raw client output and request bodies were not retained.",
+  "environment": {
+    "ANTHROPIC_BASE_URL": "Ephemeral numeric IPv4 loopback URL",
+    "ANTHROPIC_AUTH_TOKEN": "Invented local bearer token",
+    "ANTHROPIC_MODEL": "claude-opus-5.5",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "claude-opus-5.5",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "claude-opus-5.5",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "claude-opus-5.5",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "CLAUDE_CODE_DISABLE_TERMINAL_TITLE": "1",
+    "CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS": "1",
+    "CLAUDE_CODE_DISABLE_THINKING": "1",
+    "CLAUDE_CODE_DISABLE_NONSTREAMING_FALLBACK": "1",
+    "DISABLE_PROMPT_CACHING": "1",
+    "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "4096",
+    "CLAUDE_CODE_MAX_RETRIES": "0"
+  },
+  "arguments": [
+    "-p",
+    "--no-session-persistence",
+    "--model", "claude-opus-5.5",
+    "--safe-mode",
+    "--tools", "Read,Edit,Bash",
+    "--permission-mode", "manual",
+    "--prompt-suggestions", "false"
+  ],
+  "input_category": "Synthetic text turn without a tool request",
+  "requests": [
+    {
+      "method": "POST",
+      "route": "/v1/messages?beta=true",
+      "matching_dummy_bearer": true,
+      "api_key_present": false,
+      "api_version_matches_2023_06_01": true,
+      "anthropic_beta_nonempty": true,
+      "exact_model_matches": true,
+      "fields": {
+        "model": "string",
+        "messages": "array",
+        "system": "array",
+        "tools": "array",
+        "metadata": "object",
+        "max_tokens": "integer",
+        "output_config": "object",
+        "stream": "boolean"
+      },
+      "output_config_fields": {
+        "effort": "string"
+      },
+      "other_root_field_count": 0,
+      "other_output_config_field_count": 0,
+      "receiver_status": 400
+    }
+  ],
+  "request_count": 1,
+  "client_exit_code": 1,
+  "kiro_dispatch_count": 0,
+  "result": "contract_mismatch",
+  "mismatches": [
+    "Spec 0004 rejects output_config; the pinned client sends an effort member without an explicit effort override.",
+    "Spec 0004 rejects nonempty anthropic-beta; the pinned client sends it despite CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS=1."
+  ],
+  "not_established": [
+    "Full request validation beyond the recorded field shapes",
+    "Successful streaming or ordinary JSON response handling",
+    "Tool execution, permission ownership, tool results, or followup",
+    "Retry behavior after 429, 502, or interrupted streams",
+    "Production adapter behavior or live compatibility"
+  ],
+  "next_decision": "Amend the client launch controls or explicitly define supported effort and beta semantics before implementing a deviation from spec 0004."
+}
