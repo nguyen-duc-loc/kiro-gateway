@@ -4,7 +4,7 @@
   "client_sha256": "6eab8333fe2121553100d8f40bfada384a3e989b94f947e18ba6677a6fcb41ea",
   "kiro_version": "2.8.0",
   "kiro_sha256": "5114a52f8bd9ec485700adf73644cd0edc54d8e26410723e8f091ad5949e39f1",
-  "code_commit": "36ffb645dab5479850a15cbdc1f29131ccd1d4ce",
+  "code_commit": "18ca0edb1297489f5add1aff851d42c7750b1046",
   "mapping": {
     "claude-opus-5.5": "claude-opus-5.5"
   },
@@ -35,5 +35,7 @@
   "permissions": "Interactive Claude Code, permission-mode manual. The operator reviews each requested file edit and shell command, enters the exact followup prompt after the first answer, and exits after the second answer. No permission bypass or automatic approval is enabled for the live run.",
   "environment": "liveClientEnv in internal/kiro/live_bridge_test.go, temporary private CLAUDE_CONFIG_DIR, HOME unchanged, dummy random local bearer, only baseline keys inherited. Exact model aliases, effort high, safe mode, Read/Edit/Bash, prompt suggestions false, MAX_RETRIES=0 verified offline.",
   "evidence": "Fixed verdict, dispatch count, first failure category, and cleanup deadline outcome only. No raw client transcript or account metadata is saved.",
-  "offline_evidence": "internal/gateway/testdata/claude-code-2.1.287-offline-loop.json"
+  "offline_evidence": "internal/gateway/testdata/claude-code-2.1.287-offline-loop.json",
+  "previous_run": "internal/kiro/testdata/bridge-run-2026-10-02-01.json",
+  "launch_fix": "Foreground terminal ownership for the separate client process group, restored after exit or cancellation. Synthetic PTY regression and repository checks pass. Tool permissions, prompts, destinations, and budgets are unchanged."
 }
