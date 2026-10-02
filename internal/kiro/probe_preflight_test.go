@@ -12,6 +12,7 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+	"time"
 )
 
 var errBaselineChanged = errors.New("baseline_changed")
@@ -109,7 +110,7 @@ func checkProbeBaseline(ctx context.Context, env probeEnvironment, run probeComm
 		return errBaselineChanged
 	}
 	kiro, err := run(ctx, "kiro-cli", "--version")
-	if err != nil || strings.TrimSpace(kiro) != "kiro-cli 2.8.0" {
+	if err != nil || strings.TrimSpace(kiro) != "kiro-cli 2.8.0" || ctx.Err() != nil {
 		return errBaselineChanged
 	}
 	return nil
@@ -119,6 +120,9 @@ func checkProbeBaseline(ctx context.Context, env probeEnvironment, run probeComm
 // output, credential commands, or environment endpoint overrides are used.
 func realProbeCommand(ctx context.Context, name string, args ...string) (string, error) {
 	cmd := exec.CommandContext(ctx, name, args...)
+	// Bound pipe cleanup if a version wrapper exits while a descendant keeps
+	// stdout open. CommandContext alone only controls the direct process.
+	cmd.WaitDelay = 100 * time.Millisecond
 	cmd.Dir = "../.."
 	if name == "git" {
 		// Git environment overrides must not point the check at another tree.
@@ -132,7 +136,7 @@ func realProbeCommand(ctx context.Context, name string, args ...string) (string,
 	var output probeCommandOutput
 	cmd.Stdout = &output
 	cmd.Stderr = io.Discard
-	if err := cmd.Run(); err != nil {
+	if err := cmd.Run(); err != nil || ctx.Err() != nil {
 		return "", errCodeChanged
 	}
 	return output.String(), nil

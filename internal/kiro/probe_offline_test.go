@@ -286,16 +286,21 @@ func (p *protocolProbe) exchangeBuilt(build func(credentials.ProfileSnapshot) (s
 		TLSClientConfig: &tls.Config{RootCAs: p.roots, MinVersion: tls.VersionTLS12},
 		// Explicitly disable HTTP/2 as well as connection reuse and GetBody.
 		TLSNextProto: map[string]func(string, *tls.Conn) http.RoundTripper{},
-		DialContext: func(ctx context.Context, network, address string) (net.Conn, error) {
+		DialContext: func(_ context.Context, network, address string) (net.Conn, error) {
 			if address != p.endpoint.Host {
 				return nil, &probeDialFailure{stage: "destination_policy", cause: errPlanInvalid}
 			}
+			// Transport may detach its dial context from request deadlines.
+			// This transport serves one attempt, so bind DNS and connect to
+			// that request and the initial idle deadline from dispatch.
+			dialContext, cancelDial := context.WithDeadline(requestContext, start.Add(p.limits.idle))
+			defer cancelDial()
 			var c net.Conn
 			var err error
 			if p.dial != nil {
-				c, err = p.dial(ctx, address)
+				c, err = p.dial(dialContext, address)
 			} else {
-				c, err = (&net.Dialer{}).DialContext(ctx, "tcp4", address)
+				c, err = (&net.Dialer{}).DialContext(dialContext, "tcp4", address)
 				if err != nil {
 					err = &probeDialFailure{stage: "connect", cause: err}
 				}
@@ -388,7 +393,7 @@ func probeContextError(ctx context.Context, err error) error {
 		return errCanceled
 	}
 	var timeout net.Error
-	if errors.Is(ctx.Err(), context.DeadlineExceeded) || errors.As(err, &timeout) && timeout.Timeout() {
+	if errors.Is(ctx.Err(), context.DeadlineExceeded) || errors.Is(err, context.DeadlineExceeded) || errors.As(err, &timeout) && timeout.Timeout() {
 		return errTimedOut
 	}
 	return errNeedsEvidence
