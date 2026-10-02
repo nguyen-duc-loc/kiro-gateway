@@ -110,7 +110,7 @@ Connect an authenticated Kiro account to a local gateway and complete a small re
   - [x] Complete the safeguards and present the exact plan and clean code commit for live review (AC-1, AC-2, AC-3, AC-5, AC-6, AC-8).
   - [x] After approval and explicit launch, run the bounded cases and record evidence or the unresolved contract (AC-2 through AC-8). All six cases were observed at `4fd0b70773ca6bdba87d73be1ac6c07ab8d77659`, with verdict `limited_candidate_observed`; no replay or additional attempt occurred.
 - [x] Verify the feasibility milestone: `/check verify first real Claude Code coding loop: feasibility milestone only`
-- [ ] Test the feasibility milestone: `/test first real Claude Code coding loop: feasibility milestone only`
+- [x] Test the feasibility milestone: `/test first real Claude Code coding loop: feasibility milestone only`
 - [x] Review the feasibility milestone (fresh model): `/check review first real Claude Code coding loop: feasibility milestone only`
 - [ ] Document the feasibility milestone: `/document changelog first real Claude Code coding loop: feasibility milestone only`
 - [ ] Design it (spec): `/architect first real Claude Code coding loop`

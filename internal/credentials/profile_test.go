@@ -349,3 +349,47 @@ func TestProfileReadCancellationAndPrecedence(t *testing.T) {
 		t.Errorf("ReadProfileSnapshot(unsupported reference) error=%v, want ErrChanged", err)
 	}
 }
+
+// covers: spec 0003 AC-1, AC-2, AC-8, AC-9.
+// An unusable selected profile cannot broaden ordinary token capture or reads.
+func TestProfileFailureLeavesTokenOnlyOperationsAvailable(t *testing.T) {
+	for _, tc := range []struct {
+		name, profile string
+		want          error
+	}{
+		{name: "missing", want: ErrProfileInvalid},
+		{name: "malformed", profile: `{"arn":"sentinel-invalid"}`, want: ErrProfileInvalid},
+		{name: "unsupported", profile: strings.Replace(profileRecord, "us-east-1", "ap-south-1", 1), want: ErrProfileUnsupported},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			r, db, ref := profileFixture(t, "delete")
+			if _, err := db.Exec(`DELETE FROM state`); err != nil {
+				t.Fatalf("delete synthetic profile error=%v, want nil", err)
+			}
+			if tc.profile != "" {
+				if _, err := db.Exec(`INSERT INTO state VALUES(?,?)`, selectedProfileKey, tc.profile); err != nil {
+					t.Fatalf("insert %s profile error=%v, want nil", tc.name, err)
+				}
+			}
+			// A plausible alternate row must never substitute for the fixed key.
+			if _, err := db.Exec(`INSERT INTO state VALUES(?,?)`, "other.selected.profile", profileRecord); err != nil {
+				t.Fatalf("insert alternate synthetic profile error=%v, want nil", err)
+			}
+			got, err := r.ReadProfileSnapshot(t.Context(), ref)
+			if !errors.Is(err, tc.want) || got != (ProfileSnapshot{}) {
+				t.Errorf("ReadProfileSnapshot(%s selected profile) error=%v snapshot=%v, want %v and zero snapshot without fallback", tc.name, err, got, tc.want)
+			}
+			r.afterProfileMetadata = func() {
+				t.Errorf("token only operation(%s profile) read profile metadata, want token source only", tc.name)
+			}
+			captured, err := r.Capture(t.Context())
+			if err != nil || captured != ref {
+				t.Errorf("Capture(%s profile) error=%v reference matches=%t, want nil and unchanged reference", tc.name, err, captured == ref)
+			}
+			token, err := r.ReadSnapshot(t.Context(), ref)
+			if err != nil || token.AccessToken() != "synthetic-access-secret" {
+				t.Errorf("ReadSnapshot(%s profile) error=%v token matches=%t, want nil and original token", tc.name, err, token.AccessToken() == "synthetic-access-secret")
+			}
+		})
+	}
+}

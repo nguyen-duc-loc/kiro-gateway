@@ -456,3 +456,221 @@ func (r wireUnexpectedSnapshot) ReadProfileSnapshot(context.Context, config.Sess
 	r.t.Error("unexpected snapshot read")
 	return credentials.ProfileSnapshot{}, errSource
 }
+
+// covers: spec 0003 AC-3, AC-4, AC-5, AC-6, AC-7, AC-8.
+// A successful tool call does not excuse a missing or wrong continuation.
+func TestWireContinuationFailuresStopWithoutReplay(t *testing.T) {
+	for _, tc := range []struct {
+		name, payload, status, verdict string
+		index                          int
+	}{
+		{name: "wrong result", payload: `{"content":"sentinel-wrong-result"}`, status: "contradicted", verdict: "candidate_rejected", index: 2},
+		{name: "missing result", payload: `{"content":""}`, status: "inconclusive", verdict: "needs_evidence", index: 2},
+		{name: "wrong followup", payload: `{"content":"sentinel-wrong-followup"}`, status: "contradicted", verdict: "candidate_rejected", index: 3},
+		{name: "missing followup", payload: `{"content":""}`, status: "inconclusive", verdict: "needs_evidence", index: 3},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			home, _ := probeHome(t)
+			var requests atomic.Int32
+			p := localWireProbe(t, home, func(w http.ResponseWriter, r *http.Request) {
+				i := int(requests.Add(1)) - 1
+				if i > tc.index {
+					t.Errorf("runWireCases(%s) dispatched case %d, want stop after %d", tc.name, i, tc.index)
+					w.WriteHeader(http.StatusConflict)
+					return
+				}
+				assertWireRequest(t, r, i)
+				w.Header().Set("Content-Type", "application/vnd.amazon.eventstream")
+				body := wireResponses(i)
+				if i == tc.index {
+					body = probeFrame("assistantResponseEvent", tc.payload)
+				}
+				w.Write(body)
+			})
+			got := runWireCases(p, wireTestID, probeMaxRetained)
+			failed := got.Cases[tc.index]
+			if got.Verdict != tc.verdict || got.Attempts != tc.index+1 || failed.Status != tc.status || failed.Assertions.TentativeCompletion != nil || failed.Assertions.Completion != nil {
+				t.Errorf("runWireCases(%s) verdict=%s attempts=%d case=%+v, want %s after %d attempts, %s and unknown completion", tc.name, got.Verdict, got.Attempts, failed, tc.verdict, tc.index+1, tc.status)
+			}
+			for _, c := range got.Cases[tc.index+1:] {
+				if c.Status != "unrun" || c.Attempt != 0 {
+					t.Errorf("runWireCases(%s) later case=%+v, want unrun without an attempt", tc.name, c)
+				}
+			}
+			runWireCases(p, wireTestID, probeMaxRetained)
+			if n := requests.Load(); n != int32(tc.index+1) {
+				t.Errorf("runWireCases(%s, second call) requests=%d, want %d without replay", tc.name, n, tc.index+1)
+			}
+			b, err := json.Marshal(got)
+			if err != nil {
+				t.Fatalf("Marshal(%s summary) error=%v, want nil", tc.name, err)
+			}
+			if strings.Contains(string(b), "sentinel") {
+				t.Errorf("runWireCases(%s) summary contains response sentinel, want filtered output", tc.name)
+			}
+		})
+	}
+}
+
+// covers: spec 0003 AC-4, AC-5, AC-8. JSON escapes may span tool events.
+func TestWireEscapedArgumentsSurviveContinuation(t *testing.T) {
+	home, _ := probeHome(t)
+	var requests atomic.Int32
+	const toolID = "synthetic-escaped-tool"
+	const arguments = `{"key":"\u0061lpha"}`
+	p := localWireProbe(t, home, func(w http.ResponseWriter, r *http.Request) {
+		i := int(requests.Add(1)) - 1
+		if i >= 6 {
+			t.Errorf("runWireCases(escaped arguments) request index=%d, want less than six", i)
+			w.WriteHeader(http.StatusConflict)
+			return
+		}
+		var req wireRequest
+		if err := json.NewDecoder(io.LimitReader(r.Body, probeMaxRequest+1)).Decode(&req); err != nil {
+			t.Errorf("decode request(escaped arguments, case %d) error=%v, want nil", i, err)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		if i == 2 || i == 3 {
+			history := req.Conversation.History
+			if len(history) != i*2 || history[3].Assistant == nil || len(history[3].Assistant.Tools) != 1 {
+				t.Errorf("runWireCases(escaped arguments, case %d) lost tool history, want one complete tool", i)
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+			tool := history[3].Assistant.Tools[0]
+			if tool.ID != toolID || tool.Name != fixtureTool || string(tool.Input) != arguments {
+				t.Errorf("runWireCases(escaped arguments, case %d) tool=%+v, want original ID, name and escaped arguments", i, tool)
+			}
+			resultMessage := req.Conversation.Current.User
+			if i == 3 {
+				resultMessage = history[4].User
+			}
+			if resultMessage == nil || resultMessage.Context == nil || len(resultMessage.Context.Results) != 1 || resultMessage.Context.Results[0].ID != toolID {
+				t.Errorf("runWireCases(escaped arguments, case %d) lost matching result, want ID %q", i, toolID)
+			}
+		}
+		w.Header().Set("Content-Type", "application/vnd.amazon.eventstream")
+		body := wireResponses(i)
+		if i == 1 {
+			body = append(probeFrame("toolUseEvent", `{"toolUseId":"synthetic-escaped-tool","name":"probe_lookup","input":"{\"key\":\"\\u00"}`), probeFrame("toolUseEvent", `{"toolUseId":"synthetic-escaped-tool","input":"61lpha\"}","stop":true}`)...)
+		}
+		w.Write(body)
+		w.(http.Flusher).Flush()
+		if i == 4 {
+			<-r.Context().Done()
+		}
+	})
+	got := runWireCases(p, wireTestID, probeMaxRetained)
+	if got.Verdict != "limited_candidate_observed" || requests.Load() != 6 || got.Cases[1].Assertions.ValidArguments == nil || !*got.Cases[1].Assertions.ValidArguments {
+		t.Errorf("runWireCases(escaped arguments) result=%+v requests=%d, want six observed cases with valid arguments", got, requests.Load())
+	}
+}
+
+type wireSnapshotFunc func(context.Context, config.Session) (credentials.ProfileSnapshot, error)
+
+func (f wireSnapshotFunc) ReadProfileSnapshot(ctx context.Context, ref config.Session) (credentials.ProfileSnapshot, error) {
+	return f(ctx, ref)
+}
+
+// covers: spec 0003 AC-2, AC-6, AC-8, AC-9.
+// Change the database after the real reader validates its combined snapshot.
+func TestWireSourceChangeAfterValidationUsesCheckedSnapshot(t *testing.T) {
+	for _, tc := range []struct {
+		name, query, replacement, cause string
+	}{
+		{name: "token", query: `UPDATE auth_kv SET value=?`, replacement: strings.Replace(probeSyntheticRecord, "sentinel-token", "replacement-token", 1), cause: "session_changed"},
+		{name: "profile", query: `UPDATE state SET value=?`, replacement: strings.Replace(probeSyntheticProfile, "us-east-1", "eu-central-1", 1), cause: "profile_changed"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			home, db := probeHome(t)
+			var requests atomic.Int32
+			p := localWireProbe(t, home, func(w http.ResponseWriter, r *http.Request) {
+				requests.Add(1)
+				assertWireRequest(t, r, 0)
+				w.Header().Set("Content-Type", "application/vnd.amazon.eventstream")
+				w.Write(wireResponses(0))
+			})
+			reader, reads := p.reader, 0
+			p.reader = wireSnapshotFunc(func(ctx context.Context, ref config.Session) (credentials.ProfileSnapshot, error) {
+				reads++
+				snapshot, err := reader.ReadProfileSnapshot(ctx, ref)
+				if err == nil && reads == 1 {
+					if _, updateErr := db.Exec(tc.query, tc.replacement); updateErr != nil {
+						t.Errorf("update synthetic %s after validation error=%v, want nil", tc.name, updateErr)
+						return credentials.ProfileSnapshot{}, credentials.ErrSource
+					}
+				}
+				return snapshot, err
+			})
+			got := runWireCases(p, wireTestID, probeMaxRetained)
+			if got.Verdict != "needs_evidence" || got.Attempts != 1 || requests.Load() != 1 || reads != 2 || got.Cases[0].Status != "observed" || got.Cases[1].Cause != tc.cause || got.Cases[1].Attempt != 0 {
+				t.Errorf("runWireCases(%s changed after validation) result=%+v requests=%d reads=%d, want checked first request then %s before dispatch", tc.name, got, requests.Load(), reads, tc.cause)
+			}
+			for _, c := range got.Cases[2:] {
+				if c.Status != "unrun" {
+					t.Errorf("runWireCases(%s change) later case %s status=%s, want unrun", tc.name, c.ID, c.Status)
+				}
+			}
+		})
+	}
+}
+
+// covers: spec 0003 AC-4, AC-5, AC-6, AC-7, AC-8.
+// The accepted reference baseline requests no model token cap.
+func TestWireOptionalUsageDoesNotInventTokenControls(t *testing.T) {
+	for _, tc := range []struct {
+		name, metadata string
+		usagePresent   bool
+	}{
+		{name: "absent"},
+		{name: "above former cap", metadata: `{"tokenUsage":{"outputTokens":2048}}`, usagePresent: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			home, _ := probeHome(t)
+			var requests atomic.Int32
+			p := localWireProbe(t, home, func(w http.ResponseWriter, r *http.Request) {
+				i := int(requests.Add(1)) - 1
+				if i >= 6 {
+					t.Errorf("runWireCases(%s usage) request index=%d, want less than six", tc.name, i)
+					w.WriteHeader(http.StatusConflict)
+					return
+				}
+				io.Copy(io.Discard, r.Body)
+				body := wireResponses(i)
+				if i == 0 {
+					body = append(probeFrame("assistantResponseEvent", `{"content":"PROBE_"}`), probeFrame("assistantResponseEvent", `{"content":"MARKER"}`)...)
+					if tc.metadata != "" {
+						body = append(body, probeFrame("metadataEvent", tc.metadata)...)
+					}
+				}
+				w.Header().Set("Content-Type", "application/vnd.amazon.eventstream")
+				w.Write(body)
+				w.(http.Flusher).Flush()
+				if i == 4 {
+					<-r.Context().Done()
+				}
+			})
+			got := runWireCases(p, wireTestID, probeMaxRetained)
+			if got.Verdict != "limited_candidate_observed" || got.Attempts != 6 {
+				t.Errorf("runWireCases(%s usage) verdict=%s attempts=%d, want limited_candidate_observed and six", tc.name, got.Verdict, got.Attempts)
+			}
+			usage := got.Cases[0].Assertions.UsagePresent
+			if tc.usagePresent && (usage == nil || !*usage) || !tc.usagePresent && usage != nil {
+				t.Errorf("runWireCases(%s usage) usage assertion=%v, want present=%t and absent left unknown", tc.name, usage, tc.usagePresent)
+			}
+			for _, c := range got.Cases {
+				if c.Assertions.ModelMatch != nil || c.Assertions.Completion != nil || c.Assertions.OutputWithinLimit != nil || !isFalse(c.Assertions.ControlsRequested) {
+					t.Errorf("runWireCases(%s usage) case %s assertions=%+v, want unknown identity, completion and token limit with controls false", tc.name, c.ID, c.Assertions)
+				}
+			}
+			b, err := json.Marshal(got)
+			if err != nil {
+				t.Fatalf("Marshal(%s usage summary) error=%v, want nil", tc.name, err)
+			}
+			if strings.Contains(string(b), "outputTokens") || strings.Contains(string(b), "2048") {
+				t.Errorf("runWireCases(%s usage) summary exposed raw usage, want boolean observation only", tc.name)
+			}
+		})
+	}
+}
