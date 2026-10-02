@@ -1,6 +1,6 @@
 # Limited feasibility harness
 
-This directory contains test code only. Nothing here is linked into the gateway.
+The original feasibility harness remains test code only. The production experimental bridge now also lives in this directory, with its separate contract and live plan described in [BRIDGE.md](BRIDGE.md).
 The comparison plan selects `claude-opus-5.5` as both the saved mapping
 and requested model. The approved run at `4fd0b70` observed all six cases with
 verdict `limited_candidate_observed`. That run is complete; further live

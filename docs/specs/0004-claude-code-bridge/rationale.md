@@ -105,7 +105,7 @@ The controls suppress neither every beta token nor the effort object in this ins
 
 The official [effort reference](https://platform.claude.com/docs/en/build-with-claude/effort) describes effort as a behavioral control affecting output, tools, and thinking. The official [beta header reference](https://platform.claude.com/docs/en/api/beta-headers) describes feature opt in and accepts comma separated names or repeated headers. Those are Anthropic semantics, not proof of Kiro support. The confirmed bridge exception knowingly differs and therefore uses explicit `ignored` and `unsupported` labels. The header parser can handle both documented representations while still rejecting unknown names and duplicates. (basis: these two official references, checked October 2, 2026)
 
-No assumption is made that the four beta names are harmless on arbitrary bodies. In particular, `interleaved-thinking-2025-05-14` cannot admit thinking history, and `mid-conversation-system-2026-04-07` cannot admit system messages within history. The complete body contract remains the gate. If later client turns need those features, development returns to architecture with structural evidence instead of stripping them.
+At that amendment, no assumption was made that the four beta names were harmless on arbitrary bodies. In particular, `interleaved-thinking-2025-05-14` did not admit thinking history, and `mid-conversation-system-2026-04-07` did not admit system messages within history. The complete body contract remained the gate. The later system history amendment below records the new observation and the narrow replacement for that rejection rule.
 
 ### Verification impact
 
@@ -116,6 +116,42 @@ The amended matrix checks both endpoints, all repeated header values, malformed 
 At your request, `gpt-6-sol` reviewed the amendment for decision completeness and soundness. It found no material decision gaps. The literal effort shape, beta token set, parser bounds, validation order, discard boundaries, upstream omissions, fixed errors and policy headers, launch flag, and return to architecture for future unsupported shapes are specified.
 
 The reviewer noted that the newer exact enum and token observations are retained here, while the original JSON fixture records presence only. A second sanitized fixture could improve auditability, but the reviewer did not consider it a blocker: the implementation contract is explicit and the full offline exercise through production handlers remains required. No new capture or fixture was created by the reviewer. You then accepted the amendment on October 2, 2026. That acceptance confirms its design and verification plan. The feature linked spec remains `Proposed` until implementation begins; live execution still requires its separate concrete run review.
+
+## System history amendment, October 2, 2026
+
+### Observation and scope
+
+Development added an initial normalized parser, response construction, and injected Messages handler, then exercised the same installed client. The [sanitized result](../../../internal/gateway/testdata/claude-code-2.1.287-bridge.json) records four isolated diagnostic exercises. In the final exercise, the Messages request had the accepted bearer and headers, a top level system value, and a history containing one user entry with two text blocks followed by one system entry with string content. The body had no unknown top level fields. It received 400 before the scripted generator ran. An in memory diagnostic copy that removed the system entry passed the rest of validation, but that copy was never dispatched. A separate request to another local route received 401; this record does not establish that route's purpose or whether its rejection matters after a successful inference response.
+
+The client version was `2.1.287`, and its executable SHA 256 remained `6eab8333fe2121553100d8f40bfada384a3e989b94f947e18ba6677a6fcb41ea`. There were zero Kiro dispatches. No installed client response success, tool execution, tool result exchange, followup, or retry behavior was established. The tagged reproduction uses a temporary fixture directory, private client configuration, dummy bearer, manual permissions, safe mode, and the normal system prompt. Its raw traffic and client output were not retained. The product command and production Kiro adapter remain unwired. Passing deterministic tests do not resolve this client mismatch.
+
+You asked to resolve this gap, chose an update to spec 0004, and selected preservation as user context. The checkout was zero commits behind `origin/main` after fetching and had 48 Go source files. The partial build remains uncommitted. This architecture pass changes only the spec and its verification plan; it does not run another client experiment or access credentials.
+
+### Meaning of the source protocol
+
+The official [system messages inside a conversation reference](https://platform.claude.com/docs/en/build-with-claude/mid-conversation-system-messages), checked for this amendment, documents system entries inside `messages`. Their instructions apply from that point onward, with later instructions taking precedence over earlier instructions and the top level system value. The observed trailing entry is therefore semantic input. Deleting it merely because validation then passes would lose instructions. The Kiro baseline has no evidenced field that preserves that priority or replacement behavior. Preserving text as user content remains a deliberate weaker contract, including when instructions conflict.
+
+The current [CLI reference](https://code.claude.com/docs/en/cli-reference) describes `--system-prompt-snapshot off` as rebuilding the prompt each request, and `--exclude-dynamic-system-prompt-sections` as moving selected context into a user message. Neither description promises to suppress system entries inside history. The [SDK system prompt guide](https://code.claude.com/docs/en/agent-sdk/modifying-system-prompts) likewise separates prompt construction from context inserted into the conversation. These current references explain the choices; they do not prove how every path in the pinned executable behaves. No omission control was verified in this architecture pass.
+
+### Options and selected rule
+
+**Selected: preserve the observed shape as user context.** Accept exactly one string system entry immediately after a user entry, including a user containing tool results. Preserve it separately in normalized history and estimates; fold it into that user's text only when constructing Kiro JSON. Keep the existing client launch. This addresses the observed blocker with the existing Go boundaries and introduces no dependency, source, migration, or persistent state. Its cost is the explicit lack of system priority and instruction replacement guarantees. A later unsupported shape still returns to architecture. You selected this direction and accepted the written amendment after independent review on October 2, 2026. (basis: the local structural evidence, your selected experimental instruction policy, and bounded input validation from the Go security skill)
+
+**Runner up: keep rejection and investigate client controls.** A verified omission control could avoid supporting this shape, but rebuilding or moving prompt sections is not documented as suppressing it. Trying those controls would need an isolated capture and then the full tool exercise. A different client version would need a separately accepted baseline. This is appropriate if the added semantic limitation is unacceptable, but there is no verified launch change ready to adopt here. (basis: official CLI and SDK references above, pinned client evidence)
+
+**Lift every history instruction into the top level prefix.** This would preserve words but move later instructions ahead of earlier assistant turns. It would also invite unsupported assumptions about replacement and duplication. The chosen suffix retains the observed position relative to the associated user and following assistant. No instruction deduplication or cross request update state is introduced. (basis: self contained history contract and the source protocol's positional semantics)
+
+**Replace or add a second translator.** A parallel or replacement gateway would still need an evidenced Kiro equivalent for system priority. The observed issue does not justify a new adapter framework or replacement of the existing HTTP and credential layers. The local transformation can be added within the experimental flag. (basis: accepted architecture and the absence of an evidenced native Kiro system role)
+
+### Exact boundaries and verification impact
+
+The build spec defines the string shape, immediate user pairing, raw message and block accounting, sequence validation, tool result invariants, exact two newline suffix, empty string handling, top level prefix ordering, current message selection, normalized estimate source, and fixed instruction policy header. The string is never parsed for tags or special phrases. A beta header neither enables nor relaxes this rule. The gateway retains neither instructions nor their fingerprints between requests and makes no model compliance assertion from preserving their bytes.
+
+Verification covers the observed `[user, system]` shape, several user turns with their own entries, a user containing only tool results, repeated text, empty strings, placement failures, extra fields, budget boundaries, both endpoints, and unchanged inputs after translation. The original mismatch fixture remains historical evidence. After implementation, the real client must pass through the handler and scripted adapter for the complete text, tool, followup, and failure exercise. The existing live run review and limits remain in force.
+
+### Independent system history review
+
+At your request, `gpt-6-sol` reviewed the written amendment without changing files or fetching its references. It found no material decision gaps in validation, pairing, tool results, current user selection, limits, estimates, errors, headers, or the unchanged launch. It identified one ambiguous sentence about empty user content. The author clarified that content stays empty only when ordinary text, a nonempty system suffix, and an applicable nonempty top level prefix are all absent, matching the existing exact formula. This was a wording correction, not a new decision. The reviewer also confirmed that the recorded initial request does not establish later client behavior; the full offline exercise remains required. You then accepted the written amendment on October 2, 2026. The feature linked spec remains `In Progress`, with the build and verification milestones incomplete. This confirms the design and permits development to resume; live execution still needs its separate concrete run review.
 
 ## References
 
@@ -140,5 +176,8 @@ Explicit trust boundaries, bounded resource ownership, deterministic local verif
 4. [Define tools](https://platform.claude.com/docs/en/agents-and-tools/tool-use/define-tools), checked October 2, 2026. The auto and none selection boundary uses this page's described model restrictions. (basis: official tool definition reference)
 5. [Effort](https://platform.claude.com/docs/en/build-with-claude/effort), checked for the client contract amendment on October 2, 2026.
 6. [Beta headers](https://platform.claude.com/docs/en/api/beta-headers), checked for the client contract amendment on October 2, 2026.
+7. [System messages inside a conversation](https://platform.claude.com/docs/en/build-with-claude/mid-conversation-system-messages), checked for the system history amendment on October 2, 2026.
+8. [Claude Code CLI reference](https://code.claude.com/docs/en/cli-reference), checked for the documented prompt flags on October 2, 2026.
+9. [Agent SDK system prompts](https://code.claude.com/docs/en/agent-sdk/modifying-system-prompts), checked for prompt construction and conversation context distinctions on October 2, 2026.
 
 These links are retained for human inspection. Later build and review work uses this recorded evidence and the offline client exercise rather than fetching them again by default.

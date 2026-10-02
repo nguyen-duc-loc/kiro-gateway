@@ -1,0 +1,52 @@
+{
+  "date": "2026-10-02",
+  "result": "offline_loop_observed",
+  "client_version": "2.1.287",
+  "client_sha256": "6eab8333fe2121553100d8f40bfada384a3e989b94f947e18ba6677a6fcb41ea",
+  "history_system_amendment": "accepted string role after user, retained in normalization and paired only during upstream encoding",
+  "read_exercise": {
+    "messages_requests": 2,
+    "matching_result": true,
+    "invalid_messages": 0,
+    "client_success": true,
+    "unrelated_unauthenticated_request_status": 401
+  },
+  "scripted_generator_loop": {
+    "messages_requests": 5,
+    "matched_tool_results": 3,
+    "completed_user_turns": 2,
+    "host_permission_responses": 2,
+    "client_success": true
+  },
+  "production_adapter_loop": {
+    "synthetic_tls_dispatches": 5,
+    "matched_tool_results": 3,
+    "completed_user_turns": 2,
+    "host_permission_responses": 2,
+    "client_success": true,
+    "real_credentials_accessed": false
+  },
+  "permission_boundary": "manual client mode; isolated offline host allows only exact invented fixture operations and harmless false default flags. Live human permission behavior remains pending.",
+  "retry_candidate": {
+    "CLAUDE_CODE_MAX_RETRIES": "0",
+    "synthetic_429_attempts": 1,
+    "synthetic_502_attempts": 1,
+    "synthetic_interruption_attempts": 1,
+    "all_clients_exited_with_error": true,
+    "deadlines_reached": false
+  },
+  "response_modes": "Installed client uses SSE. Deterministic handler tests cover both SSE and ordinary JSON plus equal local token estimates.",
+  "real_kiro_dispatches": 0,
+  "ga_accepted": false,
+  "live_loop_observed": false,
+  "commands": [
+    "rtk proxy go test -race -tags clientbridge ./internal/gateway -run TestInstalledClient -count=1 -v -args -client-bridge",
+    "rtk proxy go test -race -tags clientbridge ./internal/kiro -run TestInstalledClientWireLoopOffline -count=1 -v -args -client-bridge"
+  ],
+  "not_established": [
+    "Real account coding loop",
+    "Live operator permission procedure",
+    "Live cancellation and injected interruption",
+    "GA compatibility"
+  ]
+}

@@ -99,6 +99,8 @@ Connect an authenticated Kiro account to a local gateway and complete a small re
 
 **Confirmed client amendment:** You accepted the spec 0004 amendment on October 2, 2026, after an independent review found no material decision gaps. The experimental contract accepts only `output_config.effort: "high"` and the four observed beta tokens as explicitly ignored compatibility inputs, pins `--effort high`, and rejects unsupported values and feature payloads before account access. Headers and startup output disclose the ignored effort and unsupported beta features. Preliminary captures establish only the initial request shape; the full offline client exercise and all experimental build milestones remain pending.
 
+**Confirmed system history amendment:** You accepted the spec 0004 amendment on October 2, 2026, after an independent review found no material decision gaps and one wording correction was applied. One string system entry may immediately follow each user message. Its text becomes a suffix on that user turn, with no guarantee of system priority or instruction replacement. The spec fixes validation, normalization, estimates, tool result handling, and the instruction policy header. The client launch stays unchanged. Development can resume; the full offline client exercise and all experimental build milestones remain pending.
+
 **Confirmed preparation:** You accepted the bounded feasibility design on October 1, 2026, after independent review and its four corrections. Its initial plan used one exact saved Sonnet mapping, at most six inference attempts, and explicit review of the concrete plan before each live run. The initial baseline was Claude Code `2.1.285` and Kiro CLI `2.8.0`. At that stage, the full bridge still needed protocol evidence and another architecture pass; its design checkbox and feature status remained pending.
 
 **Confirmed profile amendment:** You accepted the selected profile source on October 1, 2026, after independent review and its name validation correction. The next local slice reads the fixed token and `state["api.codewhisperer.profile"]` records in one transaction, derives region from the profile ARN, and pins profile bytes for the run. Synthetic implementation can proceed. Destination and authentication, distinct system instructions, output controls, and successful turn completion still need new evidence before live work.
@@ -119,9 +121,9 @@ Connect an authenticated Kiro account to a local gateway and complete a small re
 - [x] Document the feasibility milestone: `/document changelog first real Claude Code coding loop: feasibility milestone only`
 - [x] Design it (spec): `/architect first real Claude Code coding loop`
 - [ ] Build it: `/develop first real Claude Code coding loop: experimental bridge only`
-  - [ ] Prove the installed client through the authenticated local API and a scripted adapter, including the confirmed effort and beta contract (AC-1, AC-3, AC-7, AC-9).
-  - [ ] Connect the production wire adapter through synthetic credentials and TLS fixtures, including source changes and cancellation (AC-2, AC-5, AC-6, AC-8, AC-9).
-  - [ ] Complete tool results, followup, estimates, limits, and deterministic failure checks; prepare the concrete live plan (AC-3 through AC-10).
+  - [x] Prove the installed client through the authenticated local API and a scripted adapter, including the confirmed effort, beta, and history system contracts (AC-1, AC-3, AC-7, AC-9).
+  - [x] Connect the production wire adapter through synthetic credentials and TLS fixtures, including source changes and cancellation (AC-2, AC-5, AC-6, AC-8, AC-9).
+  - [x] Complete tool results, followup, estimates, limits, and deterministic failure checks; prepare the concrete live plan (AC-3 through AC-10).
   - [ ] After review and an authorized launch, complete the bounded coding proof and record its experimental outcome (AC-1 through AC-10).
 - [ ] Verify it: `/check verify first real Claude Code coding loop: experimental bridge only`
 - [ ] Test it: `/test first real Claude Code coding loop: experimental bridge only`
@@ -129,7 +131,7 @@ Connect an authenticated Kiro account to a local gateway and complete a small re
 - [ ] Document it: `/document changelog first real Claude Code coding loop: experimental bridge only`
 - [ ] Resolve remaining GA guarantees before feature completion: `/architect first real Claude Code coding loop: GA promotion`
 
-**Code:** The test only harness in `internal/kiro` and combined snapshot reader in `internal/credentials` have positive six case live evidence for the requested Opus 5.5 mapping. The final run used the reference request baseline, metadata extension tolerance, and reasoning discard only for independent failure checks. It observed streamed text, tool call, matching result, followup, cancellation, and the 256 byte interruption in one run. The verdict is `limited_candidate_observed`, with explicit instruction, completion, model identity, usage, and token control limits. Sanitized evidence is in spec 0003's verification record. Repository checks pass. The experimental bridge now has the confirmed design above; its implementation and GA promotion remain pending, so feature 4 is not complete.
+**Code:** The experimental parser and estimates are in `internal/bridge`, the authenticated Messages handler is in `internal/gateway/messages.go`, and `internal/cli` wires `serve --experimental-bridge` to the production adapter in `internal/kiro`. The history system amendment is implemented. Claude Code `2.1.287` completed Read, Edit, Bash, three matching results, and a second user turn through both a scripted generator and the production adapter with synthetic SQLite and TLS. Sanitized outcomes and retry observations are in `internal/gateway/testdata/claude-code-2.1.287-offline-loop.json`. Repository checks pass. The development runner and concrete plan are described in `internal/kiro/BRIDGE.md`; live dispatches remain zero and a separate run review is pending. The overall build box, verification workflow, and GA completion remain open.
 
 ## Slice 2: Keep access working
 

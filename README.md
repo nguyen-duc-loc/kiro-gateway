@@ -91,6 +91,20 @@ Initialization never overwrites an existing file. Mutations install a complete f
 
 The [configuration spec](docs/specs/0002-local-configuration-credentials/index.md) records the complete model and safety contract. Tests use synthetic databases and isolated homes, including real process locking and health requests. They do not read your Kiro credentials or prove live inference compatibility.
 
+## Experimental Claude Code bridge
+
+You can enable the Messages API with `serve --experimental-bridge` after linking a session and saving the exact mapping `"claude-opus-5.5": "claude-opus-5.5"`. Stop the gateway before editing settings, run `config check`, then restart. Startup and health do not read Kiro credentials.
+
+```sh
+rtk proxy go run ./cmd/kiro-gateway serve --experimental-bridge
+```
+
+The flag enables authenticated `POST /v1/messages` with SSE or ordinary JSON and `POST /v1/messages/count_tokens`. Both use the existing bearer token and API version `2023-06-01`. Only one inference can run at a time. The count endpoint estimates tokens locally. Plain `serve` keeps inference routes disabled.
+
+This is experimental. Top level and history instructions become user context, without guaranteed system priority or replacement. Completion is inferred, reasoning is discarded, usage is estimated, and `max_tokens` is advisory. Effort is ignored, beta features are unsupported, and serving model identity is unverified. Startup output and response headers disclose these limits.
+
+The pinned Claude Code `2.1.287` completed the offline Read, Edit, Bash, tool result, and followup exercise through a synthetic TLS service. Real account coding compatibility remains pending. The [bridge guide](internal/bridge/README.md) describes the offline checks. The [live proof guide](internal/kiro/BRIDGE.md) links the concrete plan, its separate run review, and the manual permission procedure.
+
 ## Development
 
 You need Git, the exact Go version in `go.mod` (currently 1.27.1), and a C compiler for the SQLite adapter and race detector. On macOS, the Xcode Command Line Tools provide the compiler. The module pins `github.com/mattn/go-sqlite3` at `v1.14.50` and uses its bundled SQLite with cgo enabled. Do not use the `libsqlite3` build tag. No external SQLite executable or live credentials are required. The first build downloads the pinned Go module.

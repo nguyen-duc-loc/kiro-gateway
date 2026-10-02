@@ -1,0 +1,56 @@
+{
+  "purpose": "Installed client exercise against the initial experimental Messages handler",
+  "date": "2026-10-02",
+  "result": "contract_mismatch",
+  "client_version": "2.1.287",
+  "client_sha256": "6eab8333fe2121553100d8f40bfada384a3e989b94f947e18ba6677a6fcb41ea",
+  "entry_point": "rtk proxy go test -tags clientbridge ./internal/gateway -run TestInstalledClientOffline -count=1 -v -args -client-bridge",
+  "receiver": "NewExperimentalHandler with a scripted local Generator and dummy bearer",
+  "product_serve_wired": false,
+  "isolation": "Temporary private client configuration and disposable fixture directory. HOME unchanged. Safe mode, normal system prompt, manual permissions, no session persistence. Child environment uses only the baseline keys in offlineClientEnv. Client stdout and stderr are discarded. Temporary client files are removed after each exercise.",
+  "arguments": [
+    "-p", "--no-session-persistence",
+    "--model", "claude-opus-5.5",
+    "--effort", "high",
+    "--safe-mode",
+    "--tools", "Read,Edit,Bash",
+    "--permission-mode", "manual",
+    "--prompt-suggestions", "false",
+    "Synthetic request to read the disposable fixture"
+  ],
+  "diagnostic_exercises": 4,
+  "final_exercise": {
+    "http_requests": 2,
+    "other_route_requests": 1,
+    "other_route_status": 401,
+    "messages_requests": 1,
+    "messages_status": 400,
+    "matching_dummy_bearer": true,
+    "headers_valid_under_amended_contract": true,
+    "body_valid_under_amended_contract": false,
+    "unknown_root_field_count": 0,
+    "root_fields": ["model", "messages", "system", "tools", "metadata", "max_tokens", "output_config", "stream"],
+    "message_shapes": [
+      {"role": "user", "content": "array of two text blocks"},
+      {"role": "system", "content": "string"}
+    ],
+    "diagnostic_only_removal_of_system_entry": {
+      "removed_count": 1,
+      "remaining_body_passes_validation": true,
+      "modified_body_dispatched": false
+    },
+    "generator_calls": 0,
+    "tool_result_observed": false,
+    "client_exit_success": false,
+    "kiro_dispatches": 0
+  },
+  "mismatch": "Spec 0004 accepts alternating user and assistant messages ending with user. This installed client sends a system message inside messages despite the selected controls. The tolerated mid conversation beta marker does not authorize that payload.",
+  "not_established": [
+    "Installed client successful text response",
+    "Read, Edit, or Bash execution and permission exchange",
+    "Tool results and subsequent user turn",
+    "Client retries after 429, 502, or stream failure",
+    "Production wire adapter or live coding compatibility"
+  ],
+  "next_decision": "Choose a client launch that avoids system messages inside history, or explicitly define their supported semantics in architecture before resuming the bridge build."
+}

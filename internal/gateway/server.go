@@ -17,6 +17,7 @@ import (
 	"syscall"
 	"time"
 
+	"kiro-gateway/internal/bridge"
 	"kiro-gateway/internal/config"
 )
 
@@ -25,6 +26,19 @@ const shutdownTimeout = 5 * time.Second
 // Run binds a validated loopback address and serves until cancellation or failure.
 // It never obtains Kiro credentials or starts an upstream request.
 func Run(ctx context.Context, listen, token, version string, logger *slog.Logger) error {
+	return runServer(ctx, listen, token, version, logger, nil)
+}
+
+// RunExperimental enables the explicit experimental Messages API. Startup and
+// health never call the generator or read account credentials.
+func RunExperimental(ctx context.Context, listen, token, version string, logger *slog.Logger, generator bridge.Generator) error {
+	if generator == nil {
+		return errors.New("experimental generator is required")
+	}
+	return runServer(ctx, listen, token, version, logger, generator)
+}
+
+func runServer(ctx context.Context, listen, token, version string, logger *slog.Logger, generator bridge.Generator) error {
 	address, err := netip.ParseAddrPort(listen)
 	if err != nil || !config.ValidListen(listen) {
 		return errors.New("--listen must be a numeric IPv4 loopback address and port, such as 127.0.0.1:8787")
@@ -47,6 +61,8 @@ func Run(ctx context.Context, listen, token, version string, logger *slog.Logger
 	}
 	defer listener.Close()
 
+	serverContext, stopRequests := context.WithCancelCause(context.WithoutCancel(ctx))
+	defer stopRequests(&bridge.Failure{Status: 503, Type: "api_error", Message: "Gateway is stopping.", Category: "stopping"})
 	server := &http.Server{
 		Handler:           newHealthHandler(token, version, logger),
 		ReadHeaderTimeout: 5 * time.Second,
@@ -54,8 +70,13 @@ func Run(ctx context.Context, listen, token, version string, logger *slog.Logger
 		WriteTimeout:      5 * time.Second,
 		IdleTimeout:       60 * time.Second,
 		MaxHeaderBytes:    16 << 10,
-		BaseContext:       func(net.Listener) context.Context { return ctx },
+		BaseContext:       func(net.Listener) context.Context { return serverContext },
 		ErrorLog:          log.New(safeServerLog{logger}, "", 0),
+	}
+	if generator != nil {
+		server.Handler = NewExperimentalHandler(token, version, logger, generator)
+		server.WriteTimeout = 0
+		logger.Warn(CompatibilityNotice, "event", "experimental_bridge")
 	}
 	result := make(chan error, 1)
 	go func() { result <- server.Serve(listener) }()
@@ -69,6 +90,7 @@ func Run(ctx context.Context, listen, token, version string, logger *slog.Logger
 		}
 		return nil
 	case <-ctx.Done():
+		stopRequests(&bridge.Failure{Status: 503, Type: "api_error", Message: "Gateway is stopping.", Category: "stopping"})
 		logger.Info("Stopping gateway", "event", "stopping")
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 		defer cancel()

@@ -12,7 +12,9 @@ import (
 	"time"
 
 	"kiro-gateway/internal/configstore"
+	"kiro-gateway/internal/credentials"
 	"kiro-gateway/internal/gateway"
+	"kiro-gateway/internal/kiro"
 )
 
 const usage = `Usage: kiro-gateway <command>
@@ -25,6 +27,7 @@ Commands:
 
 Serve options:
   --listen  Numeric IPv4 loopback address and port (default 127.0.0.1:8787)
+  --experimental-bridge  Enable the experimental Claude Code Messages bridge
 
 Environment:
   KIRO_GATEWAY_TOKEN  Required for serve, a random credential of at least 32 characters
@@ -67,6 +70,7 @@ func run(ctx context.Context, args []string, getenv func(string) string, stdout,
 		// The flag package otherwise echoes unknown arguments, which may contain secrets.
 		flags.SetOutput(io.Discard)
 		listen := flags.String("listen", "127.0.0.1:8787", "Numeric IPv4 loopback address and port")
+		experimental := flags.Bool("experimental-bridge", false, "Enable experimental inference")
 		if err := flags.Parse(args[1:]); err != nil {
 			if errors.Is(err, flag.ErrHelp) {
 				_, err := io.WriteString(stdout, usage)
@@ -100,6 +104,13 @@ func run(ctx context.Context, args []string, getenv func(string) string, stdout,
 			*listen = document.Listen
 		}
 		logger := slog.New(slog.NewTextHandler(stderr, nil))
+		if *experimental {
+			adapter, err := kiro.New(credentials.Reader{Home: home}, document)
+			if err != nil {
+				return err
+			}
+			return gateway.RunExperimental(ctx, *listen, getenv("KIRO_GATEWAY_TOKEN"), version, logger, adapter)
+		}
 		return gateway.Run(ctx, *listen, getenv("KIRO_GATEWAY_TOKEN"), version, logger)
 	default:
 		return errors.New("unknown command; use --help for usage")

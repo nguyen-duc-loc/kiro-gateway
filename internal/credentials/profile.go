@@ -26,7 +26,7 @@ type profileSnapshot struct {
 }
 
 // ProfileSnapshot holds a token and selected profile from one SQLite snapshot.
-// It is for the feasibility adapter only. Never log or persist its accessors.
+// It is for evidenced inference adapters. Never log or persist its accessors.
 type ProfileSnapshot struct {
 	credential Snapshot
 	profile    profileSnapshot
