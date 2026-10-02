@@ -4,7 +4,7 @@
   "client_sha256": "6eab8333fe2121553100d8f40bfada384a3e989b94f947e18ba6677a6fcb41ea",
   "kiro_version": "2.8.0",
   "kiro_sha256": "5114a52f8bd9ec485700adf73644cd0edc54d8e26410723e8f091ad5949e39f1",
-  "code_commit": "62990971e2581cc4aff0617030fc7aa730178cbf",
+  "code_commit": "f95c757ce2d281c5781e42fec4b515f0aa5b867c",
   "mapping": {
     "claude-opus-5.5": "claude-opus-5.5"
   },
@@ -32,11 +32,11 @@
     "cancel": "Cancel the local request after the first nonempty SSE text delta. Require matching canceled observation and completed cleanup.",
     "interrupt": "After the first validated nonempty text event, allow exactly 13 decoded HTTP body bytes, then inject an incomplete read in the next EventStream frame. Require text, stream error, no message_stop, and cleanup. An unreached trigger is incomplete evidence."
   },
-  "permissions": "Interactive Claude Code, permission-mode manual. The operator reviews each requested file edit and shell command, enters the exact followup prompt after the first answer, and exits after the second answer. No permission bypass or automatic approval is enabled for the live run.",
+  "permissions": "Interactive Claude Code, permission-mode manual. The operator reviews each requested file edit and shell command, enters the exact followup prompt after the first answer, and exits after the second answer. No permission bypass or automatic approval is enabled for the live run. For temporary first launch setup, use the default theme, continue the welcome notes, and trust only the prepared disposable fixture. Dismiss optional plugin installation dialogs with Escape; no plugin installation is authorized.",
   "environment": "liveClientEnv in internal/kiro/live_bridge_test.go, temporary private CLAUDE_CONFIG_DIR, HOME unchanged, dummy random local bearer, only baseline keys inherited. Exact model aliases, effort high, safe mode, Read/Edit/Bash, prompt suggestions false, MAX_RETRIES=0 verified offline.",
   "evidence": "Fixed verdict, dispatch count, first failure category, and cleanup deadline outcome only. No raw client transcript or account metadata is saved.",
   "offline_evidence": "internal/gateway/testdata/claude-code-2.1.287-offline-loop.json",
-  "previous_run": "internal/kiro/testdata/bridge-run-2026-10-02-02.json",
-  "launch_fix": "Foreground terminal ownership for the separate client process group, restored after exit or cancellation. Synthetic PTY regression and repository checks pass. Tool permissions, prompts, destinations, and budgets are unchanged.",
+  "previous_run": "internal/kiro/testdata/bridge-run-2026-10-02-03.json",
+  "launch_fix": "All client streams use the concrete controlling terminal device so captured runner output cannot select print mode. Foreground ownership and terminal settings are restored after exit or cancellation. The actual interactive client passed an offline tool loop with individual Edit and Bash prompts. Prompts, destinations, and budgets are unchanged.",
   "local_recovery": "Operator confirmed renewed sign in. Explicit session linking, exact Opus mapping restoration, and configuration validation succeeded. No inference was sent during recovery. Client artifacts still match their pinned digests."
 }
