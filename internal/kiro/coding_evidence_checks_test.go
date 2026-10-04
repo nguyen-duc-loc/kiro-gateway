@@ -8,6 +8,8 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -242,14 +244,18 @@ func TestCodingEvidenceRejectsIncompleteProof(t *testing.T) {
 
 type evidenceWriteFailure struct {
 	*httptest.ResponseRecorder
-	stream bool
-	mode   string
-	cancel context.CancelFunc
+	stream          bool
+	mode            string
+	cancel          context.CancelFunc
+	terminalWritten bool
 }
 
 func (w *evidenceWriteFailure) Write(data []byte) (int, error) {
+	w.terminalWritten = bytes.Contains(data, []byte("event: message_stop"))
 	if !w.stream || bytes.Contains(data, []byte("event: message_stop")) {
 		switch w.mode {
+		case "flush":
+			return w.ResponseRecorder.Write(data)
 		case "short":
 			return len(data) - 1, nil
 		case "cancel":
@@ -261,6 +267,89 @@ func (w *evidenceWriteFailure) Write(data []byte) (int, error) {
 		}
 	}
 	return w.ResponseRecorder.Write(data)
+}
+
+func (w *evidenceWriteFailure) FlushError() error {
+	if w.mode == "flush" && w.terminalWritten {
+		return io.ErrClosedPipe
+	}
+	w.ResponseRecorder.Flush()
+	return nil
+}
+
+// covers: AC-12. A final flush failure leaves client completion unproven.
+func TestCodingEvidenceFailedTerminalFlush(t *testing.T) {
+	f := newEvidenceFixture(t, true)
+	f.initial()
+	f.followupEdit()
+	if !f.send(bridge.Event{Tool: &f.calls[5]}) {
+		t.Fatal("send(followup test) = false, want successful handoff")
+	}
+	f.result(5, false)
+	f.generator.events = []bridge.Event{{Text: "Completed upstream only."}}
+	w := &evidenceWriteFailure{ResponseRecorder: httptest.NewRecorder(), stream: true, mode: "flush"}
+	aborted := false
+	func() {
+		defer func() {
+			if p := recover(); p != nil {
+				if p != http.ErrAbortHandler {
+					panic(p)
+				}
+				aborted = true
+			}
+		}()
+		f.handler.ServeHTTP(w, f.request())
+	}()
+	if !w.terminalWritten || !aborted || !f.tracking.failed || f.tracking.complete() || f.tracking.turns[1].complete {
+		t.Errorf("ServeHTTP(final flush failure) written=%t aborted=%t failed=%t complete=%t turn_complete=%t, want true true true false false", w.terminalWritten, aborted, f.tracking.failed, f.tracking.complete(), f.tracking.turns[1].complete)
+	}
+}
+
+// covers: AC-12. Both file inspections reject malformed or unavailable evidence.
+func TestCodingEvidenceRejectsInvalidBoundaryFiles(t *testing.T) {
+	for _, phase := range []string{"initial completion", "followup edit"} {
+		for _, mode := range []string{"malformed", "missing", "directory"} {
+			t.Run(phase+"/"+mode, func(t *testing.T) {
+				f := newEvidenceFixture(t, false)
+				if phase == "initial completion" {
+					f.user(f.plan.InitialPrompt)
+					for i := 0; i < 4; i++ {
+						if !f.send(bridge.Event{Tool: &f.calls[i]}) {
+							t.Fatalf("send(initial call %d) = false, want successful handoff", i)
+						}
+						f.result(i, false)
+					}
+				} else {
+					f.initial()
+					f.followupEdit()
+				}
+				path := filepath.Join(f.repo, "clamp_test.go")
+				if mode == "malformed" {
+					writeCodingFile(t, f.repo, "clamp_test.go", "package bridgefixture\nfunc broken(")
+				} else {
+					if err := os.Remove(path); err != nil {
+						t.Fatalf("Remove(fixture test) = %v, want nil", err)
+					}
+					if mode == "directory" {
+						if err := os.Mkdir(path, 0700); err != nil {
+							t.Fatalf("Mkdir(fixture test) = %v, want nil", err)
+						}
+					}
+				}
+				event := bridge.Event{Text: "Initial complete."}
+				if phase == "followup edit" {
+					event = bridge.Event{Tool: &f.calls[5]}
+				}
+				accepted := f.send(event)
+				if accepted || !f.tracking.failed || f.tracking.complete() {
+					t.Errorf("send(%s, %s file) accepted=%t failed=%t complete=%t, want false true false", phase, mode, accepted, f.tracking.failed, f.tracking.complete())
+				}
+				if f.tracking.calls[f.calls[5].ID] != nil {
+					t.Errorf("send(%s, %s file) delivered followup test, want no test handoff", phase, mode)
+				}
+			})
+		}
+	}
 }
 func TestCodingEvidenceFailedTerminalWrite(t *testing.T) {
 	for _, stream := range []bool{false, true} {

@@ -37,7 +37,7 @@ func repairClientBinary(t *testing.T) string {
 		t.Fatal("client unavailable")
 	}
 	version, err := exec.Command(binary, "--version").Output()
-	if err != nil || !strings.HasPrefix(string(version), "2.1.287 ") {
+	if err != nil || !strings.HasPrefix(string(version), "2.1.289 ") {
 		t.Fatal("client version mismatch")
 	}
 	artifact, err := os.ReadFile(binary)
@@ -45,7 +45,7 @@ func repairClientBinary(t *testing.T) string {
 		t.Fatal("client artifact unavailable")
 	}
 	sum := sha256.Sum256(artifact)
-	if hex.EncodeToString(sum[:]) != "6eab8333fe2121553100d8f40bfada384a3e989b94f947e18ba6677a6fcb41ea" {
+	if hex.EncodeToString(sum[:]) != "03d66745e3bb69ec727d66023696f3820bc0a00a8a5ba725eb6706d0c67cbe69" {
 		t.Fatal("client artifact mismatch")
 	}
 	return binary

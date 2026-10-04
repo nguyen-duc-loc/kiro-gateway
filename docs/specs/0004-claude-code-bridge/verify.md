@@ -37,7 +37,7 @@ Use invented credentials, temporary settings and SQLite stores, ephemeral loopba
 
 ## Offline installed client baseline
 
-Use Claude Code `2.1.287`, a disposable private configuration directory, the selected tool list and manual permission mode, a dummy local token, and a scripted loopback adapter. This is an explicitly invoked characterization, separate from unit tests. Do not provide real Kiro or Anthropic credentials.
+Use Claude Code `2.1.289` (the October 4 authorized offline baseline), a disposable private configuration directory, the selected tool list and manual permission mode, a dummy local token, and a scripted loopback adapter. This is an explicitly invoked characterization, separate from unit tests. Do not provide real Kiro or Anthropic credentials.
 
 1. Record the version and client artifact digest. Inspect the prepared child environment without printing secret values. Clear conflicting provider choices, user hooks, plugins, MCP configuration, and normal client session data using the specified isolation controls.
 2. Exercise a text turn, each tool type, returned success and error results, and a subsequent user turn. Record endpoint and method categories, known field presence, shapes, and bounded counts. Recreate any retained examples with invented content.
@@ -92,7 +92,7 @@ The October 4 review, `docs/reviews/2026-10-04-feat-claude-code-bridge-design.md
 
 ## Review repair verification
 
-All rows below start pending. Record actual commands, candidate commit, and outcomes when they run. An unavailable pinned client or an unreached assertion is incomplete evidence, never a pass.
+Repair behavior verification passed on October 4, 2026, for candidate `1d79b67fa8d293f2089283f53f0edab8613882cc`. The evidence below covers AC-11, AC-12, and AC-13. Separate regression test work, fresh review closure, and GA promotion remain pending. An unavailable pinned client or an unreached assertion is incomplete evidence, never a pass.
 
 | Criteria | Required proof |
 |---|---|
@@ -108,6 +108,40 @@ All rows below start pending. Record actual commands, candidate commit, and outc
 | AC-12 | An empty function named `TestClampUpperBoundary` fails the checker. The real assertion for `Clamp(11, 0, 10) == 10` must pass on the final fixture and fail on the isolated upper mutation under `rtk proxy go test -count=1 -run '^TestClampUpperBoundary$' .`. A compiler error, unrelated test failure, or timeout is not a successful mutation check. The full suite still passes on the final unmodified fixture. |
 | AC-13 | For synthetic 429 and 502, require the second request when the setting is absent, then stop that offline client. Require exactly one with zero, with client failure before the deadline. For interruption, the retained zero setting observation is one request. Repeat the absent setting characterization and record its count separately; it is not a retry suppression control and need not show a second attempt. Both interruption cases must reach a request and fail the client before their deadline. |
 | AC-11, AC-12, AC-13, AC-15 | Run repository checks, the explicitly invoked offline client exercises, and a fresh review of the repairs. Record closure of each review finding. Check the controller still owns limits and cancellation, and that new fixture inspection or mutation cannot outlive the existing absolute run deadline. |
+
+### Repair verification evidence, October 4, 2026
+
+Verdict: PASS for the review repair slice only. The installed Claude Code `2.1.287` passed the harness version and artifact digest checks. Runtime work used invented credentials, disposable fixtures, and local HTTP and TLS services. There were no live inference dispatches. All verification processes exited. Repository application and test sources were unchanged.
+
+The initial sandbox attempts could not bind loopback listeners. The repeated commands with listener access completed successfully. The old baseline allocation failures below are expected regression evidence.
+
+| Criterion | Verdict | Observed evidence |
+|---|---|---|
+| AC-11 | met | Serial production measurements used 285553 bytes per text operation and 285377 per tool operation, below 1048576. The prior implementation used 36100075 and 36099835 bytes respectively and failed the same assertion. Both response modes preserved exact assembled content and estimates at the text and tool limits. Overflow and cancellation did not expose a successful terminal event or executable tool. |
+| AC-12 | met | The pinned client distinguished passing and failing test results, completed two coding turns with eight synthetic dispatches, and passed the final suite and isolated boundary mutation checks. Missing results, invalid history, unsuccessful final writes, invalid fixture files, and unfinished inspections could not satisfy the proof. |
+| AC-13 | met | Both 429 and 502 produced two requests with the retry setting absent and one with zero. Interrupted SSE produced one in each case. Every client failed before its deadline. |
+
+The completed checks and their command evidence follow. Every command exited zero unless an expected baseline failure is explicitly stated.
+
+* [x] Measure the fixed allocation budget and exact output (AC-11): `rtk proxy go test -p 1 ./internal/bridge ./internal/kiro -run '^TestFragmentedAccumulationAllocation$' -v -count=1`. Both packages printed `PASS`, with 285553 and 285377 bytes per operation.
+* [x] Compare the earlier implementation and record CPU profiles (AC-11). Disposable Git archive copies of `f3335a6` and the candidate used the same accumulator benchmark. The old tool append was extracted unchanged into a helper for measurement. Each package ran `rtk proxy go test ./internal/<package> -run '^TestFragmentedAccumulationAllocation$' -bench '^BenchmarkFragmentedAccumulation$' -benchtime=1s -count=1 -v -cpuprofile=<scratch>/<label>-<package>.cpu -memprofile=<scratch>/<label>-<package>.mem -o <scratch>/<label>-<package>.test`. Both old allocation checks exited 1 above 36 million bytes per operation. Both candidate checks exited 0. Profiles and logs remain in `/tmp/kiro-verify-repair-dhu2v2ve`. CPU profiles were inspected with `rtk proxy go tool pprof -top -nodecount=5`; runtime scheduling and memory management dominated. Their durations and iteration counts differ, so sampled totals are not a speed ratio.
+* [x] Exercise production framing, handlers, cancellation, complete turns, rejected evidence, final write failures, mutation preconditions, assertion failures, and fixture deadlines (AC-11, AC-12): `rtk proxy go test -race ./internal/kiro -run '^TestCodingEvidence|^TestBoundaryRegression|^TestUpperMutation|^TestFragmentedStream|^TestFixtureTestDeadline' -v -count=1`. All selected cases passed. The fragmented fixture carried 2097152 text bytes and 262144 tool bytes in 5713950 wire bytes.
+* [x] Exercise passing and failing shell tests and the complete coding loop through the installed client, authenticated handler, production adapter, synthetic SQLite, and TLS (AC-12): `rtk proxy go test -race -tags clientbridge ./internal/kiro -run '^TestRepairClient' -repair-client -v -count=1`. Output included `suite_passes=false matching_client_error_flag=true`, `suite_passes=true matching_client_error_flag=true`, and `coding_loop_complete=true synthetic_dispatches=8 live_dispatches=0`.
+* [x] Characterize retries through the installed client (AC-13): `rtk proxy go test -race -tags clientbridge ./internal/gateway -run '^TestInstalledClientRetriesOffline$' -client-bridge -v -count=1`. Counts were 429: zero 1, absent 2; 502: zero 1, absent 2; interruption: zero 1, absent 1. Every case reported `client_success=false deadline_reached=false`.
+* [x] Run repository checks (AC-11 through AC-13): `rtk proxy ./scripts/check` printed `All checks passed.` Formatting, vet, build, and the suite with the race detector completed.
+* [x] Exercise the additional boundary cases in the disposable candidate copy (AC-11, AC-12): `rtk proxy go test -race ./internal/kiro -run '^TestFragmentedStream|^TestCodingEvidenceRejectsIncompleteProof/(malformed_boundary|unreadable_boundary)$' -v -count=1`. The scratch harness changed fragment width to 50 bytes with a final remainder, changed tool overflow to exactly one extra byte, and supplied malformed or missing boundary files. All cases passed; the exact limit fixture used 6653343 wire bytes. No production behavior was changed.
+* [x] Exercise overlapping admission during both file inspections and total wire overflow (AC-11, AC-12): `rtk proxy go test -race ./internal/kiro -run '^TestRuntimeInspectionAdmissionContention$|^TestFragmentedStreamLimitsAndCancellation/wire_overflow$' -v -count=1 -timeout=30s` in the same disposable copy. Scratch instrumentation paused the existing file read while the observer mutex remained held. The next admission waited, then failed after the invalid inspection. Both initial and followup cases passed. More than 8 MiB of valid metadata frames with only a small text output produced a stream error without successful completion.
+* [ ] Complete the separate repair test activity and fresh model review, and record closure of the earlier review findings. These are subsequent scope gates, not part of this verify invocation. AC-14 and AC-15 remain pending.
+
+No new route, table, migration, or product surface is required by this repair slice. The existing Messages handler, production adapter, coding observer, and installed client path were exercised. No repair surface was missing or failed at runtime. Scope: `Verify the repairs` is checked. Feature 4 remains in progress.
+
+### Regression tests and client update, October 4, 2026
+
+The operator requested updating to the latest Claude Code after the installed `2.1.289` failed the earlier version pin. Anthropic's latest release endpoint confirmed `2.1.289`; the installed macOS arm64 artifact matched Homebrew's SHA 256 `03d66745e3bb69ec727d66023696f3820bc0a00a8a5ba725eb6706d0c67cbe69`. The offline harness now pins this version and the repair harness checks this digest. Earlier verification and live records above remain evidence for their original versions.
+
+All seven explicitly invoked offline client tests passed with the race detector. The synthetic production adapter coding proof completed two task turns with eight dispatches, the passing and failing fixture suites produced matching error flags, and the final fixture and isolated boundary mutation checks passed. Retry counts were 429: zero 1, absent 2; 502: zero 1, absent 2; interrupted SSE: zero 1, absent 1. No live inference occurred. Commands and fixed outcomes are in the [new client record](../../../internal/gateway/testdata/claude-code-2.1.289-offline-loop.json).
+
+The permanent suite adds 18 cases for UTF-8 byte bounds, fixed terminal observations, invalid fixture files at both inspection points, failed terminal flushing, total wire overflow, and incomplete tool JSON. The large stream fixture now uses 50 byte fragments with a final remainder, and tool overflow is exactly one byte. All added cases passed with the race detector. Serial allocation checks measured 285553 text bytes and 285376 tool bytes per operation, below 1048576. `rtk proxy ./scripts/check` passed. Scope: `Test the repairs` is checked. Independent repair review, interactive terminal evidence for the new client, any new live plan, and GA promotion remain separate work.
 
 ## GA promotion verification
 

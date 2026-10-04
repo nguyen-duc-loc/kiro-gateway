@@ -103,7 +103,7 @@ The flag enables authenticated `POST /v1/messages` with SSE or ordinary JSON and
 
 This is experimental. Top level and history instructions become user context, without guaranteed system priority or replacement. Completion is inferred, reasoning is discarded, usage is estimated, and `max_tokens` is advisory. Effort is ignored, beta features are unsupported, and serving model identity is unverified. Startup output and response headers disclose these limits.
 
-The pinned Claude Code `2.1.287` completed the offline Read, Edit, Bash, tool result, and followup exercise through a synthetic TLS service. One separately approved real account coding proof also passed with 8 dispatches, including a followup test, cancellation, and interrupted stream handling. This is an observed experimental loop; broader compatibility and GA acceptance remain pending. The [bridge guide](internal/bridge/README.md) describes the offline checks. The [live proof guide](internal/kiro/BRIDGE.md) links the concrete plan, its separate run review, and the manual permission procedure.
+The pinned Claude Code `2.1.289` completed the offline Read, Edit, Bash, tool result, and followup exercise through a synthetic TLS service, plus the repaired completion and retry checks. The earlier separately approved real account coding proof used `2.1.287` and passed with 8 dispatches, including a followup test, cancellation, and interrupted stream handling. This is an observed experimental loop; broader compatibility and GA acceptance remain pending. The [bridge guide](internal/bridge/README.md) describes the offline checks. The [live proof guide](internal/kiro/BRIDGE.md) links the concrete plan, its separate run review, and the manual permission procedure.
 
 ## Development
 

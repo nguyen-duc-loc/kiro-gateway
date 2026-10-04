@@ -1,0 +1,78 @@
+{
+  "date": "2026-10-04",
+  "result": "offline_loop_observed",
+  "authorization": "Operator requested updating to the latest Claude Code version after the prior pin rejected the installed client.",
+  "client_version": "2.1.289",
+  "client_sha256": "03d66745e3bb69ec727d66023696f3820bc0a00a8a5ba725eb6706d0c67cbe69",
+  "platform": "darwin/arm64",
+  "go_version": "1.27.1",
+  "latest_version_source": "https://downloads.claude.ai/claude-code-releases/latest",
+  "artifact_matches_installed_homebrew_cask": true,
+  "candidate_base_commit": "1d79b67fa8d293f2089283f53f0edab8613882cc",
+  "candidate_has_uncommitted_test_and_documentation_changes": true,
+  "read_exercises": {
+    "existing_file": {"messages_requests": 2, "matching_result": true, "invalid_messages": 0, "client_success": true},
+    "missing_file": {"messages_requests": 2, "matching_error_result": true, "invalid_messages": 0, "client_success": true}
+  },
+  "scripted_generator_loop": {
+    "messages_requests": 5,
+    "matched_tool_results": 3,
+    "completed_user_turns": 2,
+    "host_permission_responses": 2,
+    "invalid_messages": 0,
+    "client_success": true
+  },
+  "production_adapter_loop": {
+    "synthetic_tls_dispatches": 5,
+    "matched_tool_results": 3,
+    "completed_user_turns": 2,
+    "host_permission_responses": 2,
+    "invalid_messages": 0,
+    "client_success": true
+  },
+  "repair_coding_loop": {
+    "synthetic_dispatches": 8,
+    "completed_task_turns": 2,
+    "successful_client_test_results": 2,
+    "passing_suite_error_flag_matched": true,
+    "failing_suite_error_flag_matched": true,
+    "first_turn_boundary_absent": true,
+    "followup_assertion_before_test_handoff": true,
+    "final_fixture_suite": "passed",
+    "isolated_upper_mutation": "named_boundary_assertion_failed",
+    "coding_evidence_complete": true
+  },
+  "retry_attempts": {
+    "429": {"zero": 1, "absent": 2},
+    "502": {"zero": 1, "absent": 2},
+    "interrupted_sse": {"zero": 1, "absent": 1},
+    "all_clients_exited_with_error": true,
+    "deadlines_reached": false,
+    "absent_429_and_502_stopped_after_second_request": true
+  },
+  "repair_regressions": {
+    "new_cases": 18,
+    "race_detector": "passed",
+    "text_accumulator_bytes_per_op": 285553,
+    "tool_accumulator_bytes_per_op": 285376,
+    "allocation_limit_bytes_per_op": 1048576,
+    "allocation_measurement": "Serial package runs of the fixed 1024 fragment benchmark."
+  },
+  "repository_checks": "passed",
+  "real_credentials_accessed": false,
+  "real_kiro_dispatches": 0,
+  "ga_accepted": false,
+  "permission_boundary": "Manual client mode; isolated host approves only the exact invented fixture operations.",
+  "commands": [
+    "rtk proxy go test -race -tags clientbridge ./internal/gateway -run '^TestInstalledClient' -client-bridge -v -count=1",
+    "rtk proxy go test -race -tags clientbridge ./internal/kiro -run '^TestRepairClient|^TestInstalledClientWireLoopOffline$' -repair-client -client-bridge -v -count=1",
+    "rtk proxy go test -p 1 ./internal/bridge ./internal/kiro -run '^TestFragmentedAccumulationAllocation$' -v -count=1",
+    "rtk proxy ./scripts/check"
+  ],
+  "not_established": [
+    "A live account coding loop on 2.1.289",
+    "Interactive terminal permission behavior on 2.1.289",
+    "Fresh independent review closure",
+    "GA compatibility"
+  ]
+}

@@ -33,7 +33,7 @@ func TestInstalledClientToolLoopOffline(t *testing.T) {
 		t.Fatal("installed client unavailable")
 	}
 	version, err := exec.Command(binary, "--version").Output()
-	if err != nil || !strings.HasPrefix(string(version), "2.1.287 ") {
+	if err != nil || !strings.HasPrefix(string(version), "2.1.289 ") {
 		t.Fatal("client version mismatch")
 	}
 	dir := t.TempDir()

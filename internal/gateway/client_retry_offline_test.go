@@ -17,7 +17,7 @@ import (
 	"kiro-gateway/internal/bridge"
 )
 
-// covers: AC-9. Compare zero with an absent setting using only local failures.
+// covers: AC-9, AC-13. Compare zero with an absent setting using only local failures.
 func TestInstalledClientRetriesOffline(t *testing.T) {
 	if !*clientBridge {
 		t.Skip("requires explicit -client-bridge flag")
@@ -27,7 +27,7 @@ func TestInstalledClientRetriesOffline(t *testing.T) {
 		t.Fatal("client unavailable")
 	}
 	version, err := exec.Command(binary, "--version").Output()
-	if err != nil || !strings.HasPrefix(string(version), "2.1.287 ") {
+	if err != nil || !strings.HasPrefix(string(version), "2.1.289 ") {
 		t.Fatal("client version mismatch")
 	}
 	for _, fault := range []string{"429", "502", "interrupted"} {

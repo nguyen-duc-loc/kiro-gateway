@@ -76,8 +76,8 @@ func installedClientReadOffline(t *testing.T, missing bool) {
 		t.Fatal("installed Claude Code is unavailable")
 	}
 	version, err := exec.Command(binary, "--version").Output()
-	if err != nil || !strings.HasPrefix(string(version), "2.1.287 ") {
-		t.Fatal("installed client does not match version 2.1.287")
+	if err != nil || !strings.HasPrefix(string(version), "2.1.289 ") {
+		t.Fatal("installed client does not match version 2.1.289")
 	}
 	artifact, err := os.ReadFile(binary)
 	if err != nil {
@@ -134,7 +134,7 @@ func installedClientReadOffline(t *testing.T, missing bool) {
 	cmd.Stderr = io.Discard
 	cmd.Env = offlineClientEnv(srv.URL, token, cfg)
 	err = cmd.Run()
-	t.Logf("client_version=2.1.287 client_sha256=%s requests=%d validated=%d result_matched=%t invalid=%d client_success=%t kiro_dispatches=0", hex.EncodeToString(digest[:]), attempts.Load(), script.calls.Load(), script.result.Load(), invalid.Load(), err == nil)
+	t.Logf("client_version=2.1.289 client_sha256=%s requests=%d validated=%d result_matched=%t invalid=%d client_success=%t kiro_dispatches=0", hex.EncodeToString(digest[:]), attempts.Load(), script.calls.Load(), script.result.Load(), invalid.Load(), err == nil)
 	if err != nil || script.calls.Load() != 2 || !script.result.Load() || invalid.Load() != 0 {
 		t.Error("installed client read exchange did not complete")
 	}

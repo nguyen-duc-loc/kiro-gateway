@@ -129,16 +129,16 @@ Connect an authenticated Kiro account to a local gateway and complete a small re
   - [x] After review and an authorized launch, complete the bounded coding proof and record its experimental outcome (AC-1 through AC-10).
 - [x] Verify it: `/check verify first real Claude Code coding loop: experimental bridge only`
 - [x] Test it: `/test first real Claude Code coding loop: experimental bridge only`
-- [ ] Review it (fresh model): `/check review first real Claude Code coding loop: experimental bridge only`
-- [ ] Document it: `/document changelog first real Claude Code coding loop: experimental bridge only`
+- [x] Review it (fresh model): `/check review first real Claude Code coding loop: experimental bridge only`
+- [x] Document it: `/document changelog first real Claude Code coding loop: experimental bridge only`
 - [x] Design GA promotion gates (spec): `/architect first real Claude Code coding loop: GA promotion`
 - [x] Build the review repair slice: `/develop first real Claude Code coding loop: review repair slice only`
   - [x] Bound fragmented accumulation and prove unchanged output and cancellation behavior (AC-11).
   - [x] Strengthen turn completion, followup test and mutation evidence, and retry controls through the offline client path (AC-12, AC-13).
-- [ ] Verify the repairs: `/check verify first real Claude Code coding loop: review repair slice only`
-- [ ] Test the repairs: `/test first real Claude Code coding loop: review repair slice only`
-- [ ] Review the repairs (fresh model): `/check review first real Claude Code coding loop: review repair slice only`
-- [ ] Document the repairs: `/document changelog first real Claude Code coding loop: review repair slice only`
+- [x] Verify the repairs: `/check verify first real Claude Code coding loop: review repair slice only`
+- [x] Test the repairs: `/test first real Claude Code coding loop: review repair slice only`
+- [x] Review the repairs (fresh model): `/check review first real Claude Code coding loop: review repair slice only`
+- [x] Document the repairs: `/document changelog first real Claude Code coding loop: review repair slice only`
 - [ ] Resolve the evidenced GA wire contract (spec): `/architect first real Claude Code coding loop: GA wire contract`
 - [ ] Build the GA candidate after wire contract ratification: `/develop first real Claude Code coding loop: GA candidate`
   - [ ] Prove the evidenced contract through the complete synthetic coding path (AC-14).
@@ -149,6 +149,8 @@ Connect an authenticated Kiro account to a local gateway and complete a small re
 - [ ] Document the GA candidate: `/document changelog first real Claude Code coding loop: GA candidate`
 
 **Code:** `internal/bridge` owns validation and estimates, `internal/gateway/messages.go` serves the authenticated API, and `internal/cli` wires `serve --experimental-bridge` to the production `internal/kiro` adapter. Offline client evidence is in `internal/gateway/testdata/claude-code-2.1.287-offline-loop.json`. The fourth separately approved live run recorded `experimental_loop_observed`: 8 dispatches in 805.64 seconds, with operator observations of the coding and followup test loop, individual permissions, cancellation, interruption, and cleanup. The sanitized record is `internal/kiro/testdata/bridge-run-2026-10-02-04.json`; earlier incomplete runs remain separate. The October 4 code review requests changes and identifies a limit in the runner's followup proof. The checked experimental review and documentation boxes record completed activities, not closure of those findings. The accepted GA amendment makes the repair slice ready; code review closure, the four protocol gates, and GA candidate acceptance remain pending. Review repair code is in `internal/bridge/response.go`, `internal/kiro/events.go`, `internal/kiro/coding_evidence_test.go`, `internal/kiro/coding_regression_test.go`, and `internal/gateway/client_retry_offline_test.go`. Development check commands and measured synthetic evidence are in `internal/kiro/testdata/review-repair-2026-10-04.json`; separate repair verification and independent review remain pending.
+
+**Current offline client baseline, October 4, 2026:** You requested the latest Claude Code version after its installed update. The harness now pins `2.1.289` and its reviewed executable digest. The new [offline record](../../internal/gateway/testdata/claude-code-2.1.289-offline-loop.json) records passing coding, wire, result encoding, and retry checks, plus 18 added repair regression cases and passing repository checks. `Test the repairs` is complete. The next repair step is independent review; feature 4 remains in progress. Earlier client and live evidence retains its original versions.
 
 ## Slice 2: Keep access working
 

@@ -23,15 +23,16 @@ func TestFragmentedStreamLimitsAndCancellation(t *testing.T) {
 	text := strings.Repeat("x", 2<<20)
 	input := `{"value":"` + strings.Repeat("y", (256<<10)-12) + `"}`
 	var wire bytes.Buffer
-	for offset := 0; offset < len(text); offset += 64 {
-		wire.Write(probeFrame("assistantResponseEvent", string(bridge.Canonical(map[string]any{"content": text[offset : offset+64]}))))
+	for offset := 0; offset < len(text); offset += 50 {
+		wire.Write(probeFrame("assistantResponseEvent", string(bridge.Canonical(map[string]any{"content": text[offset:min(offset+50, len(text))]}))))
 	}
-	for offset := 0; offset < len(input); offset += 64 {
-		event := map[string]any{"toolUseId": "fragmented_tool", "input": input[offset : offset+64]}
+	for offset := 0; offset < len(input); offset += 50 {
+		end := min(offset+50, len(input))
+		event := map[string]any{"toolUseId": "fragmented_tool", "input": input[offset:end]}
 		if offset == 0 {
 			event["name"] = "Read"
 		}
-		if offset+64 == len(input) {
+		if end == len(input) {
 			event["stop"] = true
 		}
 		wire.Write(probeFrame("toolUseEvent", string(bridge.Canonical(event))))
@@ -40,7 +41,7 @@ func TestFragmentedStreamLimitsAndCancellation(t *testing.T) {
 		t.Fatal("fragmented fixture exceeds wire limit")
 	}
 	t.Logf("fragmented fixture text_bytes=%d tool_bytes=%d wire_bytes=%d", len(text), len(input), wire.Len())
-	for _, mode := range []string{"json", "sse", "cancel", "text overflow", "tool overflow"} {
+	for _, mode := range []string{"json", "sse", "cancel", "text overflow", "tool overflow", "wire overflow", "incomplete tool"} {
 		t.Run(mode, func(t *testing.T) {
 			body := wire.Bytes()
 			switch mode {
@@ -54,14 +55,25 @@ func TestFragmentedStreamLimitsAndCancellation(t *testing.T) {
 			case "tool overflow":
 				// Overflow before stop, rather than a fragment after a completed tool.
 				var overflow bytes.Buffer
-				for i := 0; i < 5; i++ {
+				for i := 0; i < 4; i++ {
 					event := map[string]any{"toolUseId": "oversize", "input": strings.Repeat("x", 64<<10)}
 					if i == 0 {
 						event["name"] = "Read"
 					}
 					overflow.Write(probeFrame("toolUseEvent", string(bridge.Canonical(event))))
 				}
+				overflow.Write(probeFrame("toolUseEvent", `{"toolUseId":"oversize","input":"x"}`))
 				body = overflow.Bytes()
+			case "wire overflow":
+				var overflow bytes.Buffer
+				overflow.Write(probeFrame("assistantResponseEvent", `{"content":"small output"}`))
+				metadata := probeFrame("messageMetadataEvent", string(bridge.Canonical(map[string]any{"conversationId": strings.Repeat("m", 64<<10)})))
+				for overflow.Len() <= 8<<20 {
+					overflow.Write(metadata)
+				}
+				body = overflow.Bytes()
+			case "incomplete tool":
+				body = append(probeFrame("assistantResponseEvent", `{"content":"partial"}`), probeFrame("toolUseEvent", `{"toolUseId":"unfinished","name":"Read","input":"{\"value\":"}`)...)
 			}
 			home, _ := probeHome(t)
 			adapter := adapterFixture(t, home, func(w http.ResponseWriter, r *http.Request) {
@@ -84,15 +96,15 @@ func TestFragmentedStreamLimitsAndCancellation(t *testing.T) {
 				writer = &fragmentCancelWriter{recorder, cancel}
 			}
 			handler.ServeHTTP(writer, req)
-			if mode == "cancel" || strings.Contains(mode, "overflow") {
+			if mode == "cancel" || strings.Contains(mode, "overflow") || mode == "incomplete tool" {
 				if strings.Contains(recorder.Body.String(), "event: message_stop") || strings.Contains(recorder.Body.String(), `"type":"tool_use"`) {
 					t.Error("failed fragmented response exposed successful terminal or tool")
 				}
 				if mode == "cancel" && ctx.Err() == nil {
 					t.Error("fragmented cancellation trigger absent")
 				}
-				if mode == "text overflow" && !strings.Contains(recorder.Body.String(), "event: error") {
-					t.Error("text overflow did not signal stream error")
+				if (mode == "text overflow" || mode == "wire overflow" || mode == "incomplete tool") && !strings.Contains(recorder.Body.String(), "event: error") {
+					t.Errorf("ServeHTTP(%s) stream error absent, want error event", mode)
 				}
 				if mode == "tool overflow" && recorder.Code != http.StatusBadGateway {
 					t.Errorf("tool overflow status=%d, want 502", recorder.Code)

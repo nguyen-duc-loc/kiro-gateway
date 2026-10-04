@@ -15,6 +15,7 @@ You can build with `rtk proxy go build -o bin/kiro-gateway ./cmd/kiro-gateway`, 
 You can format with `rtk proxy gofmt -w cmd internal`, check with `rtk proxy go vet ./...`, compile all packages with `rtk proxy go build ./...`, and test with `rtk proxy go test -race ./...`.
 You can run all checks with `rtk proxy ./scripts/check` and enable the commit hook in each clone with `rtk proxy git config --local core.hooksPath .githooks`.
 You can manage settings with `config init`, `config check`, and `config upgrade`, and the selected session reference with `account link` and `account forget`. These local commands need no gateway token. Stop serving before mutations or manual edits; settings take effect after restart.
+You can enable the experimental Messages API with `serve --experimental-bridge` after linking a session and saving the exact `"claude-opus-5.5": "claude-opus-5.5"` mapping. Plain `serve` keeps inference disabled. Startup, health, and local token estimates do not read account credentials.
 
 ## Rules
 
@@ -26,6 +27,7 @@ You can manage settings with `config init`, `config check`, and `config upgrade`
 * Use Go `testing` and `httptest`, with `*_test.go` beside source. Unit tests exercise inner logic without live dependencies; integration tests cover adapters and process behavior. Use synthetic credentials, isolated environments, and ephemeral loopback ports. Keep live compatibility evidence separate from deterministic tests.
 * Save only versioned settings and a session fingerprint at `~/.config/kiro-gateway/config.json`. Keep credentials in Kiro CLI's store. Relinking changed bytes clears all model mappings; forgetting removes the reference and mappings without changing Kiro. Use synthetic SQLite fixtures, never the operator's real credential store, in ordinary verification.
 * The feasibility harness uses `Reader.ReadProfileSnapshot` to read the fixed token and selected profile in one transaction. Route by the profile ARN region and pin its exact byte digest only in memory for the run. `Capture` and `ReadSnapshot` remain token only. Live work requires the concrete protocol evidence and explicit run review in spec 0003.
+* The experimental adapter reads one fresh combined snapshot per admitted inference, pins the profile in memory for its lifetime, and dispatches once. Complete tools wait for validated framing, semantic checks, and transport cleanup. A cleanup timeout disables inference until restart. Spec 0004 governs the experimental bridge and requires a separately reviewed plan for each live run; earlier launch approvals are consumed.
 * Keep `.lock` stable and hold its exclusive process lock through serving or mutation. Use atomic nonreplacing initialization and replacing saves. Validate descriptor metadata and explicitly reject appended symlinks; `os.Root` may resolve relative symlinks despite `O_NOFOLLOW`. Report uncertain saves after installation instead of claiming rollback.
 
 ## Tooling
@@ -43,6 +45,7 @@ Use conventional commit messages. Pushes and pull requests require explicit user
 ## Specs
 
 Specs live in `docs/specs/<number>-<name>/index.md`, with supporting rationale alongside. The [accepted architecture](docs/specs/0001-stack-architecture/index.md) is the stack source of truth, extended by the [configuration and session reference model](docs/specs/0002-local-configuration-credentials/index.md). Live inference and credential renewal still need their own decisions before implementation.
+The [experimental bridge and GA promotion spec](docs/specs/0004-claude-code-bridge/index.md) governs implemented inference and repair acceptance. GA still needs evidenced decisions for instruction semantics, completion, serving model and usage, and model controls.
 
 ## Agent skills
 
@@ -65,5 +68,6 @@ Declined during spec 0002: `eduardo-sl/go-agent-skills` skills `go-database` and
 ## Context files
 
 * [internal/credentials/AGENTS.md](internal/credentials/AGENTS.md): Fixed SQLite records, snapshot validation, and profile boundaries.
+* [internal/bridge/AGENTS.md](internal/bridge/AGENTS.md): Client protocol validation, bounded response accumulation, and development observations.
 
 _Drafted by /audit from the repo, worth a quick human pass. Edit freely: once a line stops matching this draft, later runs treat it as curated and will flag rather than overwrite it._
