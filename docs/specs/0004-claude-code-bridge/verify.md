@@ -1,6 +1,6 @@
 # Verification plan for the coding bridge and GA promotion
 
-This is the verification plan for [spec 0004](index.md), updated October 4, 2026. The retained offline client record and fourth live run now establish an experimental coding loop. The October 4 review requests changes, so completion of the review activity does not establish acceptance. The original matrix remains below; you confirmed the added repair and promotion matrix with the revised GA amendment on October 4. No GA gate is currently verified.
+This is the verification plan for [spec 0004](index.md), updated October 4, 2026. The retained offline client record and fourth live run establish an experimental coding loop. The later October 4 repair review closes the three local findings; the earlier review and verification entries below retain their original chronology. The wire investigation still records `needs_evidence`, with no GA gate verified.
 
 ## Deterministic verification
 
@@ -142,6 +142,22 @@ The operator requested updating to the latest Claude Code after the installed `2
 All seven explicitly invoked offline client tests passed with the race detector. The synthetic production adapter coding proof completed two task turns with eight dispatches, the passing and failing fixture suites produced matching error flags, and the final fixture and isolated boundary mutation checks passed. Retry counts were 429: zero 1, absent 2; 502: zero 1, absent 2; interrupted SSE: zero 1, absent 1. No live inference occurred. Commands and fixed outcomes are in the [new client record](../../../internal/gateway/testdata/claude-code-2.1.289-offline-loop.json).
 
 The permanent suite adds 18 cases for UTF-8 byte bounds, fixed terminal observations, invalid fixture files at both inspection points, failed terminal flushing, total wire overflow, and incomplete tool JSON. The large stream fixture now uses 50 byte fragments with a final remainder, and tool overflow is exactly one byte. All added cases passed with the race detector. Serial allocation checks measured 285553 text bytes and 285376 tool bytes per operation, below 1048576. `rtk proxy ./scripts/check` passed. Scope: `Test the repairs` is checked. Independent repair review, interactive terminal evidence for the new client, any new live plan, and GA promotion remain separate work.
+
+## Wire investigation disposition, October 4, 2026
+
+The disposition in `index.md`, accepted after independent review on October 4, records a source investigation at repository commit `d60b949af7ea9d41ced2a3faa5bd7043a9928b00`. The source inventory in `rationale.md` binds the native artifact, code paths, decoder addresses, and public source limitations. The investigation performed no client launch, account read, inference dispatch, or new runtime test.
+
+| Evidence boundary | Recorded outcome |
+|---|---|
+| Repair findings | Closed by the later `Repair review, 2026-10-04` section of the independent review. This supersedes its earlier requests for changes within the repair scope only. |
+| G1 | Open. No evidenced native instruction priority and positional replacement mapping. |
+| G2 | Open. No evidenced authoritative terminal or equivalent completeness mechanism. |
+| G3 | Open. Candidate identity and usage fields, without sufficient serving identity or accounting semantics. |
+| G4 | Open. Candidate generic control carrier and prior `max_tokens` documentation, without service enforcement, terminal reason, or effort equivalence. |
+| GA contract and AC-14 | Incomplete. The investigation disposition is not a buildable wire contract or a gate pass. |
+| New live plan | None. Earlier approvals remain consumed. |
+
+The next contract review needs exact field mappings and positive and negative cases from a new identifiable source before the matrix below can be implemented as GA acceptance. Historical experimental fixtures remain evidence of their weaker contract. This document change warrants source and consistency checks; it does not rerun or upgrade the recorded runtime outcomes.
 
 ## GA promotion verification
 

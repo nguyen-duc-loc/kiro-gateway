@@ -223,6 +223,59 @@ The allocation check now measures cumulative allocated bytes per operation throu
 
 These corrections were applied with your approval, and you subsequently accepted the complete revised amendment. They do not close the implementation review findings or verify a GA gate. No second independent review of the corrected text has been recorded.
 
+## GA wire investigation, October 4, 2026
+
+### Context and outcome
+
+You chose an update to spec 0004 and named sources with evidence locations. This is an enhancement investigation on the existing Go backend and Tracer Bullet path. Its outcome is `needs_evidence`: the inspected sources do not supply a complete GA wire contract. You accepted this investigation disposition after independent review; no new protocol behavior is ratified.
+
+The checkout began clean at `d60b949af7ea9d41ced2a3faa5bd7043a9928b00`, with 77 Go files and zero commits behind `origin/main` after fetching. The later repair review in `docs/reviews/2026-10-04-feat-claude-code-bridge-design.md`, section `Repair review, 2026-10-04`, approves the repair slice and closes all three earlier findings. `CHANGELOG.md`, section `Fixed`, records the repairs. Earlier pending review statements in this rationale describe their historical checkpoint.
+
+The offline client record `internal/gateway/testdata/claude-code-2.1.289-offline-loop.json` supplies the current client version, artifact digest, synthetic assertions, and limits. This investigation did not run those checks again. The earlier live evidence stays bound to its original client and runner; it does not verify any GA gate.
+
+### Source identity and inspection boundary
+
+A fresh SHA 256 calculation of `/Applications/Kiro CLI.app/Contents/MacOS/kiro-cli-chat` returned `2118bd89d96830a4f0e0884e4f4071fb94e4b6036c757126afe9e3f80c9d90c6`, matching the recorded Kiro CLI `2.8.0` artifact. Addresses below are arm64 file virtual addresses, not process addresses. The retained disassembly is under `/private/tmp/kiro-protocol-research`; this local scratch directory is not required build input and may disappear. The pinned binary digest, named functions, and addresses identify the binary locations. Reproducing the inspection requires access to that matching binary or adequate retained excerpts; this document does not archive either artifact.
+
+The main thread inspected production event and response handling, reread the prior static call trace, checked retained usage decoding, and resolved input serializer constants directly from binary bytes. A read only helper cross checked the production request and completion paths against the retained disassembly. No client process was launched or attached, no real credential or account settings were read, and no inference endpoint was contacted.
+
+| Gate | Source location | Established fact | Remaining unknown |
+|---|---|---|---|
+| G1 | `internal/kiro/request.go`, `encodeRequest`; native conversation serializer `0x100861b10`, message union serializer `0x10085bf08`, user context serializer `0x100841890`; prior static trace in spec 0003 | The gateway appends history system text to its paired user and prefixes top level system text to the first user. The inspected native typed shapes supply user and assistant variants and context fields, without an identified distinct system role. | A field and protocol guarantee preserving priority and positional replacement. Generic documents or another operation may expose more, but none was established. |
+| G2 | `internal/kiro/adapter.go`, `Generate`; `internal/kiro/events.go`, `complete` and `emitTools`; native stream unmarshaller `0x10082eb58`, assistant decoder `0x1008771e4`, message metadata decoder `0x100869d10`, metadata decoder `0x1008686d8` | The adapter accepts clean frame completion, semantic content, complete tools, and successful cleanup, then returns `InferredCleanEOF`. The identified metadata fields and per tool stop do not supply the required normal generation terminal contract. | A positive generation terminal indication or equivalent mechanism that rejects every earlier valid stream prefix. The native dry run success branch is not such evidence for normal inference. |
+| G3 | `internal/kiro/events.go`, `observe`; `internal/bridge/response.go`, `Message`; native assistant decoder `0x1008771e4`, token usage decoder `0x1008228a0` | The gateway checks an optional `modelId` against the request and discards recognized usage. Its client envelope echoes the requested model and computes byte estimates. The native decoder has actual comparisons for `uncachedInputTokens`, `outputTokens`, `totalTokens`, cache counters, and normalized or percentage fields. | Whether identity reports the actual serving model; counter units, measurement basis, totals versus deltas, cache and reasoning accounting, ordering, and availability on this service/model. Field names alone cannot define these. |
+| G4 | Native input serializer `0x100810d48`, key writer call `0x100810e4c`; `RealApiClient::send_message` calls at `0x10238a464` and `0x10238a4b8`; spec 0003 output control investigation; `internal/kiro/request.go` | The native path serializes a generic `additionalModelRequestFields` document. Prior documentation makes `max_tokens` a candidate. Production intentionally omits that document and discards the accepted effort hint. | Actual service acceptance and enforcement for the exact Opus mapping, counting basis, cap terminal reason, and an effort equivalent. A request failure with several differing fields cannot isolate a rejected control. |
+
+The usage trace merits care. At `0x100822ab4` through `0x100822af8`, key comparisons recognize `uncachedInputTokens`; at `0x100822c94` through `0x100822cbc` they recognize `outputTokens`. Builder error constants referenced at `0x10082336c`, `0x100823388`, and `0x1008233b0` name required native structure members `uncached_input_tokens`, `output_tokens`, and `total_tokens`. Those underscore names are native error text, not JSON wire names. Native structure validation does not prove that a usage event is always emitted, that these counters mean Anthropic message tokens, or that metadata ends generation. No aggregation formula or client usage mapping is selected from this evidence.
+
+### Public source check
+
+A bounded read only research pass checked official Kiro and AWS material on October 4. Kiro's `Models` documentation describes model selection, Auto routing, and model dependent effort controls. AWS's `Amazon Q Developer permissions reference` identifies the legacy `codewhisperer:GenerateAssistantResponse` action, and its `Prompt log examples` show audit records. These establish product features and historical service context, not a current request and response schema for the selected Kiro runtime operation. None of these findings closes a gate. No result from the public search is used as proof that an undocumented mechanism does not exist.
+
+The earlier spec 0003 `Output control evidence` section remains the named source for the documented `max_tokens` candidate and its connected native serialization path. Bedrock or Anthropic native API semantics cannot be imported into Kiro's generic document without evidence that this operation forwards and honors them. The public research did not establish such a contract. New source names are retained here as requested; prior reference links remain historical.
+
+### Options and recommendation
+
+| Option | Benefit | Cost and disposition |
+|---|---|---|
+| Fix the current path when new source evidence supplies the missing semantics | Reuses the implemented transport, credential boundary, client tool ownership, and synthetic path. | Completion time is unknown and local code cannot manufacture server guarantees. Recommended continuation, starting with G1 and G2, because it preserves your accepted product and GA requirements. |
+| Prove another native Kiro access path alongside the experimental adapter | Could supply a stronger contract while retaining the working experiment for comparison. | No qualifying path is identified. It needs a separate decision for protocol, authentication, destination, and ownership before implementation. Runner up if new evidence identifies a candidate. |
+| Replace the adapter directly or weaken the promotion requirements | A genuinely compatible replacement could remove the protocol gap; a weaker requirement could describe today's working experiment. | No compatible replacement is established. Wrapping the native CLI does not by itself preserve Claude Code tool execution, and weakening GA conflicts with the confirmed promotion decision. Neither change is selected. |
+
+(basis: the exact source inventory above, the confirmed G1 through G4 requirements, spec 0001's client tool ownership, and the independent repair review)
+
+### Handoff
+
+All four gate states remain `open`, with source outcomes recorded as `unknown`. No state becomes `contract_recorded`, and no feature, GA design checkbox, or live plan becomes ready from this investigation. The smallest useful next input is an identifiable source for native instruction priority and authoritative completion on this operation. A provider schema, a newly connected binary path, or a concrete alternative access path would change that assessment. Repeating the prior successful coding task would not.
+
+This update adds no dependency, service, storage entity, migration, secret, or implementation skill. Existing experimental interfaces, errors, ownership, and limits remain the runtime contract. When source evidence exists, architecture still owns the complete mapping and failure rules before a builder writes GA protocol code. Content review of this disposition and later ratification of a buildable wire contract are distinct steps.
+
+### Independent wire investigation review
+
+At your request, GPT-6 Sol reviewed the draft written by GPT-6 Astra. It approved the amendment as an honest `needs_evidence` investigation disposition and found no material decision completeness or soundness gap. It checked the spec handoff, scope checkbox, local request and event code, prior source evidence, and binary digest. It performed no tests, client runs, account reads, network access, or edits.
+
+The author applied its two wording corrections: repair review approval closes findings while separate deterministic records support acceptance criteria, and reproducing binary inspection requires the matching artifact or retained excerpts. Neither correction changes the protocol or gate state. You accepted the revised investigation record on October 4, 2026. The GA wire milestone remains incomplete, GA implementation remains blocked, and the feature lifecycle stays `In Progress`. This acceptance grants no live launch authorization.
+
 ## References
 
 **Project sources**
