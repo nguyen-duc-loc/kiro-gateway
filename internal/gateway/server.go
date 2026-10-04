@@ -62,7 +62,7 @@ func runServer(ctx context.Context, listen, token, version string, logger *slog.
 	defer listener.Close()
 
 	serverContext, stopRequests := context.WithCancelCause(context.WithoutCancel(ctx))
-	defer stopRequests(&bridge.Failure{Status: 503, Type: "api_error", Message: "Gateway is stopping.", Category: "stopping"})
+	defer stopRequests(&bridge.Failure{Status: http.StatusServiceUnavailable, Type: "api_error", Message: "Gateway is stopping.", Category: "stopping"})
 	server := &http.Server{
 		Handler:           newHealthHandler(token, version, logger),
 		ReadHeaderTimeout: 5 * time.Second,
@@ -90,7 +90,7 @@ func runServer(ctx context.Context, listen, token, version string, logger *slog.
 		}
 		return nil
 	case <-ctx.Done():
-		stopRequests(&bridge.Failure{Status: 503, Type: "api_error", Message: "Gateway is stopping.", Category: "stopping"})
+		stopRequests(&bridge.Failure{Status: http.StatusServiceUnavailable, Type: "api_error", Message: "Gateway is stopping.", Category: "stopping"})
 		logger.Info("Stopping gateway", "event", "stopping")
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 		defer cancel()

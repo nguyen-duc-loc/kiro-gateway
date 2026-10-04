@@ -6,10 +6,14 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"net/http"
 )
 
 // Model is the only model admitted by this experiment.
 const Model = "claude-opus-5.5"
+
+// StatusOverloaded is the client protocol's nonstandard HTTP status for busy inference.
+const StatusOverloaded = 529
 
 // MaxBody is the maximum client JSON size in bytes.
 const MaxBody = 4 << 20
@@ -68,7 +72,9 @@ type End struct {
 // InferredCleanEOF names this experiment's limited completion guarantee.
 const InferredCleanEOF = "inferred_clean_eof"
 
-// Generator is synchronous. It returns only after all owned work has stopped.
+// Generator is synchronous. It returns after owned work stops, or reports
+// cleanup_failed and disables further generation if cleanup exceeds its bound.
+// Unfinished cleanup retains ownership of its resources and must never emit.
 // emit is called serially and its errors must stop generation immediately.
 type Generator interface {
 	Generate(context.Context, Request, func(Event) error) (End, error)
@@ -84,12 +90,12 @@ func (f *Failure) Error() string { return f.Message }
 
 // Invalid is the fixed error for unsupported or malformed client input.
 func Invalid() error {
-	return &Failure{400, "invalid_request_error", "Unsupported or invalid request.", "invalid_request"}
+	return &Failure{http.StatusBadRequest, "invalid_request_error", "Unsupported or invalid request.", "invalid_request"}
 }
 
 // ProtocolFailure is the fixed error for invalid or incomplete upstream output.
 func ProtocolFailure() error {
-	return &Failure{502, "api_error", "Upstream response was invalid or incomplete.", "incomplete_stream"}
+	return &Failure{http.StatusBadGateway, "api_error", "Upstream response was invalid or incomplete.", "incomplete_stream"}
 }
 
 // SafeFailure maps unknown errors without exposing their contents.
@@ -99,7 +105,7 @@ func SafeFailure(err error) *Failure {
 		return f
 	}
 	if errors.Is(err, context.DeadlineExceeded) {
-		return &Failure{504, "api_error", "Inference timed out.", "timed_out"}
+		return &Failure{http.StatusGatewayTimeout, "api_error", "Inference timed out.", "timed_out"}
 	}
 	return ProtocolFailure().(*Failure)
 }

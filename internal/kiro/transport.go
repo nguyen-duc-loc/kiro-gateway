@@ -6,10 +6,10 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
+	"io"
 	"net"
 	"net/http"
 	"net/netip"
-	"sync"
 	"time"
 
 	"kiro-gateway/internal/bridge"
@@ -25,7 +25,20 @@ type transport struct {
 
 type idleConn struct {
 	net.Conn
-	idle time.Duration
+	idle         time.Duration
+	requestClose func()
+}
+
+// TLS may close its connection when HandshakeContext is canceled. Delegate that
+// close to the transport owner rather than starting a second blocking Close.
+func (c *idleConn) Close() error {
+	c.requestClose()
+	return nil
+}
+
+type connectionCloseResult struct {
+	err        error
+	finishedAt time.Time
 }
 
 func (c *idleConn) Read(b []byte) (int, error) {
@@ -54,28 +67,66 @@ func (t transport) exchange(ctx context.Context, req *http.Request, consume func
 	if err != nil {
 		return transportError(ctx, err)
 	}
-	// The cancellation callback owns only closing this connection and is joined.
-	var closeOnce sync.Once
-	var closeErr error
-	closeConn := func() { closeOnce.Do(func() { closeErr = conn.Close() }) }
-	closed := make(chan struct{})
-	stop := context.AfterFunc(ctx, func() { closeConn(); close(closed) })
-	defer func() {
-		began := time.Now()
-		closeConn()
-		if !stop() {
-			<-closed
+	// One worker owns connection cleanup. Interrupt I/O before Close so a slow
+	// close cannot hold the exchange in a socket read or write after cancellation.
+	// A timeout leaves this worker owning the connection; the adapter then
+	// disables inference, so unresolved cleanup cannot accumulate across requests.
+	closing := make(chan struct{}, 1)
+	requestClose := func() {
+		select {
+		case closing <- struct{}{}:
+		default:
 		}
-		if time.Since(began) > 5*time.Second {
-			err = &bridge.Failure{Status: 503, Type: "api_error", Message: "Inference cleanup failed. Restart the gateway.", Category: "cleanup_failed"}
-		} else if err == nil && closeErr != nil {
-			err = bridge.ProtocolFailure()
+	}
+	closeStarted := make(chan time.Time, 1)
+	closed := make(chan connectionCloseResult, 1)
+	go func() {
+		select {
+		case <-ctx.Done():
+		case <-closing:
+		}
+		closeStarted <- time.Now()
+		_ = conn.SetDeadline(time.Now())
+		closeErr := conn.Close()
+		closed <- connectionCloseResult{err: closeErr, finishedAt: time.Now()}
+	}()
+	var responseBody io.ReadCloser
+	defer func() {
+		requestClose()
+		// Cancellation and normal completion share the same cleanup start time.
+		// Do not grant another five seconds if cancellation already started it.
+		deadline := (<-closeStarted).Add(5 * time.Second)
+		if requestDeadline, ok := ctx.Deadline(); ok && requestDeadline.Add(5*time.Second).Before(deadline) {
+			deadline = requestDeadline.Add(5 * time.Second)
+		}
+		cleanupFailed := func() {
+			err = &bridge.Failure{Status: http.StatusServiceUnavailable, Type: "api_error", Message: "Inference cleanup failed. Restart the gateway.", Category: "cleanup_failed"}
+		}
+		timer := time.NewTimer(time.Until(deadline))
+		defer timer.Stop()
+		select {
+		case result := <-closed:
+			if result.finishedAt.After(deadline) {
+				cleanupFailed()
+				return
+			}
+			if err == nil && result.err != nil {
+				err = bridge.ProtocolFailure()
+			}
+			// The socket is closed, so Body.Close cannot drain upstream traffic.
+			if responseBody != nil {
+				if bodyErr := responseBody.Close(); err == nil && bodyErr != nil {
+					err = bridge.ProtocolFailure()
+				}
+			}
+		case <-timer.C:
+			cleanupFailed()
 		}
 	}()
 	if err = conn.SetDeadline(start.Add(idle)); err != nil {
 		return bridge.ProtocolFailure()
 	}
-	tlsConn := tls.Client(&idleConn{Conn: conn, idle: idle}, &tls.Config{RootCAs: t.roots, ServerName: req.URL.Hostname(), MinVersion: tls.VersionTLS12, NextProtos: []string{"http/1.1"}})
+	tlsConn := tls.Client(&idleConn{Conn: conn, idle: idle, requestClose: requestClose}, &tls.Config{RootCAs: t.roots, ServerName: req.URL.Hostname(), MinVersion: tls.VersionTLS12, NextProtos: []string{"http/1.1"}})
 	if err = tlsConn.HandshakeContext(dialCtx); err != nil {
 		return transportError(ctx, err)
 	}
@@ -91,12 +142,8 @@ func (t transport) exchange(ctx context.Context, req *http.Request, consume func
 		return transportError(ctx, err)
 	}
 	reader.headers = false
+	responseBody = resp.Body
 	err = consume(resp)
-	// Closing the connection first prevents Body.Close draining untrusted input.
-	closeConn()
-	if closeErr := resp.Body.Close(); err == nil && closeErr != nil {
-		err = bridge.ProtocolFailure()
-	}
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
@@ -149,7 +196,7 @@ func transportError(ctx context.Context, err error) error {
 		return failure
 	}
 	if e, ok := err.(net.Error); ok && e.Timeout() {
-		return &bridge.Failure{Status: 504, Type: "api_error", Message: "Inference timed out.", Category: "timed_out"}
+		return &bridge.Failure{Status: http.StatusGatewayTimeout, Type: "api_error", Message: "Inference timed out.", Category: "timed_out"}
 	}
 	return bridge.ProtocolFailure()
 }

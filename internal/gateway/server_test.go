@@ -24,21 +24,21 @@ func TestHealth_AuthenticationAndRouting(t *testing.T) {
 		auth               []string
 		status             int
 	}{
-		{"valid credential", "GET", "/healthz", []string{"Bearer " + testToken}, 200},
-		{"missing credential", "GET", "/healthz", nil, 401},
-		{"wrong credential", "GET", "/healthz", []string{"Bearer " + strings.Repeat("x", 32)}, 401},
-		{"tampered credential", "GET", "/healthz", []string{"Bearer " + testToken + "x"}, 401},
-		{"missing scheme", "GET", "/healthz", []string{testToken}, 401},
-		{"wrong scheme", "GET", "/healthz", []string{"Basic " + testToken}, 401},
-		{"empty credential", "GET", "/healthz", []string{"Bearer "}, 401},
-		{"duplicate valid headers", "GET", "/healthz", []string{"Bearer " + testToken, "Bearer " + testToken}, 401},
-		{"valid then invalid header", "GET", "/healthz", []string{"Bearer " + testToken, "Bearer invalid"}, 401},
-		{"invalid then valid header", "GET", "/healthz", []string{"Bearer invalid", "Bearer " + testToken}, 401},
-		{"query credential", "GET", "/healthz?token=" + testToken, nil, 401},
-		{"unknown unauthenticated route", "GET", "/private", nil, 401},
-		{"unauthenticated method", "POST", "/healthz", nil, 401},
-		{"unknown authenticated route", "GET", "/private", []string{"Bearer " + testToken}, 404},
-		{"unsupported method", "POST", "/healthz", []string{"Bearer " + testToken}, 405},
+		{"valid credential", "GET", "/healthz", []string{"Bearer " + testToken}, http.StatusOK},
+		{"missing credential", "GET", "/healthz", nil, http.StatusUnauthorized},
+		{"wrong credential", "GET", "/healthz", []string{"Bearer " + strings.Repeat("x", 32)}, http.StatusUnauthorized},
+		{"tampered credential", "GET", "/healthz", []string{"Bearer " + testToken + "x"}, http.StatusUnauthorized},
+		{"missing scheme", "GET", "/healthz", []string{testToken}, http.StatusUnauthorized},
+		{"wrong scheme", "GET", "/healthz", []string{"Basic " + testToken}, http.StatusUnauthorized},
+		{"empty credential", "GET", "/healthz", []string{"Bearer "}, http.StatusUnauthorized},
+		{"duplicate valid headers", "GET", "/healthz", []string{"Bearer " + testToken, "Bearer " + testToken}, http.StatusUnauthorized},
+		{"valid then invalid header", "GET", "/healthz", []string{"Bearer " + testToken, "Bearer invalid"}, http.StatusUnauthorized},
+		{"invalid then valid header", "GET", "/healthz", []string{"Bearer invalid", "Bearer " + testToken}, http.StatusUnauthorized},
+		{"query credential", "GET", "/healthz?token=" + testToken, nil, http.StatusUnauthorized},
+		{"unknown unauthenticated route", "GET", "/private", nil, http.StatusUnauthorized},
+		{"unauthenticated method", "POST", "/healthz", nil, http.StatusUnauthorized},
+		{"unknown authenticated route", "GET", "/private", []string{"Bearer " + testToken}, http.StatusNotFound},
+		{"unsupported method", "POST", "/healthz", []string{"Bearer " + testToken}, http.StatusMethodNotAllowed},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			handler := newHealthHandler(testToken, "release\"\nversion", slog.New(slog.NewTextHandler(io.Discard, nil)))
@@ -58,7 +58,7 @@ func TestHealth_AuthenticationAndRouting(t *testing.T) {
 				t.Fatal("credential leaked into response")
 			}
 			switch tc.status {
-			case 200:
+			case http.StatusOK:
 				var body map[string]string
 				if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
 					t.Fatal(err)
@@ -69,11 +69,11 @@ func TestHealth_AuthenticationAndRouting(t *testing.T) {
 				if rec.Header().Get("Content-Type") != "application/json" {
 					t.Fatal("health must be JSON")
 				}
-			case 401:
+			case http.StatusUnauthorized:
 				if rec.Header().Get("WWW-Authenticate") != "Bearer" {
 					t.Fatal("missing authentication challenge")
 				}
-			case 405:
+			case http.StatusMethodNotAllowed:
 				if rec.Header().Get("Allow") != "GET" {
 					t.Fatal("missing allowed method")
 				}
@@ -179,7 +179,7 @@ func TestHealth_ConcurrentDiagnostics(t *testing.T) {
 			t.Fatalf("invalid or duplicate request ID: %d", record.ID)
 		}
 		seen[record.ID] = true
-		if record.Event != "request" || (record.Outcome != 200 && record.Outcome != 401) || record.Elapsed < 0 {
+		if record.Event != "request" || (record.Outcome != http.StatusOK && record.Outcome != http.StatusUnauthorized) || record.Elapsed < 0 {
 			t.Fatalf("invalid diagnostic: %+v", record)
 		}
 	}

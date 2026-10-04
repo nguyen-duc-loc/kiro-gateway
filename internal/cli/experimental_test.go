@@ -11,6 +11,7 @@ import (
 	"kiro-gateway/internal/configstore"
 )
 
+// covers: AC-1. Startup validates saved setup without requiring a credential store.
 func TestExperimentalStartupRequiresFrozenMappingWithoutSource(t *testing.T) {
 	for _, linked := range []bool{false, true} {
 		t.Run(map[bool]string{false: "missing mapping", true: "linked mapping"}[linked], func(t *testing.T) {

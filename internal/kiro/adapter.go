@@ -52,12 +52,13 @@ func New(reader ProfileReader, document config.Document) (*Adapter, error) {
 
 // Generate reads one snapshot, dispatches once, and validates and closes the
 // upstream stream before exposing complete tool calls or inferred completion.
+// A cleanup timeout disables inference while the cleanup owner retains its connection.
 func (a *Adapter) Generate(parent context.Context, r bridge.Request, emit func(bridge.Event) error) (bridge.End, error) {
 	if a.disabled.Load() {
-		return bridge.End{}, &bridge.Failure{Status: 503, Type: "api_error", Message: "Inference cleanup failed. Restart the gateway.", Category: "cleanup_failed"}
+		return bridge.End{}, &bridge.Failure{Status: http.StatusServiceUnavailable, Type: "api_error", Message: "Inference cleanup failed. Restart the gateway.", Category: "cleanup_failed"}
 	}
 	if !a.active.CompareAndSwap(false, true) {
-		return bridge.End{}, &bridge.Failure{Status: 529, Type: "overloaded_error", Message: "An inference request is already active.", Category: "busy"}
+		return bridge.End{}, &bridge.Failure{Status: bridge.StatusOverloaded, Type: "overloaded_error", Message: "An inference request is already active.", Category: "busy"}
 	}
 	defer a.active.Store(false)
 	ctx, cancel := context.WithTimeout(parent, 2*time.Minute)
@@ -80,7 +81,7 @@ func (a *Adapter) Generate(parent context.Context, r bridge.Request, emit func(b
 	}
 	digest := selected.ProfileDigest()
 	if a.pinned && subtle.ConstantTimeCompare(a.pin[:], digest[:]) != 1 {
-		return bridge.End{}, &bridge.Failure{Status: 409, Type: "api_error", Message: "Selected Kiro profile has changed. Check the selected profile through Kiro CLI, then restart the gateway.", Category: "profile_changed"}
+		return bridge.End{}, &bridge.Failure{Status: http.StatusConflict, Type: "api_error", Message: "Selected Kiro profile has changed. Check the selected profile through Kiro CLI, then restart the gateway.", Category: "profile_changed"}
 	}
 	region := selected.ProfileRegion()
 	if region != "us-east-1" && region != "eu-central-1" {
@@ -130,11 +131,11 @@ func (a *Adapter) Generate(parent context.Context, r bridge.Request, emit func(b
 		return bridge.End{}, err
 	}
 	err = a.transport.exchange(ctx, req, func(resp *http.Response) error {
-		if resp.StatusCode == 429 {
-			return &bridge.Failure{Status: 429, Type: "rate_limit_error", Message: "Upstream rate limit reached.", Category: "upstream_throttle"}
+		if resp.StatusCode == http.StatusTooManyRequests {
+			return &bridge.Failure{Status: http.StatusTooManyRequests, Type: "rate_limit_error", Message: "Upstream rate limit reached.", Category: "upstream_throttle"}
 		}
-		if resp.StatusCode != 200 {
-			return &bridge.Failure{Status: 502, Type: "api_error", Message: "Upstream request failed.", Category: "upstream_status"}
+		if resp.StatusCode != http.StatusOK {
+			return &bridge.Failure{Status: http.StatusBadGateway, Type: "api_error", Message: "Upstream request failed.", Category: "upstream_status"}
 		}
 		media, params, e := mime.ParseMediaType(resp.Header.Get("Content-Type"))
 		if e != nil || media != "application/vnd.amazon.eventstream" || len(params) != 0 || resp.Header.Get("Content-Encoding") != "" || resp.ContentLength > 8<<20 {
@@ -170,7 +171,7 @@ func (a *Adapter) Generate(parent context.Context, r bridge.Request, emit func(b
 }
 
 func localMetadataFailure() error {
-	return &bridge.Failure{Status: 500, Type: "api_error", Message: "Required local request metadata is unavailable.", Category: "local_metadata"}
+	return &bridge.Failure{Status: http.StatusInternalServerError, Type: "api_error", Message: "Required local request metadata is unavailable.", Category: "local_metadata"}
 }
 func machineFingerprint() (string, error) {
 	host, err := os.Hostname()
@@ -213,20 +214,20 @@ func applicationHeaders(fingerprint, invocation string) http.Header {
 	return h
 }
 func sourceFailure(err error) *bridge.Failure {
-	status, category, message := 503, "source_unavailable", "Saved Kiro source is unavailable or unsupported. Check Kiro CLI sign in and local file access."
+	status, category, message := http.StatusServiceUnavailable, "source_unavailable", "Saved Kiro source is unavailable or unsupported. Check Kiro CLI sign in and local file access."
 	for _, row := range []struct {
 		err               error
 		status            int
 		category, message string
 	}{
-		{credentials.ErrRecord, 503, "credential_invalid", "Saved Kiro token record is invalid or unsupported. Stop the gateway, sign in through Kiro CLI, link again, restore the model mapping, and restart."},
-		{credentials.ErrExpired, 503, "credential_expired", "Saved Kiro credential has expired. Stop the gateway, sign in through Kiro CLI, link again, restore the model mapping, and restart."},
-		{credentials.ErrBusy, 503, "source_busy", "Saved Kiro source is busy. Wait for Kiro CLI, then retry explicitly."},
-		{credentials.ErrTimeout, 504, "source_timeout", "Reading the saved Kiro source timed out. Check local source availability before retrying."},
-		{credentials.ErrChanged, 409, "session_changed", "Saved Kiro session has changed. Stop the gateway, link again, restore the model mapping, and restart."},
-		{credentials.ErrProfileInvalid, 503, "profile_invalid", "Saved Kiro profile is invalid. Check the selected profile through Kiro CLI, then restart the gateway."},
-		{credentials.ErrProfileUnsupported, 503, "profile_unsupported", "Saved Kiro profile is unsupported by this gateway. Check the supported profile and region before restarting."},
-		{credentials.ErrCanceled, 503, "source_canceled", "Reading the saved Kiro source was canceled. Retry only when the gateway is ready."},
+		{credentials.ErrRecord, http.StatusServiceUnavailable, "credential_invalid", "Saved Kiro token record is invalid or unsupported. Stop the gateway, sign in through Kiro CLI, link again, restore the model mapping, and restart."},
+		{credentials.ErrExpired, http.StatusServiceUnavailable, "credential_expired", "Saved Kiro credential has expired. Stop the gateway, sign in through Kiro CLI, link again, restore the model mapping, and restart."},
+		{credentials.ErrBusy, http.StatusServiceUnavailable, "source_busy", "Saved Kiro source is busy. Wait for Kiro CLI, then retry explicitly."},
+		{credentials.ErrTimeout, http.StatusGatewayTimeout, "source_timeout", "Reading the saved Kiro source timed out. Check local source availability before retrying."},
+		{credentials.ErrChanged, http.StatusConflict, "session_changed", "Saved Kiro session has changed. Stop the gateway, link again, restore the model mapping, and restart."},
+		{credentials.ErrProfileInvalid, http.StatusServiceUnavailable, "profile_invalid", "Saved Kiro profile is invalid. Check the selected profile through Kiro CLI, then restart the gateway."},
+		{credentials.ErrProfileUnsupported, http.StatusServiceUnavailable, "profile_unsupported", "Saved Kiro profile is unsupported by this gateway. Check the supported profile and region before restarting."},
+		{credentials.ErrCanceled, http.StatusServiceUnavailable, "source_canceled", "Reading the saved Kiro source was canceled. Retry only when the gateway is ready."},
 	} {
 		if errors.Is(err, row.err) {
 			status, category, message = row.status, row.category, row.message

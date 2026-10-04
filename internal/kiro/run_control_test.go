@@ -2,6 +2,7 @@ package kiro
 
 import (
 	"context"
+	"net/http"
 	"sync"
 	"time"
 
@@ -28,7 +29,7 @@ func newRunControl(parent context.Context, cutoff time.Time) *runControl {
 	return &runControl{ctx: ctx, cancel: cancel, cutoff: cutoff}
 }
 func stoppedFailure() error {
-	return &bridge.Failure{Status: 503, Type: "api_error", Message: "The live run has stopped.", Category: "run_stopped"}
+	return &bridge.Failure{Status: http.StatusServiceUnavailable, Type: "api_error", Message: "The live run has stopped.", Category: "run_stopped"}
 }
 func (c *runControl) stop(category string) {
 	if !c.stopped {
@@ -57,7 +58,7 @@ func (c *runControl) Before(o bridge.Observation) error {
 	if o.Phase == "dispatch" {
 		if c.attempts >= 20 {
 			c.stop("budget_exhausted")
-			return &bridge.Failure{Status: 504, Type: "api_error", Message: "Live run budget exhausted.", Category: "budget_exhausted"}
+			return &bridge.Failure{Status: http.StatusGatewayTimeout, Type: "api_error", Message: "Live run budget exhausted.", Category: "budget_exhausted"}
 		}
 		c.attempts++
 	}

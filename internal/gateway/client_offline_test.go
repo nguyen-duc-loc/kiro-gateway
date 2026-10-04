@@ -27,9 +27,10 @@ import (
 var clientBridge = flag.Bool("client-bridge", false, "explicitly exercise the installed client using only a dummy local adapter")
 
 type clientScript struct {
-	calls  atomic.Int64
-	result atomic.Bool
-	path   string
+	calls     atomic.Int64
+	result    atomic.Bool
+	path      string
+	wantError bool
 }
 
 func (s *clientScript) Generate(ctx context.Context, r bridge.Request, emit func(bridge.Event) error) (bridge.End, error) {
@@ -44,7 +45,7 @@ func (s *clientScript) Generate(ctx context.Context, r bridge.Request, emit func
 	} else {
 		for _, m := range r.Messages {
 			for _, b := range m.Content {
-				if b.Type == "tool_result" && b.ToolUseID == "offline_read_1" && !b.IsError {
+				if b.Type == "tool_result" && b.ToolUseID == "offline_read_1" && b.IsError == s.wantError {
 					s.result.Store(true)
 				}
 			}
@@ -57,6 +58,16 @@ func (s *clientScript) Generate(ctx context.Context, r bridge.Request, emit func
 }
 
 func TestInstalledClientOffline(t *testing.T) {
+	installedClientReadOffline(t, false)
+}
+
+// covers: AC-3, AC-4, AC-9. A missing fixture file returns a matching error result.
+func TestInstalledClientReadErrorOffline(t *testing.T) {
+	installedClientReadOffline(t, true)
+}
+
+func installedClientReadOffline(t *testing.T, missing bool) {
+	t.Helper()
 	if !*clientBridge {
 		t.Skip("requires explicit -client-bridge flag")
 	}
@@ -85,7 +96,10 @@ func TestInstalledClientOffline(t *testing.T) {
 	if err := os.WriteFile(file, []byte("package fixture\nfunc Value() int { return 1 }\n"), 0600); err != nil {
 		t.Fatal(err)
 	}
-	script := &clientScript{path: file}
+	if missing {
+		file = filepath.Join(repo, "absent.go")
+	}
+	script := &clientScript{path: file, wantError: missing}
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	token := strings.Repeat("offline-token-", 4)
 	handler := NewExperimentalHandler(token, "offline", logger, script)
@@ -103,9 +117,9 @@ func TestInstalledClientOffline(t *testing.T) {
 		} else {
 			t.Log("non Messages request observed")
 		}
-		rec := &offlineStatusWriter{ResponseWriter: w, status: 200}
+		rec := &offlineStatusWriter{ResponseWriter: w, status: http.StatusOK}
 		handler.ServeHTTP(rec, r)
-		if rec.status >= 400 && r.URL.Path == "/v1/messages" {
+		if rec.status >= http.StatusBadRequest && r.URL.Path == "/v1/messages" {
 			invalid.Add(1)
 			t.Logf("client response status=%d", rec.status)
 		}

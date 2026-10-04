@@ -59,7 +59,7 @@ func TestLiveBridge(t *testing.T) {
 	started := time.Now()
 	absolute := started.Add(20 * time.Minute)
 	cutoff := absolute.Add(-5 * time.Second)
-	work, stop := context.WithDeadlineCause(t.Context(), cutoff, &bridge.Failure{Status: 504, Type: "api_error", Message: "Live run budget exhausted.", Category: "budget_exhausted"})
+	work, stop := context.WithDeadlineCause(t.Context(), cutoff, &bridge.Failure{Status: http.StatusGatewayTimeout, Type: "api_error", Message: "Live run budget exhausted.", Category: "budget_exhausted"})
 	defer stop()
 	control := newRunControl(work, cutoff)
 	defer control.cancel(context.Canceled)

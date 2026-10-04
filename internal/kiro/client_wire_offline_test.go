@@ -80,7 +80,7 @@ func installedClientWireLoop(t *testing.T, interactive bool) {
 		var root map[string]any
 		if json.NewDecoder(req.Body).Decode(&root) != nil {
 			t.Error("synthetic wire request decode failed")
-			w.WriteHeader(400)
+			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 		n := int(generated.Add(1))
@@ -99,7 +99,7 @@ func installedClientWireLoop(t *testing.T, interactive bool) {
 			}
 			if !found {
 				t.Error("wire tool result not matched")
-				w.WriteHeader(400)
+				w.WriteHeader(http.StatusBadRequest)
 				return
 			}
 			matched.Add(1)

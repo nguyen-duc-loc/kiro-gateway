@@ -42,14 +42,14 @@ func NewObservedExperimentalHandler(token, version string, logger *slog.Logger, 
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		id, err := randomID("req_")
 		if err != nil {
-			writeAPIError(w, "", &bridge.Failure{Status: 500, Type: "api_error", Message: "Local randomness is unavailable.", Category: "randomness"})
+			writeAPIError(w, "", &bridge.Failure{Status: http.StatusInternalServerError, Type: "api_error", Message: "Local randomness is unavailable.", Category: "randomness"})
 			return
 		}
 		w.Header().Set("request-id", id)
 		provided := sha256.Sum256([]byte(r.Header.Get("Authorization")))
 		if len(r.Header.Values("Authorization")) != 1 || subtle.ConstantTimeCompare(expected[:], provided[:]) != 1 {
 			w.Header().Set("WWW-Authenticate", "Bearer")
-			writeAPIError(w, id, &bridge.Failure{Status: 401, Type: "authentication_error", Message: "Invalid gateway credential.", Category: "authentication"})
+			writeAPIError(w, id, &bridge.Failure{Status: http.StatusUnauthorized, Type: "authentication_error", Message: "Invalid gateway credential.", Category: "authentication"})
 			return
 		}
 		for k, v := range map[string]string{"Compatibility": "experimental", "Usage": "estimated", "Completion": "inferred", "Controls": "advisory", "Effort": "ignored", "Betas": "unsupported", "Instructions": "user-context"} {
@@ -90,7 +90,7 @@ func (h *messagesHandler) serve(w http.ResponseWriter, r *http.Request, id strin
 	}
 	if r.Method != http.MethodPost {
 		w.Header().Set("Allow", "POST")
-		fail(&bridge.Failure{Status: 405, Type: "invalid_request_error", Message: "Method not allowed.", Category: "method"})
+		fail(&bridge.Failure{Status: http.StatusMethodNotAllowed, Type: "invalid_request_error", Message: "Method not allowed.", Category: "method"})
 		return
 	}
 	if err := validateHeaders(r); err != nil {
@@ -102,7 +102,7 @@ func (h *messagesHandler) serve(w http.ResponseWriter, r *http.Request, id strin
 	if err != nil {
 		var large *http.MaxBytesError
 		if errors.As(err, &large) {
-			fail(&bridge.Failure{Status: 413, Type: "request_too_large", Message: "Request body is too large.", Category: "request_too_large"})
+			fail(&bridge.Failure{Status: http.StatusRequestEntityTooLarge, Type: "request_too_large", Message: "Request body is too large.", Category: "request_too_large"})
 		} else {
 			fail(bridge.Invalid())
 		}
@@ -120,7 +120,7 @@ func (h *messagesHandler) serve(w http.ResponseWriter, r *http.Request, id strin
 			return
 		}
 		category = "success"
-		if writeJSON(w, 200, map[string]int{"input_tokens": bridge.InputTokens(request)}) != nil {
+		if writeJSON(w, http.StatusOK, map[string]int{"input_tokens": bridge.InputTokens(request)}) != nil {
 			category = "response_write"
 			bridge.Observe(r.Context(), "failure", category, true)
 		}
@@ -137,14 +137,14 @@ func (h *messagesHandler) serve(w http.ResponseWriter, r *http.Request, id strin
 			bridge.Observe(r.Context(), "cleanup", category, category != "cleanup_failed")
 		}()
 	default:
-		fail(&bridge.Failure{Status: 529, Type: "overloaded_error", Message: "An inference request is already active.", Category: "busy"})
+		fail(&bridge.Failure{Status: bridge.StatusOverloaded, Type: "overloaded_error", Message: "An inference request is already active.", Category: "busy"})
 		return
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Minute)
 	defer cancel()
 	messageID, err := randomID("msg_")
 	if err != nil {
-		fail(&bridge.Failure{Status: 500, Type: "api_error", Message: "Local randomness is unavailable.", Category: "randomness"})
+		fail(&bridge.Failure{Status: http.StatusInternalServerError, Type: "api_error", Message: "Local randomness is unavailable.", Category: "randomness"})
 		return
 	}
 	state := bridge.NewResponse(request)
@@ -169,6 +169,27 @@ func (h *messagesHandler) serve(w http.ResponseWriter, r *http.Request, id strin
 		}
 		return nil
 	})
+	if err != nil && bridge.SafeFailure(err).Category == "cleanup_failed" {
+		// Failed cleanup takes precedence over the cancellation or write error
+		// that initiated it. Never tell the run controller that cleanup finished.
+		writeFailed := category == "response_write"
+		category = "cleanup_failed"
+		bridge.Observe(ctx, "failure", category, false)
+		if writeFailed {
+			panic(http.ErrAbortHandler)
+		}
+		if r.Context().Err() != nil && errors.Is(context.Cause(r.Context()), context.Canceled) {
+			return
+		}
+		if sse.started {
+			if sse.send("error", errorBody(id, bridge.SafeFailure(err))) != nil {
+				panic(http.ErrAbortHandler)
+			}
+		} else {
+			writeAPIError(w, id, bridge.SafeFailure(err))
+		}
+		return
+	}
 	if category == "response_write" {
 		bridge.Observe(ctx, "cleanup", category, true)
 		panic(http.ErrAbortHandler)
@@ -207,7 +228,7 @@ func (h *messagesHandler) serve(w http.ResponseWriter, r *http.Request, id strin
 	if request.Stream {
 		err = sse.finish()
 	} else {
-		err = writeJSONWithin(ctx, w, 200, state.Message(messageID, true))
+		err = writeJSONWithin(ctx, w, http.StatusOK, state.Message(messageID, true))
 	}
 	if err != nil {
 		category = "response_write"
@@ -247,7 +268,7 @@ func validateHeaders(r *http.Request) error {
 }
 
 func validateBetas(values []string) error {
-	fail := &bridge.Failure{Status: 400, Type: "invalid_request_error", Message: "Unsupported or invalid beta header.", Category: "beta_header"}
+	fail := &bridge.Failure{Status: http.StatusBadRequest, Type: "invalid_request_error", Message: "Unsupported or invalid beta header.", Category: "beta_header"}
 	n := max(0, len(values)-1)
 	for _, v := range values {
 		n += len(v)

@@ -3,6 +3,7 @@ package bridge
 import (
 	"bytes"
 	"encoding/json"
+	"net/http"
 	"strings"
 
 	"kiro-gateway/internal/jsonobject"
@@ -36,7 +37,7 @@ func parse(data []byte, count bool) (Request, error) {
 	if v, ok := root["output_config"]; ok {
 		m, ok := v.(map[string]any)
 		if !ok || len(m) != 1 || m["effort"] != "high" {
-			return r, &Failure{400, "invalid_request_error", "Unsupported or invalid output configuration.", "output_configuration"}
+			return r, &Failure{http.StatusBadRequest, "invalid_request_error", "Unsupported or invalid output configuration.", "output_configuration"}
 		}
 	}
 	if v, ok := root["max_tokens"]; ok {

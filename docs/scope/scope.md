@@ -125,8 +125,8 @@ Connect an authenticated Kiro account to a local gateway and complete a small re
   - [x] Connect the production wire adapter through synthetic credentials and TLS fixtures, including source changes and cancellation (AC-2, AC-5, AC-6, AC-8, AC-9).
   - [x] Complete tool results, followup, estimates, limits, and deterministic failure checks; prepare the concrete live plan (AC-3 through AC-10).
   - [x] After review and an authorized launch, complete the bounded coding proof and record its experimental outcome (AC-1 through AC-10).
-- [ ] Verify it: `/check verify first real Claude Code coding loop: experimental bridge only`
-- [ ] Test it: `/test first real Claude Code coding loop: experimental bridge only`
+- [x] Verify it: `/check verify first real Claude Code coding loop: experimental bridge only`
+- [x] Test it: `/test first real Claude Code coding loop: experimental bridge only`
 - [ ] Review it (fresh model): `/check review first real Claude Code coding loop: experimental bridge only`
 - [ ] Document it: `/document changelog first real Claude Code coding loop: experimental bridge only`
 - [ ] Resolve remaining GA guarantees before feature completion: `/architect first real Claude Code coding loop: GA promotion`
