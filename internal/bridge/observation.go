@@ -5,10 +5,11 @@ import "context"
 // Observation contains fixed lifecycle labels and a local random request ID.
 // It must never contain request content, account data, or raw upstream errors.
 type Observation struct {
-	RequestID string
-	Phase     string
-	Category  string
-	Cleanup   bool
+	RequestID  string
+	Phase      string
+	Category   string
+	Cleanup    bool
+	StopReason string // Empty except for a successfully written terminal response.
 }
 
 // Observer is the consuming boundary for explicit development run controls.
@@ -46,5 +47,15 @@ func Before(ctx context.Context, phase string) error {
 func Observe(ctx context.Context, phase, category string, cleanup bool) {
 	if c, ok := ctx.Value(observationKey{}).(observationContext); ok && c.observer != nil {
 		c.observer.Observe(Observation{RequestID: c.id, Phase: phase, Category: category, Cleanup: cleanup})
+	}
+}
+
+// ObserveTerminal reports the fixed client stop reason after all final writes.
+func ObserveTerminal(ctx context.Context, stopReason string) {
+	if stopReason != "end_turn" && stopReason != "tool_use" {
+		return
+	}
+	if c, ok := ctx.Value(observationKey{}).(observationContext); ok && c.observer != nil {
+		c.observer.Observe(Observation{RequestID: c.id, Phase: "terminal", Category: "success", Cleanup: true, StopReason: stopReason})
 	}
 }

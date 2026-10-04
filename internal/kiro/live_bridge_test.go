@@ -10,9 +10,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"flag"
-	"go/ast"
-	"go/parser"
-	"go/token"
 	"io"
 	"log/slog"
 	"net"
@@ -22,7 +19,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
@@ -35,19 +31,6 @@ import (
 var liveBridge = flag.Bool("live-bridge", false, "launch only the separately reviewed bounded live coding proof")
 var liveBridgePlan = flag.String("bridge-plan", "internal/kiro/testdata/bridge-plan.json", "reviewed plan path")
 var liveBridgePlanHash = flag.String("bridge-plan-sha256", "", "reviewed plan digest required for launch")
-
-type bridgePlan struct {
-	ClientVersion   string            `json:"client_version"`
-	ClientSHA       string            `json:"client_sha256"`
-	KiroVersion     string            `json:"kiro_version"`
-	KiroSHA         string            `json:"kiro_sha256"`
-	CodeCommit      string            `json:"code_commit"`
-	Files           map[string]string `json:"files"`
-	InitialPrompt   string            `json:"initial_prompt"`
-	FollowupPrompt  string            `json:"followup_prompt"`
-	CancelPrompt    string            `json:"cancel_prompt"`
-	InterruptPrompt string            `json:"interrupt_prompt"`
-}
 
 // TestLiveBridge is excluded from ordinary checks and exits before setup unless
 // explicitly launched. Run its compiled test binary in a terminal for manual
@@ -201,8 +184,8 @@ func TestLiveBridge(t *testing.T) {
 		return
 	}
 	bearer := hex.EncodeToString(tokenBytes[:])
-	tracking := &codingEvidence{generator: adapter}
-	handler := gateway.NewObservedExperimentalHandler(bearer, "live-proof", slog.New(slog.NewTextHandler(io.Discard, nil)), tracking, control)
+	tracking := newCodingEvidence(adapter, control, repo, plan.InitialPrompt, plan.FollowupPrompt)
+	handler := gateway.NewObservedExperimentalHandler(bearer, "live-proof", slog.New(slog.NewTextHandler(io.Discard, nil)), tracking, tracking)
 	server := httptest.NewUnstartedServer(handler)
 	server.Config.BaseContext = func(net.Listener) context.Context { return control.ctx }
 	server.Config.ReadHeaderTimeout = 5 * time.Second
@@ -241,24 +224,11 @@ func TestLiveBridge(t *testing.T) {
 		fail("coding_assertion_failed")
 		return
 	}
-	tests, err := os.ReadFile(filepath.Join(repo, "clamp_test.go"))
-	if err != nil || string(tests) == plan.Files["clamp_test.go"] {
-		fail("boundary_test_not_added")
+	if !verifyBoundaryRegression(control.ctx, repo) {
+		fail("boundary_regression_incomplete")
 		return
 	}
-	parsed, parseErr := parser.ParseFile(token.NewFileSet(), "clamp_test.go", tests, 0)
-	boundary := false
-	if parseErr == nil {
-		for _, decl := range parsed.Decls {
-			if f, ok := decl.(*ast.FuncDecl); ok && f.Name.Name == "TestClampUpperBoundary" {
-				boundary = true
-			}
-		}
-	}
-	if !boundary {
-		fail("boundary_test_not_added")
-		return
-	}
+	tracking.finishCoding()
 	for _, fault := range []struct{ name, category, prompt string }{{"cancel", "canceled", plan.CancelPrompt}, {"interrupt", "incomplete_stream", plan.InterruptPrompt}} {
 		if !control.arm(fault.name, fault.category) {
 			fail("fault_setup")
@@ -343,58 +313,6 @@ func TestLiveBridge(t *testing.T) {
 	verdict = "experimental_loop_observed"
 }
 
-type codingEvidence struct {
-	mu        sync.Mutex
-	generator bridge.Generator
-	calls     map[string]string
-	results   map[string]bool
-	userTurns int
-}
-
-func (c *codingEvidence) Generate(ctx context.Context, r bridge.Request, emit func(bridge.Event) error) (bridge.End, error) {
-	c.mu.Lock()
-	if c.calls == nil {
-		c.calls = map[string]string{}
-		c.results = map[string]bool{}
-	}
-	last := bridge.Message{}
-	for _, m := range r.Messages {
-		if m.Role == "user" {
-			last = m
-		}
-		for _, b := range m.Content {
-			if b.Type == "tool_result" && !b.IsError {
-				if name := c.calls[b.ToolUseID]; name != "" {
-					c.results[name] = true
-				}
-			}
-		}
-	}
-	resultTurn := false
-	for _, b := range last.Content {
-		if b.Type == "tool_result" {
-			resultTurn = true
-		}
-	}
-	if !resultTurn {
-		c.userTurns++
-	}
-	c.mu.Unlock()
-	return c.generator.Generate(ctx, r, func(e bridge.Event) error {
-		if e.Tool != nil {
-			c.mu.Lock()
-			c.calls[e.Tool.ID] = e.Tool.Name
-			c.mu.Unlock()
-		}
-		return emit(e)
-	})
-}
-func (c *codingEvidence) complete() bool {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	return c.userTurns >= 2 && c.results["Read"] && c.results["Edit"] && c.results["Bash"]
-}
-
 type cutAfterText struct {
 	r       io.Reader
 	control *runControl
@@ -419,19 +337,6 @@ func (r *cutAfterText) Read(b []byte) (int, error) {
 	}
 	return n, err
 }
-func liveClientEnv(url, token, cfg string) []string {
-	env := []string{}
-	for _, k := range []string{"HOME", "PATH", "TMPDIR", "USER", "LOGNAME", "SHELL", "TERM"} {
-		if v, ok := os.LookupEnv(k); ok {
-			env = append(env, k+"="+v)
-		}
-	}
-	for k, v := range map[string]string{"CLAUDE_CONFIG_DIR": cfg, "ANTHROPIC_BASE_URL": url, "ANTHROPIC_AUTH_TOKEN": token, "ANTHROPIC_MODEL": bridge.Model, "ANTHROPIC_DEFAULT_OPUS_MODEL": bridge.Model, "ANTHROPIC_DEFAULT_SONNET_MODEL": bridge.Model, "ANTHROPIC_DEFAULT_HAIKU_MODEL": bridge.Model, "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1", "CLAUDE_CODE_DISABLE_TERMINAL_TITLE": "1", "CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS": "1", "CLAUDE_CODE_DISABLE_THINKING": "1", "CLAUDE_CODE_DISABLE_NONSTREAMING_FALLBACK": "1", "DISABLE_PROMPT_CACHING": "1", "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "4096", "CLAUDE_CODE_MAX_RETRIES": "0"} {
-		env = append(env, k+"="+v)
-	}
-	return env
-}
-
 func TestLiveBridgeCutoffHelper(t *testing.T) {
 	c := newRunControl(t.Context(), time.Now().Add(time.Minute))
 	defer c.cancel(context.Canceled)

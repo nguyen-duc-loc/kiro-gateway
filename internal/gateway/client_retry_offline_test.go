@@ -77,8 +77,12 @@ func TestInstalledClientRetriesOffline(t *testing.T) {
 				cmd.Stderr = io.Discard
 				err := cmd.Run()
 				t.Logf("fault=%s attempts=%d retry_setting=%s client_success=%t deadline_reached=%t stopped_after_retry=%t kiro_dispatches=0", fault, attempts.Load(), setting, err == nil, ctx.Err() == context.DeadlineExceeded, setting == "absent" && attempts.Load() >= 2)
-				if err == nil || ctx.Err() == context.DeadlineExceeded || attempts.Load() < 1 || setting == "zero" && (attempts.Load() != 1 || ctx.Err() != nil) {
-					t.Errorf("client(fault=%s, retries=%s) attempts=%d error=%v context=%v, want failed client before deadline and exactly one attempt when retries=0", fault, setting, attempts.Load(), err, ctx.Err())
+				wantAttempts := int64(1)
+				if setting == "absent" && fault != "interrupted" {
+					wantAttempts = 2
+				}
+				if err == nil || ctx.Err() == context.DeadlineExceeded || attempts.Load() != wantAttempts || setting == "zero" && (attempts.Load() != 1 || ctx.Err() != nil) {
+					t.Errorf("client(fault=%s, retries=%s) attempts=%d error=%v context=%v, want failed client before deadline and %d attempts", fault, setting, attempts.Load(), err, ctx.Err(), wantAttempts)
 				}
 			})
 		}

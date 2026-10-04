@@ -132,9 +132,9 @@ Connect an authenticated Kiro account to a local gateway and complete a small re
 - [ ] Review it (fresh model): `/check review first real Claude Code coding loop: experimental bridge only`
 - [ ] Document it: `/document changelog first real Claude Code coding loop: experimental bridge only`
 - [x] Design GA promotion gates (spec): `/architect first real Claude Code coding loop: GA promotion`
-- [ ] Build the review repair slice: `/develop first real Claude Code coding loop: review repair slice only`
+- [x] Build the review repair slice: `/develop first real Claude Code coding loop: review repair slice only`
   - [x] Bound fragmented accumulation and prove unchanged output and cancellation behavior (AC-11).
-  - [ ] Strengthen turn completion, followup test and mutation evidence, and retry controls through the offline client path (AC-12, AC-13).
+  - [x] Strengthen turn completion, followup test and mutation evidence, and retry controls through the offline client path (AC-12, AC-13).
 - [ ] Verify the repairs: `/check verify first real Claude Code coding loop: review repair slice only`
 - [ ] Test the repairs: `/test first real Claude Code coding loop: review repair slice only`
 - [ ] Review the repairs (fresh model): `/check review first real Claude Code coding loop: review repair slice only`
@@ -148,7 +148,7 @@ Connect an authenticated Kiro account to a local gateway and complete a small re
 - [ ] Review the GA candidate (fresh model): `/check review first real Claude Code coding loop: GA candidate`
 - [ ] Document the GA candidate: `/document changelog first real Claude Code coding loop: GA candidate`
 
-**Code:** `internal/bridge` owns validation and estimates, `internal/gateway/messages.go` serves the authenticated API, and `internal/cli` wires `serve --experimental-bridge` to the production `internal/kiro` adapter. Offline client evidence is in `internal/gateway/testdata/claude-code-2.1.287-offline-loop.json`. The fourth separately approved live run recorded `experimental_loop_observed`: 8 dispatches in 805.64 seconds, with operator observations of the coding and followup test loop, individual permissions, cancellation, interruption, and cleanup. The sanitized record is `internal/kiro/testdata/bridge-run-2026-10-02-04.json`; earlier incomplete runs remain separate. The October 4 code review requests changes and identifies a limit in the runner's followup proof. The checked experimental review and documentation boxes record completed activities, not closure of those findings. The accepted GA amendment makes the repair slice ready; code review closure, the four protocol gates, and GA candidate acceptance remain pending.
+**Code:** `internal/bridge` owns validation and estimates, `internal/gateway/messages.go` serves the authenticated API, and `internal/cli` wires `serve --experimental-bridge` to the production `internal/kiro` adapter. Offline client evidence is in `internal/gateway/testdata/claude-code-2.1.287-offline-loop.json`. The fourth separately approved live run recorded `experimental_loop_observed`: 8 dispatches in 805.64 seconds, with operator observations of the coding and followup test loop, individual permissions, cancellation, interruption, and cleanup. The sanitized record is `internal/kiro/testdata/bridge-run-2026-10-02-04.json`; earlier incomplete runs remain separate. The October 4 code review requests changes and identifies a limit in the runner's followup proof. The checked experimental review and documentation boxes record completed activities, not closure of those findings. The accepted GA amendment makes the repair slice ready; code review closure, the four protocol gates, and GA candidate acceptance remain pending. Review repair code is in `internal/bridge/response.go`, `internal/kiro/events.go`, `internal/kiro/coding_evidence_test.go`, `internal/kiro/coding_regression_test.go`, and `internal/gateway/client_retry_offline_test.go`. Development check commands and measured synthetic evidence are in `internal/kiro/testdata/review-repair-2026-10-04.json`; separate repair verification and independent review remain pending.
 
 ## Slice 2: Keep access working
 

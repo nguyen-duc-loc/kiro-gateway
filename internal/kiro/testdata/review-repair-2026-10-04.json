@@ -1,0 +1,153 @@
+{
+  "date": "2026-10-04",
+  "scope": "spec_0004_review_repair_AC11_AC12_AC13",
+  "status": "development_self_check_passed_independent_verification_pending",
+  "go_version": "1.27.1",
+  "client_version": "2.1.287",
+  "live_dispatches": 0,
+  "allocation_measurement": {
+    "method": "testing.Benchmark and BenchmarkResult.AllocedBytesPerOp, serial package runs",
+    "payload_bytes": 65536,
+    "fragment_bytes": 64,
+    "fragment_count": 1024,
+    "max_bytes_per_operation": 1048576,
+    "includes": [
+      "fresh production accumulator",
+      "growth",
+      "final materialization"
+    ],
+    "excludes": [
+      "fixture construction",
+      "framing",
+      "JSON parsing",
+      "response encoding"
+    ],
+    "baseline": "Production append implementation at f3335a6, with tool append extracted unchanged for measurement",
+    "text": {
+      "before_bytes_per_op": 36100019,
+      "after_bytes_per_op": 285553,
+      "before_ns_per_op": 2425831,
+      "after_ns_per_op": 26536
+    },
+    "tool": {
+      "before_bytes_per_op": 36099788,
+      "after_bytes_per_op": 285377,
+      "before_ns_per_op": 2243341,
+      "after_ns_per_op": 21362
+    },
+    "timing_note": "Nanoseconds per operation are measured benchmark elapsed time, not a CPU guarantee or the earlier review arithmetic example.",
+    "fix_commit": "3f97425"
+  },
+  "profiles": {
+    "method": "Go CPU and allocation profiles from the same 1024 fragment benchmark; profile duration and operation counts differ, so aggregate sampled totals are not compared as speed ratios.",
+    "raw_local_files": [
+      "/tmp/bridge-before.cpu",
+      "/tmp/bridge-before.mem",
+      "/tmp/bridge-after.cpu",
+      "/tmp/bridge-after.mem",
+      "/tmp/kiro-before.cpu",
+      "/tmp/kiro-before.mem",
+      "/tmp/kiro-after.cpu",
+      "/tmp/kiro-after.mem"
+    ],
+    "allocation_dominant_before": {
+      "text": "Response.Add",
+      "tool": "pendingTool.appendInput"
+    },
+    "allocation_dominant_after": "strings.Builder.WriteString",
+    "cpu_samples_ms": {
+      "text_before": 2380,
+      "text_after": 4780,
+      "tool_before": 2340,
+      "tool_after": 4720
+    },
+    "cpu_profile_dominant_symbols": [
+      "runtime.pthread_cond_wait",
+      "runtime.kevent",
+      "runtime.madvise",
+      "runtime.pthread_cond_signal",
+      "runtime.pthread_kill",
+      "runtime.usleep"
+    ]
+  },
+  "stream_limits": {
+    "text_bytes": 2097152,
+    "tool_bytes": 262144,
+    "wire_bytes": 5713950,
+    "json_content_and_estimates": "passed",
+    "sse_content_and_estimates": "passed",
+    "text_overflow": "rejected",
+    "tool_overflow": "rejected",
+    "incremental_cancellation": "no_successful_terminal_or_tool"
+  },
+  "coding_evidence": {
+    "passing_suite_error_flag": false,
+    "failing_suite_error_flag": true,
+    "completed_task_turns": 2,
+    "successful_client_test_results": 2,
+    "synthetic_dispatches": 8,
+    "source": "pinned client through authenticated handler, production adapter, synthetic SQLite and TLS",
+    "first_turn_boundary_absent": true,
+    "followup_assertion_before_test_handoff": true,
+    "final_suite": "passed",
+    "named_boundary_test": "passed",
+    "isolated_upper_return_mutation": "named_boundary_assertion_failed",
+    "original_source_unchanged": true,
+    "failure_cases": [
+      "duplicate request",
+      "changed history",
+      "early boundary",
+      "missing boundary",
+      "empty boundary",
+      "unrelated Bash",
+      "composed command",
+      "background test",
+      "failed test result",
+      "missing result",
+      "combined edit and test",
+      "reused ID",
+      "unmatched result",
+      "third task turn",
+      "tool handoff without end turn",
+      "wrong request ID",
+      "absent stop reason",
+      "cancellation",
+      "failed final JSON write",
+      "failed message_stop write",
+      "inapplicable mutation",
+      "syntax failure",
+      "unreachable assertion",
+      "short final JSON write",
+      "short message_stop write",
+      "cancellation during final write",
+      "fixture test deadline"
+    ]
+  },
+  "retry_attempts": {
+    "429": {
+      "absent": 2,
+      "zero": 1
+    },
+    "502": {
+      "absent": 2,
+      "zero": 1
+    },
+    "interrupted_sse": {
+      "absent": 1,
+      "zero": 1
+    }
+  },
+  "checks": {
+    "scripts_check": "passed",
+    "pinned_client_with_race_detector": "passed",
+    "live_runner_without_launch_flag": "compiled_and_skipped",
+    "independent_review": "pending"
+  },
+  "commands": [
+    "rtk proxy go test -p 1 ./internal/bridge ./internal/kiro -run '^TestFragmentedAccumulationAllocation$' -v -count=1",
+    "rtk proxy go test -race ./internal/kiro -run '^TestCodingEvidence|^TestBoundaryRegression|^TestUpperMutation|^TestFragmentedStream' -count=1",
+    "rtk proxy go test -race -tags clientbridge ./internal/kiro -run '^TestRepairClient' -repair-client -v -count=1",
+    "rtk proxy go test -tags clientbridge ./internal/gateway -run '^TestInstalledClientRetriesOffline$' -client-bridge -v -count=1",
+    "rtk proxy ./scripts/check"
+  ]
+}

@@ -133,8 +133,8 @@ func (h *messagesHandler) serve(w http.ResponseWriter, r *http.Request, id strin
 	select {
 	case h.slot <- struct{}{}:
 		defer func() {
-			<-h.slot
 			bridge.Observe(r.Context(), "cleanup", category, category != "cleanup_failed")
+			<-h.slot
 		}()
 	default:
 		fail(&bridge.Failure{Status: bridge.StatusOverloaded, Type: "overloaded_error", Message: "An inference request is already active.", Category: "busy"})
@@ -230,6 +230,9 @@ func (h *messagesHandler) serve(w http.ResponseWriter, r *http.Request, id strin
 	} else {
 		err = writeJSONWithin(ctx, w, http.StatusOK, state.Message(messageID, true))
 	}
+	if err == nil && ctx.Err() != nil {
+		err = context.Cause(ctx)
+	}
 	if err != nil {
 		category = "response_write"
 		if ctx.Err() != nil {
@@ -238,7 +241,7 @@ func (h *messagesHandler) serve(w http.ResponseWriter, r *http.Request, id strin
 		bridge.Observe(ctx, "failure", category, true)
 		panic(http.ErrAbortHandler)
 	}
-	bridge.Observe(ctx, "terminal", "success", true)
+	bridge.ObserveTerminal(ctx, state.StopReason())
 }
 
 func canceledCategory(ctx, request context.Context) string {
@@ -326,7 +329,11 @@ func writeJSONWithin(ctx context.Context, w http.ResponseWriter, status int, v a
 	_ = http.NewResponseController(w).SetWriteDeadline(responseDeadline(ctx))
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	_, err := w.Write(append(bridge.Canonical(v), '\n'))
+	payload := append(bridge.Canonical(v), '\n')
+	n, err := w.Write(payload)
+	if err == nil && n != len(payload) {
+		return io.ErrShortWrite
+	}
 	return err
 }
 
@@ -359,8 +366,13 @@ func (s *streamWriter) send(kind string, v any) error {
 	}
 	c := http.NewResponseController(s.w)
 	_ = c.SetWriteDeadline(responseDeadline(ctx))
-	if _, err := s.w.Write(append(append([]byte("event: "+kind+"\ndata: "), bridge.Canonical(v)...), '\n', '\n')); err != nil {
+	payload := append(append([]byte("event: "+kind+"\ndata: "), bridge.Canonical(v)...), '\n', '\n')
+	n, err := s.w.Write(payload)
+	if err != nil {
 		return err
+	}
+	if n != len(payload) {
+		return io.ErrShortWrite
 	}
 	return c.Flush()
 }
