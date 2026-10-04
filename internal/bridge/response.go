@@ -1,12 +1,14 @@
 package bridge
 
+import "strings"
+
 // Response accumulates bounded normalized output for both response modes.
 type Response struct {
-	Content   []Block
-	request   Request
-	textBytes int
-	tools     int
-	seen      map[string]bool
+	Content []Block
+	request Request
+	text    strings.Builder
+	tools   int
+	seen    map[string]bool
 }
 
 // NewResponse starts an empty response using the offered tools and historical IDs.
@@ -25,14 +27,13 @@ func NewResponse(r Request) *Response {
 // Add validates a normalized event before it can reach the client.
 func (s *Response) Add(e Event) error {
 	if e.Tool == nil {
-		if s.tools > 0 || e.Text == "" || s.textBytes+len(e.Text) > 2<<20 {
+		if s.tools > 0 || e.Text == "" || len(e.Text) > (2<<20)-s.text.Len() {
 			return ProtocolFailure()
 		}
-		s.textBytes += len(e.Text)
 		if len(s.Content) == 0 {
 			s.Content = append(s.Content, Block{Type: "text"})
 		}
-		s.Content[0].Text += e.Text
+		s.text.WriteString(e.Text)
 		return nil
 	}
 	b := *e.Tool
@@ -58,6 +59,9 @@ func (s *Response) Add(e Event) error {
 func (s *Response) Complete(end End) error {
 	if end.Basis != InferredCleanEOF || len(s.Content) == 0 {
 		return ProtocolFailure()
+	}
+	if s.text.Len() > 0 {
+		s.Content[0].Text = s.text.String()
 	}
 	return nil
 }

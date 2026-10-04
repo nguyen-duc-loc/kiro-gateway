@@ -5,15 +5,17 @@ import (
 	"encoding/json"
 	"math"
 	"slices"
+	"strings"
 
 	"kiro-gateway/internal/bridge"
 	"kiro-gateway/internal/jsonobject"
 )
 
 type pendingTool struct {
-	id, name, input string
-	stopped         bool
-	value           map[string]any
+	id, name string
+	input    strings.Builder
+	stopped  bool
+	value    map[string]any
 }
 type streamState struct {
 	request              bridge.Request
@@ -158,10 +160,12 @@ func (s *streamState) tool(o map[string]json.RawMessage) error {
 	}
 	if raw, ok := o["input"]; ok {
 		part, err := eventString(raw)
-		if err != nil || len(tool.input)+len(part) > 256<<10 {
+		if err != nil {
 			return bridge.ProtocolFailure()
 		}
-		tool.input += part
+		if err := tool.appendInput(part); err != nil {
+			return err
+		}
 	}
 	if raw, ok := o["stop"]; ok {
 		var stop *bool
@@ -169,10 +173,10 @@ func (s *streamState) tool(o map[string]json.RawMessage) error {
 			return bridge.ProtocolFailure()
 		}
 		if *stop {
-			if _, err := jsonobject.Parse([]byte(tool.input), 256<<10); err != nil {
+			if _, err := jsonobject.Parse([]byte(tool.inputString()), 256<<10); err != nil {
 				return bridge.ProtocolFailure()
 			}
-			d := json.NewDecoder(bytes.NewBufferString(tool.input))
+			d := json.NewDecoder(bytes.NewBufferString(tool.inputString()))
 			d.UseNumber()
 			if d.Decode(&tool.value) != nil {
 				return bridge.ProtocolFailure()
@@ -217,3 +221,13 @@ func eventNumber(raw json.RawMessage) (float64, error) {
 	}
 	return *n, nil
 }
+
+func (t *pendingTool) appendInput(part string) error {
+	if len(part) > (256<<10)-t.input.Len() {
+		return bridge.ProtocolFailure()
+	}
+	t.input.WriteString(part)
+	return nil
+}
+
+func (t *pendingTool) inputString() string { return t.input.String() }

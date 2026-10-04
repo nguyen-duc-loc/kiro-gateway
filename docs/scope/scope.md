@@ -133,7 +133,7 @@ Connect an authenticated Kiro account to a local gateway and complete a small re
 - [ ] Document it: `/document changelog first real Claude Code coding loop: experimental bridge only`
 - [x] Design GA promotion gates (spec): `/architect first real Claude Code coding loop: GA promotion`
 - [ ] Build the review repair slice: `/develop first real Claude Code coding loop: review repair slice only`
-  - [ ] Bound fragmented accumulation and prove unchanged output and cancellation behavior (AC-11).
+  - [x] Bound fragmented accumulation and prove unchanged output and cancellation behavior (AC-11).
   - [ ] Strengthen turn completion, followup test and mutation evidence, and retry controls through the offline client path (AC-12, AC-13).
 - [ ] Verify the repairs: `/check verify first real Claude Code coding loop: review repair slice only`
 - [ ] Test the repairs: `/test first real Claude Code coding loop: review repair slice only`
