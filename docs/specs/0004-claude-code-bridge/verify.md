@@ -159,6 +159,8 @@ The disposition in `index.md`, accepted after independent review on October 4, r
 
 The next contract review needs exact field mappings and positive and negative cases from a new identifiable source before the matrix below can be implemented as GA acceptance. Historical experimental fixtures remain evidence of their weaker contract. This document change warrants source and consistency checks; it does not rerun or upgrade the recorded runtime outcomes.
 
+The subsequent static continuation is recorded in `rationale.md`, section `Further native protocol evidence, October 4, 2026`. It adds native prompt interface, event dispatch, current receiver, and effort schema path evidence. These are source observations only: no new runtime acceptance case ran, no selected account schema was obtained, and G1 through G4 remain open.
+
 ## GA promotion verification
 
 The following rows define the proof required, not completed checks or instructions to guess new wire fields. The concrete protocol amendment must supply the missing mechanism and exact cases before implementation or a live plan can proceed. Each gate starts `open` in `rationale.md`.

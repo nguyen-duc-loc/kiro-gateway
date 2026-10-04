@@ -276,6 +276,71 @@ At your request, GPT-6 Sol reviewed the draft written by GPT-6 Astra. It approve
 
 The author applied its two wording corrections: repair review approval closes findings while separate deterministic records support acceptance criteria, and reproducing binary inspection requires the matching artifact or retained excerpts. Neither correction changes the protocol or gate state. You accepted the revised investigation record on October 4, 2026. The GA wire milestone remains incomplete, GA implementation remains blocked, and the feature lifecycle stays `In Progress`. This acceptance grants no live launch authorization.
 
+## Further native protocol evidence, October 4, 2026
+
+You asked to continue after accepting the investigation disposition at `d0ec39b`. This pass adds source observations under that decision. It changes no protocol requirement, gate state, runtime behavior, or live authorization. The inspected native binary still has SHA 256 `2118bd89d96830a4f0e0884e4f4071fb94e4b6036c757126afe9e3f80c9d90c6`, freshly checked again. LLDB ran with startup files disabled and only created a file target for static disassembly. No target was launched or attached. No account data, native client process, public web fetch, or inference request was involved in this continuation.
+
+### G1, local prompt input is not a service role
+
+The internal `agent::agent::agent_loop::protocol::SendRequestArgs` serializer at `0x102336578` writes `messages`, `tool_specs`, and `system_prompt`. Its field accesses are at offsets `0`, `0x18`, and `0x30` respectively; the key and field pairing for `system_prompt` is at `0x102336620` through `0x102336634`. This establishes a local agent request shape. It is not the `GenerateAssistantResponse` input schema.
+
+The selected v2 adapter implements the shared `Model::stream` interface at `0x10284202c`. Its conversation path includes `RtsModel::converse_stream_rts` at `0x102089134`, `make_conversation_state` at `0x1027a69c8`, `format_user_content` at `0x1027a5ce0`, and `extract_tool_results_and_images` at `0x1027a6378`. The service message conversions are at `0x10279b71c` and `0x10279bac0`, before the generated user context serializer at `0x100841890`.
+
+This narrows the next static question to how the local `system_prompt` input is handled at the model adapter boundary. The pass did not establish a field to wire connection for that input, a distinct service role, or instruction priority. It also did not establish that `additionalContext` supplies those semantics. A local field name must not be promoted into a new service field or a claim that native instructions are preserved. G1 remains open.
+
+### G2, complete modeled event dispatch and current receiver
+
+The complete `ChatResponseStreamUnmarshaller::unmarshall` function starts at `0x10082eb58` and ends before `0x10082fe68`. It has 17 payload decoder branches plus one inline dry run event. These are modeled event variants, not 18 successful completion cases.
+
+| Payload decoder type | Decoder address |
+|---|---|
+| `CodeEvent` | `0x1008500b0` |
+| `InteractionComponentsEvent` | `0x10084a294` |
+| `InvalidStateEvent` | `0x1008349c4` |
+| `CodeReferenceEvent` | `0x100875e94` |
+| `ToolResultEvent` | `0x10083fad4` |
+| `CitationEvent` | `0x10083e684` |
+| `ToolUseEvent` | `0x100860d68` |
+| `FollowupPromptEvent` | `0x100835400` |
+| `MessageMetadataEvent` | `0x100869d10` |
+| `AssistantResponseEvent` | `0x1008771e4` |
+| `SupplementaryWebLinksEvent` | `0x10086cfc4` |
+| `ContextUsageEvent` | `0x100875800` |
+| `MetadataEvent` | `0x1008686d8` |
+| `IntentsEvent` | `0x100833130` |
+| `ReasoningContentEvent` | `0x100876650` |
+| `MeteringEvent` | `0x100833964` |
+| `DocumentCitationEvent` | `0x100824aa4` |
+
+The inline comparison at `0x10082f0a4` through `0x10082f0dc` recognizes exactly `dryRunSucceedEvent` and branches to `0x10082f74c`, which constructs a variant without a payload decoder. This does not establish ordinary generation completion. `InvalidStateEvent` is a modeled variant; its name does not make it successful completion. The default branch at `0x10082f5b0` writes a distinct dispatch value. This pass does not classify that value as an error without a further enum or consumer trace. None of these findings expands the gateway's accepted event vocabulary.
+
+For the selected `chat_cli_v2` implementation, `ResponseParser::next` at `0x10239650c` calls `Receiver::next_message` at `0x102396c08`, targeting `0x10239cd24`. That receiver calls `SdkBody::poll_frame` at `0x10239d128`. Its body end branch at `0x10239d418` constructs the stream end result with discriminant `0x8000000000000006`. The parser compares that exact result at `0x102396c18` through `0x102396c24`. The event path separately unmarshals at `0x102396dfc` and converts the model event at `0x102397130`.
+
+This connects HTTP body EOF to the current native parser, rather than relying on the older `chat_cli::SendMessageOutput::recv` implementation at `0x100f75074`. No modeled ordinary generation terminal event was identified. The pass did not prove the higher consumer's final state semantics, arbitrary server extension behavior, or absence of every possible completeness mechanism. G2 remains open; neither this native EOF handling nor the dry run variant meets its guarantee.
+
+### G4, schema selected effort overrides
+
+This pass establishes a concrete native effort selection path that the earlier inventory lacked:
+
+| Step | Static source and observation |
+|---|---|
+| Model information supplies additional field data | `ModelInfo::from_api_model` at `0x1023f347c` calls `document_to_value` at `0x1023f35dc`. `RtsState::set_model_info` at `0x1027a7d5c` copies the resulting optional `AdditionalModelFields`. The native model builder exposes `set_additional_model_request_fields_schema` at `0x10073c52c`. This does not reveal the selected account's actual model schema. |
+| Select an effort property from the schema | `AdditionalModelFields::effort_path` at `0x1022f53ec` tries `output_config.effort` at `0x1022f5420`, then `reasoning.effort` at `0x1022f545c`, through `resolve_schema_node`. Literal bytes at `0x11b85e8ca` (20 bytes) and `0x11b85e8de` (16 bytes) establish those exact paths. |
+| Resolve nested schema properties | `resolve_schema_node` at `0x1022f5e7c` splits the path on `.` and looks up `properties`, whose ten bytes are at `0x11b85e8ef`. This is schema lookup, not a literal JSON key containing a dot. |
+| Set the native effort override | `RtsState::set_effort` at `0x1027a7aa8` repeats that ordered lookup and calls `set_typed` at `0x1027a7c84`. Its error literals report an absent additional field schema or an unsupported effort configuration. A path's existence alone does not establish that every effort value is accepted. |
+| Build nested override JSON | `set_typed` at `0x1022f6260` resolves the schema, then splits the path and constructs nested overrides at `0x1022f69a0` through `0x1022f6afc`. The native `AdditionalModelFields` serializer identifies its separate `schema` and `overrides` members at `0x1022f51a4` and `0x1022f5244`. |
+| Carry overrides to the service request | `make_conversation_state` reads additional fields at `0x1027a7200` and selects the optional overrides at `0x1027a724c`. `RealApiClient::send_message` converts their value at `0x10238a464` and sets `additionalModelRequestFields` at `0x10238a4b8`. The previously traced input serializer writes that member at `0x100810e4c`. |
+
+The resulting candidate locations are nested `additionalModelRequestFields.output_config.effort` or `additionalModelRequestFields.reasoning.effort`, conditional on the selected model schema. They are not two fields to send together, a service fallback policy, or an accepted gateway mapping. No selected schema was read, no `high` value was exercised through this service, and no equivalence to the client's effort semantics was established. The `max_tokens` counting basis and terminal reason remain unresolved. G4 stays open.
+
+### Remaining work
+
+G1 now has a concrete local model boundary to trace. G2 has a bounded complete event dispatch inventory and a current native EOF path. G4 has an exact schema selected override path. These are stronger investigation inputs, not gate passes. G3 was not expanded by this continuation. The accepted next decision still requires evidence for native instruction priority and authoritative completion before a buildable GA wire mapping; another ordinary coding run would not settle those source questions.
+
+### Independent source check
+
+GPT-6 Sol checked this supplement against the matching binary using static disassembly. It confirmed the request serializer fields, the 17 payload decoders plus the inline dry run branch, the current receiver's body end path, and the ordered effort property lookup. It found no new decision gap or accidental gate closure. The author applied its wording correction so the index identifies the local prompt field and model boundary without claiming their data flow was proved. This is an evidence supplement to the accepted disposition, not a new wire decision. The review performed no writes, tests, client launches, account reads, or network requests.
+
 ## References
 
 **Project sources**
