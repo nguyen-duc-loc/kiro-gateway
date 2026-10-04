@@ -93,7 +93,9 @@ Connect an authenticated Kiro account to a local gateway and complete a small re
 
 **Done when:** Claude Code receives streamed output, runs its own file and shell tools under its normal permissions, sends tool results back, and completes a follow up turn; instructions and tool identifiers survive translation; the local endpoint requires a credential; errors and cancellation are visible; evidence records the exact access path and tested versions.
 
-**Spec:** [0004. Experimental Claude Code coding bridge](../specs/0004-claude-code-bridge/index.md). The completed preparation remains recorded in [0003. First Claude Code loop, protocol feasibility](../specs/0003-first-claude-code-loop/index.md).
+**Spec:** [0004. Claude Code coding bridge and GA promotion](../specs/0004-claude-code-bridge/index.md). The completed preparation remains recorded in [0003. First Claude Code loop, protocol feasibility](../specs/0003-first-claude-code-loop/index.md).
+
+**Confirmed GA promotion amendment:** You accepted the revised spec on October 4, 2026, after independent review and its four approved corrections. The next buildable slice repairs stream accumulation, coding verdict evidence, and retry control assertions. It requires completed client turns, proof that the boundary test appears during the followup, a valid isolated mutation, and a fixed allocation budget. Instruction semantics, completion, serving model and usage, and model controls remain four open protocol gates. Their concrete wire contract needs another architecture amendment before GA implementation. Earlier design notes below retain the decisions and progress as recorded at their dates. Acceptance confirms this plan; feature 4 remains in progress and all prior live approvals remain consumed.
 
 **Confirmed bridge design:** You accepted spec 0004 on October 2, 2026, after independent review and its corrections. The next milestone adds `serve --experimental-bridge`, the exact Opus 5.5 mapping, both Messages response modes, local token estimation, and one active inference request. It uses Claude Code `2.1.287` and Kiro CLI `2.8.0` as the proposed baseline. Instructions become user context, completion is inferred, reasoning is discarded, usage is estimated, and `max_tokens` is advisory. The later live proof requires its own concrete run review and permits at most 20 dispatches over 20 minutes, including five seconds reserved for cleanup. The build and verification boxes below cover this experimental milestone; GA completion remains pending the separate guarantees identified in the spec.
 
@@ -129,9 +131,24 @@ Connect an authenticated Kiro account to a local gateway and complete a small re
 - [x] Test it: `/test first real Claude Code coding loop: experimental bridge only`
 - [ ] Review it (fresh model): `/check review first real Claude Code coding loop: experimental bridge only`
 - [ ] Document it: `/document changelog first real Claude Code coding loop: experimental bridge only`
-- [ ] Resolve remaining GA guarantees before feature completion: `/architect first real Claude Code coding loop: GA promotion`
+- [x] Design GA promotion gates (spec): `/architect first real Claude Code coding loop: GA promotion`
+- [ ] Build the review repair slice: `/develop first real Claude Code coding loop: review repair slice only`
+  - [ ] Bound fragmented accumulation and prove unchanged output and cancellation behavior (AC-11).
+  - [ ] Strengthen turn completion, followup test and mutation evidence, and retry controls through the offline client path (AC-12, AC-13).
+- [ ] Verify the repairs: `/check verify first real Claude Code coding loop: review repair slice only`
+- [ ] Test the repairs: `/test first real Claude Code coding loop: review repair slice only`
+- [ ] Review the repairs (fresh model): `/check review first real Claude Code coding loop: review repair slice only`
+- [ ] Document the repairs: `/document changelog first real Claude Code coding loop: review repair slice only`
+- [ ] Resolve the evidenced GA wire contract (spec): `/architect first real Claude Code coding loop: GA wire contract`
+- [ ] Build the GA candidate after wire contract ratification: `/develop first real Claude Code coding loop: GA candidate`
+  - [ ] Prove the evidenced contract through the complete synthetic coding path (AC-14).
+  - [ ] Prepare a new concrete plan and complete only its separately authorized live proof (AC-14, AC-15).
+- [ ] Verify the GA candidate: `/check verify first real Claude Code coding loop: GA candidate`
+- [ ] Test the GA candidate: `/test first real Claude Code coding loop: GA candidate`
+- [ ] Review the GA candidate (fresh model): `/check review first real Claude Code coding loop: GA candidate`
+- [ ] Document the GA candidate: `/document changelog first real Claude Code coding loop: GA candidate`
 
-**Code:** `internal/bridge` owns validation and estimates, `internal/gateway/messages.go` serves the authenticated API, and `internal/cli` wires `serve --experimental-bridge` to the production `internal/kiro` adapter. Offline client evidence is in `internal/gateway/testdata/claude-code-2.1.287-offline-loop.json`. The fourth separately approved live run passed with `experimental_loop_observed`: 8 dispatches in 805.64 seconds, the real coding and followup test loop, individual operator permissions, cancellation, interrupted stream handling, and cleanup within budget. The sanitized record is `internal/kiro/testdata/bridge-run-2026-10-02-04.json`; the three earlier incomplete runs remain separate records. All four live approvals are consumed. The experimental build is complete; behavior verification, the test workflow, fresh model review, change documentation, and GA decisions remain open.
+**Code:** `internal/bridge` owns validation and estimates, `internal/gateway/messages.go` serves the authenticated API, and `internal/cli` wires `serve --experimental-bridge` to the production `internal/kiro` adapter. Offline client evidence is in `internal/gateway/testdata/claude-code-2.1.287-offline-loop.json`. The fourth separately approved live run recorded `experimental_loop_observed`: 8 dispatches in 805.64 seconds, with operator observations of the coding and followup test loop, individual permissions, cancellation, interruption, and cleanup. The sanitized record is `internal/kiro/testdata/bridge-run-2026-10-02-04.json`; earlier incomplete runs remain separate. The October 4 code review requests changes and identifies a limit in the runner's followup proof. The checked experimental review and documentation boxes record completed activities, not closure of those findings. The accepted GA amendment makes the repair slice ready; code review closure, the four protocol gates, and GA candidate acceptance remain pending.
 
 ## Slice 2: Keep access working
 

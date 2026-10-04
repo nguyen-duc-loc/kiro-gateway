@@ -1,5 +1,7 @@
 # Reasoning for the experimental coding bridge
 
+The original decision and October 2 amendments below retain their historical context. The confirmed October 4 GA promotion amendment records the current evidence and next work.
+
 ## Context
 
 The repository has a working health server, private versioned configuration, exact session linking, and a combined token and profile reader. Its test only feasibility harness observed all six cases at commit `4fd0b70773ca6bdba87d73be1ac6c07ab8d77659`: streamed text, a tool request, matching result continuation, a followup turn, cancellation, and deliberate interruption. That run requested `claude-opus-5.5` and returned `limited_candidate_observed`.
@@ -153,6 +155,74 @@ Verification covers the observed `[user, system]` shape, several user turns with
 
 At your request, `gpt-6-sol` reviewed the written amendment without changing files or fetching its references. It found no material decision gaps in validation, pairing, tool results, current user selection, limits, estimates, errors, headers, or the unchanged launch. It identified one ambiguous sentence about empty user content. The author clarified that content stays empty only when ordinary text, a nonempty system suffix, and an applicable nonempty top level prefix are all absent, matching the existing exact formula. This was a wording correction, not a new decision. The reviewer also confirmed that the recorded initial request does not establish later client behavior; the full offline exercise remains required. You then accepted the written amendment on October 2, 2026. The feature linked spec remains `In Progress`, with the build and verification milestones incomplete. This confirms the design and permits development to resume; live execution still needs its separate concrete run review.
 
+## GA promotion amendment, October 4, 2026
+
+### Context
+
+> Premise note: A working experimental coding loop does not establish the instruction, completion, identity, usage, and control guarantees that its contract explicitly waived. Promotion requires new evidence for those guarantees as well as closure of the implementation review.
+
+You selected an update to spec 0004 rather than a separate promotion spec. Scope feature 4 remains in progress with a GA workflow. The experiment now has an offline real client loop and a separately approved live coding loop. The scope has checked off the review and documentation activities, but its latest review verdict is `Changes requested`, and several earlier progress sentences still describe the bridge as unbuilt. Those historical sentences are not current acceptance evidence.
+
+This amendment is a confirmed enhancement design for the existing Go CLI and HTTP backend. It uses the current package boundaries, one account, one exact model mapping, and the Tracer Bullet approach. No UI, storage migration, dependency, skill installation, or new service is selected. The references choice for this amendment is named local sources only. Earlier web references remain historical; none was fetched again for this update.
+
+### Options considered
+
+1. **Repair in place and require evidence before promotion, recommended.** Keep the useful experimental path and fix its observed weaknesses, then resolve the wire contract before adding stronger behavior. This avoids replacing working local layers and keeps the requested GA bar honest. Its cost is an uncertain promotion date, and the selected upstream path may never supply every guarantee. (basis: spec 0001, spec 0004's original followup, October 4 review, current adapter and bridge)
+2. **Accept a narrower stable replacement contract.** Make user context instructions, inferred completion, estimated usage, and ignored controls permanent declared limits. This could provide a stable integration for an operator who accepts those semantics. It changes the earlier GA promise and still cannot guarantee that a complete frame truncation is detected; it needs a separate explicit decision. The request to update this spec does not itself accept these tradeoffs. (basis: spec 0004's experimental exceptions and recorded run limitations)
+3. **Add a second adapter alongside the experiment.** An independently evidenced Kiro access path could supply missing semantics while preserving the existing path for comparison. This isolates migration but duplicates verification and has no proven candidate in this pass. Keep it as a later access path option rather than adding an empty provider abstraction now. (basis: spec 0001's replaceable adapter boundary and the absence of new protocol evidence)
+4. **Replace the current bridge directly.** A replacement could simplify the product once a better path is proven. Today it would discard a demonstrated loop without supplying the missing upstream facts, and would require repeating credential, cancellation, and client verification. There is no evidence that the existing local layers are unmaintainable. (basis: the retained offline and live loop records and current code boundaries)
+
+### Rationale
+
+The immediate defects are local and actionable. Fragmented strings repeatedly copy their accumulated prefixes, and the live verdict can succeed without the client's followup test command. These have concrete repairs within the existing path. Protocol guarantees have a different source: the upstream interface must expose and honor them. Treating an optional field's presence or a successful coding task as that evidence would hide a gap from the next builder. (basis: `internal/bridge/response.go`, `internal/kiro/events.go`, `internal/kiro/live_bridge_test.go`, October 4 review)
+
+The recommended gate is deliberately stricter than relabeling the experiment. It preserves the accepted instruction and terminal goals and requires actual sources for model identity, message usage, and controls. The local count endpoint can remain an explicit estimate because its current contract already names that source and denies exact capacity or billing claims. GA protocol implementation remains blocked until the actual wire contract is ratified. This is a bounded repair and promotion decision, not a claim that the missing protocol design is complete. (basis: specs 0001 and 0004, explicit value sourcing)
+
+Bounded builders retain the current byte limits without adding asynchronous processing. The synchronous generator, single stream writer, and cancellation owner remain appropriate. Benchmarking before and after distinguishes the review's arithmetic cost from measured runtime behavior. Runner observations are private test state with exact tool ownership; they never become product conversation storage. (basis: Go security and Go concurrency skills, the current generator interface)
+
+### Current evidence inventory
+
+| Source | Established observation | Remaining limit |
+|---|---|---|
+| `internal/gateway/testdata/claude-code-2.1.287-offline-loop.json` | Pinned client completed synthetic tool and followup paths, including a production adapter TLS fixture, with zero real Kiro dispatches. | Synthetic output establishes client handling, not upstream semantics. |
+| `internal/kiro/testdata/bridge-run-2026-10-02-04.json` | Recorded experimental success, 8 dispatches in 805.64 seconds, operator permissions and followup observations, cancellation, interruption, and bounded cleanup. | Explicitly not GA; the later review limits what the automated coding assertions independently establish. |
+| `docs/reviews/2026-10-04-feat-claude-code-bridge-design.md` | Two major findings, repeated accumulation copies and weak followup verdict checks, plus a missing retry control assertion. | Review was performed; fixes and review closure are not established. |
+| `internal/bridge/response.go` | Text uses repeated string concatenation; final usage is estimated and model is the request's value. | No measured usage or serving identity source. |
+| `internal/kiro/events.go` | Tool fragments use repeated string concatenation; optional model and recognized usage fields are validated but not propagated. | Field names and validation alone do not establish their semantics, completeness, or availability. |
+| `internal/kiro/adapter.go` | After validated framing, semantic checks, and cleanup, the adapter returns `inferred_clean_eof`. | No authoritative upstream turn completion indication is consumed. |
+| `internal/kiro/request.go` | System text enters user context; no upstream output token or effort control is sent. | No evidence of instruction priority, replacement, or enforced model controls. |
+| `internal/kiro/live_bridge_test.go` | The existing observer tracks tool names across the run and increments a request based turn counter; the boundary check accepts a function name. | Repeated history, unrelated Bash success, and an empty followup test can produce insufficient evidence. |
+| `internal/kiro/testdata/bridge-plan.json` | Exact initial and followup prompts, command, fixture, versions, and budgets exist. The original upper branch returns the correct upper value. | A new repair changes the candidate and needs a new plan binding before any future live run. |
+
+The review estimates about 43.98 GiB of cumulative text copying for 41,943 valid frames with 50 text bytes each. That is an arithmetic example, not a measured heap peak or benchmark result. The amendment requires measurement rather than repeating that number as performance evidence.
+
+### Promotion gate record
+
+| Gate | State | Missing source or proof |
+|---|---|---|
+| G1 | open | Concrete instruction role and positional priority contract; current encoder flattens instructions. |
+| G2 | open | Concrete terminal indication or equivalent completeness mechanism; current adapter accepts validated EOF. |
+| G3 | open | Proven serving identity and message usage semantics, mapping, and availability; current response echoes and estimates. |
+| G4 | open | Proven output cap and effort mapping, or a ratified client baseline that omits unsupported effort. |
+
+For each later transition, add the exact source artifact and location, code commit and client baseline, contract amendment, deterministic results, and separately authorized live result. A source or result that is missing stays missing. The retained experimental live record cannot verify these gates retroactively. No new upstream investigation or client run was performed for this amendment.
+
+### Confirmation
+
+You accepted the complete revised GA amendment on October 4, 2026, after choosing an update in place, named local sources, an independent model review, and application of its four recommended corrections. This confirms the repair design and promotion gates. The review repair slice is ready to build; protocol implementation still depends on the later evidenced wire amendment. The lifecycle status remains `In Progress` until feature completion is actually verified. This acceptance does not authorize another live run.
+
+### Independent GA amendment review
+
+At your request, GPT-6 Sol reviewed the draft written by GPT-6 Astra. It read the three spec files and relevant local code without editing files, fetching reference links, running tests, or accessing credentials. It found the explicit G1 through G4 research dependencies honest and found no material gap in evidence ownership, candidate binding, or gate transitions. It identified four gaps in the buildable repair slice.
+
+You selected the recommended fixes. The revised design observes completion only after a successful final client response write with `end_turn`, tied to the issuing request and task turn, with required results and no outstanding calls. It checks the boundary test's absence after the first turn and presence after the followup edit before allowing the second test command. These checks turn timing and completion into concrete runner evidence rather than deductions from a generator return or final file contents.
+
+The mutation now requires an exact patchable upper branch in the final `Clamp` source. Only its return identifier changes in the disposable copy. A refactor outside that shape produces incomplete evidence instead of an invented mutation. This narrows the accepted fixture shape and can reject an otherwise valid coding result, but it gives the regression assertion a reproducible meaning.
+
+The allocation check now measures cumulative allocated bytes per operation through the real production accumulator. It uses exactly 64 KiB in 64 byte fragments, includes initialization and final materialization, and permits at most 1 MiB separately for text and tool input. Fixture construction and protocol parsing are outside that measurement. The old copying pattern exceeds 32 MiB for this input, while the larger stream and CPU profile cases remain supplementary evidence. This is a focused regression budget, not a claim that a complete inference uses only 1 MiB of memory.
+
+These corrections were applied with your approval, and you subsequently accepted the complete revised amendment. They do not close the implementation review findings or verify a GA gate. No second independent review of the corrected text has been recorded.
+
 ## References
 
 **Project sources**
@@ -163,6 +233,9 @@ At your request, `gpt-6-sol` reviewed the written amendment without changing fil
 4. [Spec 0002](../0002-local-configuration-credentials/index.md), settings and exact credential snapshot rules.
 5. [Spec 0003](../0003-first-claude-code-loop/index.md), [live evidence](../0003-first-claude-code-loop/verify.md), and [request plan](../../../internal/kiro/testdata/probe-plan.json), observed candidate and limitations.
 6. [Go security skill](../../../.agents/skills/golang-security/SKILL.md) and [Go concurrency skill](../../../.agents/skills/go-concurrency/SKILL.md), bounded input, fixed authority, stream ownership, and cleanup.
+7. `docs/reviews/2026-10-04-feat-claude-code-bridge-design.md`, current review findings and their limits.
+8. `internal/gateway/testdata/claude-code-2.1.287-offline-loop.json`, `internal/kiro/testdata/bridge-run-2026-10-02-04.json`, and `internal/kiro/testdata/bridge-plan.json`, recorded client evidence and the exact experimental fixture.
+9. `internal/bridge/response.go`, `internal/bridge/bridge.go`, `internal/kiro/request.go`, `internal/kiro/events.go`, `internal/kiro/adapter.go`, `internal/kiro/live_bridge_test.go`, and `internal/gateway/client_retry_offline_test.go`, implementation inspected for the GA amendment.
 
 **Practices**
 
