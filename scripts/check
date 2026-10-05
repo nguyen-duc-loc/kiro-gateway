@@ -30,4 +30,7 @@ printf 'Building all packages...\n'
 go build -mod=readonly ./...
 printf 'Running tests with the race detector...\n'
 go test -mod=readonly -race ./...
+printf 'Checking the offline schema probe...\n'
+go vet -mod=readonly -tags=schemaprobe ./internal/kiro
+go test -mod=readonly -race -tags=schemaprobe ./internal/kiro -run '^TestSchema' -args -schema-probe-launch=false
 printf 'All checks passed.\n'
