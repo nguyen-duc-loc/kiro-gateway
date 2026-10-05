@@ -34,6 +34,8 @@ You can enable the experimental Messages API with `serve --experimental-bridge` 
 
 Selected: `scripts/check` checks formatting without changing files, runs `go vet`, compiles all packages, and runs unit and integration tests with the race detector. It requires the exact Go version in `go.mod` and a C compiler, disables automatic toolchain downloads and surrounding Go workspaces, and uses `-mod=readonly`. The optional `.githooks/pre-commit` runs the same checks on the working tree. GitHub Actions runs them on pushes and pull requests using `macos-15` and actions pinned to commit hashes in `.github/workflows/check.yml`. Include any Go source directories added outside `cmd` and `internal` in the formatting step. See `README.md` for setup.
 
+`scripts/check` also vets the `schemaprobe` build and runs its synthetic schema tests with the race detector and `-schema-probe-launch=false`. This flag keeps the real catalogue entry point disabled during ordinary checks. See [the probe guide](internal/kiro/SCHEMA_PROBE.md) for the separate live review requirements.
+
 ## Git
 
 - integration: on
