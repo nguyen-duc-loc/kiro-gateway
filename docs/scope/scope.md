@@ -144,10 +144,10 @@ Connect an authenticated Kiro account to a local gateway and complete a small re
 - [x] Review the repairs (fresh model): `/check review first real Claude Code coding loop: review repair slice only`
 - [x] Document the repairs: `/document changelog first real Claude Code coding loop: review repair slice only`
 - [x] Design the model schema investigation (spec): `/architect first real Claude Code coding loop: model schema investigation`
-- [ ] Build the model schema probe offline: `/develop first real Claude Code coding loop: model schema investigation, offline preparation only`
+- [x] Build the model schema probe offline: `/develop first real Claude Code coding loop: model schema investigation, offline preparation only`
   - [x] Prove one complete synthetic settings, snapshot, TLS, selection, and structural report path (AC-16).
   - [x] Complete bounded failure, redaction, unknown path, cancellation, cleanup, and disabled entry point checks (AC-16).
-  - [ ] Prepare the exact clean code and concrete plan for separate live review after independent code review (AC-16).
+  - [x] Prepare the exact clean code and concrete plan for separate live review after independent code review (AC-16).
 - [x] Verify the probe offline: `/check verify first real Claude Code coding loop: model schema investigation, offline only`
 - [x] Test the probe: `/test first real Claude Code coding loop: model schema investigation`
 - [x] Review the probe (fresh model): `/check review first real Claude Code coding loop: model schema investigation`
