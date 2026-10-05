@@ -8,6 +8,14 @@
 
 The experimental bridge has completed a recorded Claude Code coding loop with its own tools and permissions. The local repair findings are closed, and the catalogue probe has observed the selected model's declared control fields. Those declarations do not supply the missing instruction and completion guarantees or prove inference behavior. All four GA protocol gates remain open; the confirmed assessment below records why the GA candidate is still not ready to build.
 
+The confirmed discovery amendment makes offline preparation ready for one explicit `CreateResponse` hypothesis. It can gather bounded structural evidence before the service binding and response grammar are established. A live request still requires separate implementation review and launch authorization.
+
+## Structure
+
+The experimental bridge and existing catalogue contract remain in this index. The following child shares its lifecycle and GA boundary:
+
+1. [CreateResponse discovery probe](0004-createresponse-discovery.md), the request hypothesis, observation rules, and offline build plan supporting AC-17. Read this child when preparing that probe.
+
 ## Requirements
 
 As the local operator, you want a real file edit, test command, tool result exchange, and followup turn through Kiro before expanding the product.
@@ -35,9 +43,15 @@ The following confirmed criteria extend the feature. AC-1 through AC-10 remain t
 
 16. **AC-16**: A development only catalogue probe can inspect one response for the exact selected model under the bounded contract below. Ordinary checks and disabled entry points access no real account. The live entry point requires a separately reviewed clean code commit and concrete plan, performs at most one combined account snapshot and one catalogue dispatch, retains only the specified structural report, and cannot dispatch inference. Every failure stops without retry, renewal, fallback, or settings mutation. A schema observation is not a verified GA guarantee.
 
+**Discovery criterion, confirmed October 5, 2026:**
+
+17. **AC-17**: A development only probe can prepare the exact `createresponse_awsjson_v1` hypothesis and bounded structural observation defined in the child contract. Disabled entry points and repository checks access no real account or upstream service. A separately reviewed and authorized live invocation performs at most one combined snapshot read and one inference request attempt within a 30 second work and cleanup wait budget, with five seconds reserved for cleanup. Unresolved cleanup is reported as failed and ends the dedicated process under the child's bounded local reporting rule; it is never claimed complete. The probe retains only the finite report, executes no tool, and performs no retry, fallback, renewal, continuation, or settings mutation. Every observation keeps the GA gates open and returns unknown semantics to architecture.
+
 ## Decision
 
 **Chosen option**: Build an explicitly enabled experimental bridge on the existing Go stack, using the successful feasibility request as the upstream baseline.
+
+**Bounded discovery amendment, confirmed October 5, 2026:** You accepted the complete design after independent review, application of its three approved corrections, and confirmation that the findings were closed. The [child contract](0004-createresponse-discovery.md) makes a narrow exception to the research prerequisite: one fixed AWS JSON hypothesis and a structural observer can be prepared before the service binding and response grammar are known. Offline preparation is ready under AC-17. No requirement for GA implementation is waived, and no live run is approved. Existing Go security and concurrency guidance shapes the request, source, parsing, redaction, and cleanup boundaries.
 
 **Assessment after catalogue evidence, confirmed October 5, 2026:** You accepted this amendment after independent review and correction of the stale AC-16 verification overview. Preserve the experimental contract and record the completed AC-16 result as input to the GA investigation. The result narrows G4 candidates but supplies no complete GA wire mapping. Keep G1 through G4 `open` and the investigation outcome `needs_evidence`. Recommend a source or access path investigation that first identifies instruction priority and authoritative completion; another catalogue request or ordinary coding run does not resolve those prerequisites. Your acceptance confirms this evidence assessment and its recommendation. It introduces no runtime change or live launch authorization.
 
@@ -422,6 +436,12 @@ The declared effort enum contains `high`, `low`, `max`, `medium`, and `xhigh`, w
 
 **Continued source investigation, confirmed October 5:** You accepted the source supplement and next investigation target after independent review and its two wording clarifications. The same pinned agent bundle contains a previously unrecorded `CreateResponse` operation with a distinct `instructions` request member, generic input, and function tools. Its HTTP annotation names `/v1/responses`, but the AWS JSON serializer exercise with a synthetic endpoint at `/` produces root path POST with target `KiroRuntimeService.CreateResponse`. The response schema has no modeled members, and no application caller or terminal decoder was identified for this operation. The [source supplement](rationale.md#createresponse-source-lead-october-5-2026) records the exact locations, synthetic serializer observation, and limits. This is a concrete alternative operation to investigate, not a selected access path or evidenced instruction and completion contract. The confirmed next investigation target is its actual service binding and response grammar. All gates remain open; no endpoint trial, probe implementation, or live run is authorized by this source supplement.
 
+### CreateResponse discovery probe
+
+The [confirmed child contract](0004-createresponse-discovery.md) defines AC-17 completely. Its narrow prerequisite exception permits discovery while service semantics are unknown; a replacement adapter or GA mapping still requires those semantics. It selects the observed default AWS JSON serialization as a hypothesis and permits no automatic comparison with the REST annotation. It expands retained research evidence only to its fixed structural report. AC-8 continues to govern product logs and all other evidence.
+
+This slice adds no product command, route, setting, dependency, or account source. It does add a test only inference operation, so AC-16's catalogue approval and all earlier coding approvals cannot authorize it. Your design confirmation makes only offline preparation ready. A concrete launch artifact follows the completed implementation and independent review. The child outcome `response_observed` is not successful model completion, verified capability, or a GA gate transition.
+
 ### Buildable review repair slice
 
 **Stream accumulation.** Keep request owned bounded builders or byte buffers for text and each pending tool input. Check remaining byte capacity before appending, preserve current ordering and validation, and materialize final content without copying the entire accumulated prefix on each event. Text still streams as deltas; final JSON and usage use the complete content once. Tool JSON is decoded only at its stop. No shared pool, worker, or dependency is needed. Compare allocation and CPU profiles before and after on the same synthetic fragmented streams; describe measured results separately from the review's arithmetic example. (basis: October 4 review, Go security bounded input guidance, Go concurrency request ownership guidance)
@@ -481,6 +501,8 @@ The original four milestones above have experimental implementation and retained
 
    **Completed October 5:** The retained `schema_observed` result completes this research step and **AC-16**. Its authorization is consumed. The assessment above supplies the resulting evidence boundary; it does not authorize repeating the probe or building milestone 7.
 
+   **Confirmed discovery step within milestone 6:** Build and verify the [AC-17 child](0004-createresponse-discovery.md) through one complete synthetic path, then all framing, redaction, failure, and disabled launch cases. Finish independent code review before preparing a new concrete launch artifact. Only a separately authorized invocation may send its one request hypothesis. This supplies discovery evidence for **AC-14** and never makes milestone 7 ready by itself.
+
 7. **Conditional, implement and verify the evidenced contract through one whole loop.** Only after milestone 6 closes, implement its complete request, stream, tool, and continuation path with synthetic sources. Then prepare a new concrete plan, execute only its separately authorized live run, and complete behavior verification, tests, fresh model review, and documentation. Satisfies **AC-14** and **AC-15**, with regression coverage for **AC-1** through **AC-13**. The exact protocol tasks are deliberately blocked on milestone 6 and are not ready to build from this amendment alone.
 
 ## Consequences
@@ -492,6 +514,8 @@ The cost is weaker instruction priority, no guaranteed replacement of earlier in
 The confirmed GA amendment makes the next repair slice concrete and prevents missing protocol facts from becoming implementation guesses. It may also establish that this access path cannot meet the chosen GA bar. Repairing local code does not create an upstream instruction role or terminal signal, and promotion has no promised date. Existing experimental operation remains available with its declared limits. There is no data migration; reverting a repair commit restores the prior experimental implementation, and switching back to plain `serve` disables inference.
 
 The accepted catalogue probe design adds a bounded account operation and a narrow retained schema report. It may reveal no useful controls or require a later source investigation, even after successful authentication. It does not justify wider credential access, native reasoning continuation, or weaker GA requirements. Its preparation and eventual launch are separate from the product bridge.
+
+The confirmed discovery exception can acquire response structure when static sources stop short. The future request may incur model usage while yielding only a rejection or incomplete evidence. Its requested token limit is unverified, and unknown fields may be excluded by the finite report. These costs and limits are explicit in the child; neither another request nor wider retention is automatic.
 
 ## Follow-up
 

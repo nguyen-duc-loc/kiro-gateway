@@ -453,13 +453,70 @@ A bounded public research pass used five searches and eight page opens. The [off
 
 Investigate `CreateResponse` first because it supplies a concrete operation and instruction carrier that the existing path lacks. The alternative is to keep waiting for a provider contract for `GenerateAssistantResponse`; that preserves the current path but adds no new source lead. Wrapping ACP is not selected because its local turn completion does not establish the required model completion contract or preserve the accepted ownership by itself.
 
-Before a probe or replacement adapter can be designed, resolve the operation's actual service binding and obtain an identifiable response grammar. Then settle instruction priority and history replacement, client supplied function results and continuation, generation terminal states, serving identity, usage, and control semantics. A schema field named `instructions`, a successful HTTP status, or a guessed `response.completed` event cannot close a gate. Generic input and the modeled previous response ID do not authorize persistent server conversation state.
+The source investigation accepted at this checkpoint required the operation's actual service binding and an identifiable response grammar before probe or replacement adapter design. The later confirmed discovery amendment below makes a narrow exception for a structural probe only. A replacement adapter still needs instruction priority and history replacement, client supplied function results and continuation, generation terminal states, serving identity, usage, and control semantics. A schema field named `instructions`, a successful HTTP status, or a guessed `response.completed` event cannot close a gate. Generic input and the modeled previous response ID do not authorize persistent server conversation state.
 
 This supplement changes the next identifiable source target, not the accepted runtime contract. You accepted the supplement and next investigation target on October 5, 2026. G1 through G4 stay `open` and AC-14 stays incomplete. No new endpoint, product dependency, probe implementation, credential operation, or live run is authorized.
 
 ### Independent source review
 
 At your request, GPT-6 Sol inspected the supplement and its connected installed source locations. It found no material unsupported claim, missing decision, accidental gate closure, or ownership and authorization gap. The author applied its two wording corrections: the observed root path depends on the supplied synthetic endpoint, and common RPC error handling is distinct from an evidenced operation response contract. The review used source inspection only, without code execution, tests, hash checks, account access, edits, or network requests. You then accepted the corrected supplement and next investigation target. The spec and feature remain in progress.
+
+### Continued binding and decoder investigation, October 5, 2026
+
+After acceptance at `6f30d76`, the investigation searched the installed `kas/node_modules` software tree for `CreateResponseCommand`, `KiroRuntimeService.CreateResponse`, and `/v1/responses` in JavaScript, declarations, and source maps. Matches were limited to the known agent bundle and two source maps. No new application caller or alternate binding was identified. This is a bounded software inventory, not proof that the service lacks the operation.
+
+The maps `@kiro/agent/dist/q-client-DTeYEvvU.cjs.map` and `q-client-DlAuewWD.js.map` have SHA 256 values `93692018027afaeda284404b2bde8e3fbf26034bcfc66e4bce8a3647cfd3c3e0` and `da3ec5850ffff70339597888595744f96bb4af1cffdfe61bdffe7d12c3fc638b`. Both embed the same runtime schema source, SHA 256 `95df03b389754d2972377d00cd009f746b88d535deac651ec643f88e77c33784`, with the request at source lines 370 through 374 and empty response at 375 through 379. They confirm the generated shape without supplying response semantics.
+
+The pinned bundle's RPC response handler at lines 127464 through 127496 collects a successful response body and passes it to the schema decoder when no event stream member exists. `CreateResponseResponse` has no such member. The JSON decoder at lines 137063 through 137113 copies declared structure members, with a separate generic path preserving otherwise unknown members when the input has a string `__type`. The middleware bypass for binary or SSE processing still names only assistant generation and MCP streaming. No `CreateResponse` terminal validation was identified.
+
+An isolated response exercise reused the extracted schema and installed protocol components identified above, after checking the bundle digest again. Each case supplied an invented HTTP 200 response directly to `deserializeResponse`, with an in memory body and explicit UTF 8 context. No transport, signer, account provider, native client, or agent entry point ran. The outcome table excludes the SDK's `$metadata` from application fields.
+
+| Invented body | Observed component outcome |
+|---|---|
+| Empty body or empty JSON object | Decoded successfully with HTTP metadata only |
+| JSON with `status: completed`, model, output, and usage | Decoded successfully with HTTP metadata only; all invented application fields were omitted |
+| JSON with `status: incomplete` and a reason | The same metadata only result; the decoder did not distinguish completion from incompleteness |
+| JSON with string `__type` and a status | Both fields survived through the generic extension path, without a modeled completion contract |
+| SSE carrying an invented terminal event | Rejected with `SyntaxError` by JSON parsing |
+| Truncated JSON | Rejected with `SyntaxError` |
+
+These fixtures deliberately invent statuses and event names. They describe decoder behavior, not Kiro response grammar, model capability, or an upstream success or failure. In particular, the generic `__type` path is not a source of validated terminal semantics. The default SDK path cannot supply the required semantic decoder from the currently modeled response alone.
+
+A further public search used four exact identifier queries. It returned no new primary source. Attempted public registry reads for `@kiro/agent` were inaccessible through the research tool and add no evidence about package availability. Previously checked references were not fetched again. No account, catalogue, or inference request occurred.
+
+The accepted source target remains unresolved. Further work needs a new provider contract or software artifact, or a separately chosen discovery design that explicitly revises the prerequisite above. This evidence record does not itself authorize a probe, choose between RPC and REST bindings, define an inference response grammar, or close a GA gate. You subsequently requested and accepted the bounded discovery design below after independent review.
+
+## Bounded CreateResponse discovery design, October 5, 2026
+
+You chose to design a bounded discovery probe after the installed source trace, source maps, synthetic response decoding, and targeted public search failed to supply a usable service response contract. The distinction is between a discovery observer and a production inference decoder. Requiring complete semantics before even a structural observation prevents the investigation from acquiring the missing facts. A narrow research exception can make progress without lowering the GA bar.
+
+### Options considered
+
+| Option | Benefit | Cost and disposition |
+|---|---|---|
+| One default AWS JSON hypothesis with finite observation | Reuses a connected serializer trace, existing source handling, and transport safeguards. It produces a bounded outcome even when the request is rejected. | Service acceptance, token enforcement, and output semantics are unverified. The retained projection may omit useful fields. Recommended in the child contract. |
+| Start with the REST annotation | The annotated request has a distinct instructions member, familiar aliases, and explicit profile headers. | No application caller selects that protocol in the inspected bundle. Starting there would replace the observed serializer with an additional untested choice. It is a possible later design, not a fallback. |
+| Wait for a provider contract or another software artifact | No new account operation or model usage. | No such source was found in the bounded investigation. It leaves no immediate evidence acquisition step. This was the prior prerequisite, which you requested permission to revise through design. |
+
+### Rationale and chosen bounds
+
+The candidate uses root path POST and `KiroRuntimeService.CreateResponse`, matching the isolated serializer observation for a root endpoint. Region hosts and the combined snapshot are explicit access hypotheses reused from the current runtime boundary; their suitability for this operation is not established. The exact request omits tools, previous response state, and reasoning controls to keep the observation small. The synthetic input and instruction strings, `KIRO_CLI`, stream flag, and 1024 token request are experiment constants rather than asserted service rules. The catalogue of another operation does not verify this cap.
+
+The probe uses raw bounded transport observation because the SDK's empty response schema can discard meaningful JSON fields and does not decode a candidate SSE response. JSON, SSE, and EventStream are explicitly supported framing hypotheses. Other formats yield incomplete evidence without sniffing, raw retention, or another attempt. The finite path and label vocabularies are inspection choices, not imported protocol semantics. Unknown fields remain unknown, and observed terminal labels cannot close G2.
+
+The confirmed 30 second work and cleanup wait budget, one snapshot, and one dispatch reuse the small catalogue investigation's ownership pattern. A failed close can remain unresolved beyond that wait, so the reviewed correction retains the lock, suppresses body observations, and ends the dedicated process after at most one second for local failure reporting. This is not a promise that an operating system close finishes within 30 seconds. Unlike AC-16, this operation can consume model usage. The requested token value cannot enforce a cost ceiling, so elapsed time, bytes, no continuation, and one dispatch bound local work. Local cancellation makes no promise about remote computation or billing. The Go security and concurrency skills support fixed authority, synthetic verification, finite retention, cancellation ownership, and bounded cleanup waiting.
+
+The full build contract is in [the child spec](0004-createresponse-discovery.md). It adds AC-17, with every report value sourced and every live action gated. No new runtime dependency, saved data model, skill installation, MCP server, or product route is selected. Static source and historical live artifacts remain unchanged. The child's implementation plan follows the same Tracer Bullet approach, beginning with a complete synthetic path before adding formats and failure cases.
+
+### Confirmation boundary
+
+You accepted the complete design on October 5, 2026, after independent review and closure of all findings. This ratifies the narrow discovery prerequisite exception and makes offline preparation ready under AC-17. The GA wire milestone, AC-14, and G1 through G4 remain open, and the feature linked spec stays `In Progress`. The later live artifact requires its own review and explicit authorization after implementation; none exists in this design.
+
+### Independent discovery design review
+
+GPT-6 Sol identified three decision gaps before a model capacity error stopped that pass. A separate GPT-5.6 Sol pass completed the review, confirmed all three findings, and established no additional material gap. Both passes used read only local inspection, without tests, client execution, account access, or network requests.
+
+You approved the recommended fixes. The child now treats 30 seconds as a work and cleanup wait budget, with explicit failed cleanup, retained lock, bounded failure reporting, and dedicated process exit. It rejects every 1xx response before body inspection or a second header block. It applies the first established cause and cancellation rules at every phase, with separate cleanup status and a reserved cleanup period after completed work. The verification matrix covers permanently blocked close in a synthetic subprocess, informational response sequences, and cancellation races. Two wording clarifications identify UUID generation and null transport state before a body read. GPT-5.6 Sol then checked the revisions and confirmed all three findings and both clarifications closed, with no new contradiction or remaining material issue. This was a read only document review, with no code or tests executed. You then separately accepted the complete design. No live run is authorized by that acceptance.
 
 ## References
 

@@ -95,6 +95,8 @@ Connect an authenticated Kiro account to a local gateway and complete a small re
 
 **Spec:** [0004. Claude Code coding bridge and GA promotion](../specs/0004-claude-code-bridge/index.md). The completed preparation remains recorded in [0003. First Claude Code loop, protocol feasibility](../specs/0003-first-claude-code-loop/index.md).
 
+**Confirmed CreateResponse discovery design, October 5, 2026:** You accepted the [AC-17 child contract](../specs/0004-claude-code-bridge/0004-createresponse-discovery.md) after independent review and closure of its three findings. Offline preparation is ready for one fixed AWS JSON request hypothesis and a bounded structural report, despite the unresolved service binding and response grammar. The design fixes cleanup failure and dedicated process exit, rejects interim HTTP responses, and defines cancellation precedence across every phase. Implementation, offline verification, tests, independent code review, and a concrete launch plan precede any separate live authorization. All GA gates and AC-14 remain open; feature 4 stays in progress.
+
 **Confirmed CreateResponse investigation target, October 5, 2026:** You accepted the [source supplement](../specs/0004-claude-code-bridge/rationale.md#createresponse-source-lead-october-5-2026) after independent source review and two wording clarifications. The pinned agent bundle contains a separate `CreateResponse` operation with an instruction member, but its actual service binding and response grammar remain unresolved. Those are the next investigation target. This selects source research, not a replacement adapter, probe implementation, or live request. All four GA gates and AC-14 remain open, the GA wire design checkbox stays incomplete, and feature 4 stays in progress.
 
 **Confirmed GA wire assessment, October 5, 2026:** You accepted the [assessment after catalogue evidence](../specs/0004-claude-code-bridge/index.md#ga-wire-assessment-after-catalogue-evidence-october-5-2026) after independent review and correction of the stale verification overview. AC-16 is complete. The catalogue narrows control candidates but does not establish inference enforcement or close G1 through G4. The outcome remains `needs_evidence`; AC-14 and the GA wire design checkbox remain incomplete, and feature 4 stays in progress. The next recommended work is source evidence for instruction priority and authoritative completion, or a separately designed access path preserving Kiro access and Claude Code tool ownership. No new implementation slice or live launch is authorized by this assessment.
@@ -161,6 +163,16 @@ Connect an authenticated Kiro account to a local gateway and complete a small re
 - [x] Review the probe (fresh model): `/check review first real Claude Code coding loop: model schema investigation`
 - [x] Document the probe: `/document changelog first real Claude Code coding loop: model schema investigation`
 - [x] After separate launch approval, run the bounded catalogue request and record its structural outcome (AC-16).
+- [x] Design CreateResponse discovery (spec): `/architect first real Claude Code coding loop: CreateResponse discovery`
+- [ ] Build the discovery probe offline: `/develop first real Claude Code coding loop: CreateResponse discovery, offline preparation only`
+  - [ ] Prove one complete synthetic plan, settings, snapshot, TLS, JSON observation, cleanup, and report path (AC-17).
+  - [ ] Complete framing, redaction, limits, cancellation, failed cleanup process exit, and disabled entry point checks (AC-17).
+  - [ ] After independent code review, prepare the exact clean code and concrete plan for separate live review (AC-17).
+- [ ] Verify discovery offline: `/check verify first real Claude Code coding loop: CreateResponse discovery, offline only`
+- [ ] Test discovery: `/test first real Claude Code coding loop: CreateResponse discovery`
+- [ ] Review discovery (fresh model): `/check review first real Claude Code coding loop: CreateResponse discovery`
+- [ ] Document discovery: `/document changelog first real Claude Code coding loop: CreateResponse discovery`
+- [ ] After separate launch approval, run the bounded discovery request and record its structural outcome (AC-17).
 - [ ] Resolve the evidenced GA wire contract (spec): `/architect first real Claude Code coding loop: GA wire contract`
 - [ ] Build the GA candidate after wire contract ratification: `/develop first real Claude Code coding loop: GA candidate`
   - [ ] Prove the evidenced contract through the complete synthetic coding path (AC-14).
