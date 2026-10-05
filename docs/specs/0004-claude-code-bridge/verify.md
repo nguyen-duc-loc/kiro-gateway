@@ -1,6 +1,6 @@
 # Verification plan for the coding bridge and GA promotion
 
-This is the verification plan for [spec 0004](index.md), updated October 4, 2026. The retained offline client record and fourth live run establish an experimental coding loop. The later October 4 repair review closes the three local findings; the earlier review and verification entries below retain their original chronology. The wire investigation still records `needs_evidence`, with no GA gate verified.
+This is the verification plan for [spec 0004](index.md), updated October 5, 2026. The retained offline client record and fourth live run establish an experimental coding loop. The later October 4 repair review closes the three local findings; the earlier review and verification entries below retain their original chronology. The wire investigation still records `needs_evidence`, with no GA gate verified. The AC-16 catalogue design was accepted on October 5; its offline preparation is ready, with implementation and live evidence still pending.
 
 ## Deterministic verification
 
@@ -160,6 +160,22 @@ The disposition in `index.md`, accepted after independent review on October 4, r
 The next contract review needs exact field mappings and positive and negative cases from a new identifiable source before the matrix below can be implemented as GA acceptance. Historical experimental fixtures remain evidence of their weaker contract. This document change warrants source and consistency checks; it does not rerun or upgrade the recorded runtime outcomes.
 
 The subsequent static continuation is recorded in `rationale.md`, section `Further native protocol evidence, October 4, 2026`. It adds native prompt interface, event dispatch, current receiver, and effort schema path evidence. These are source observations only: no new runtime acceptance case ran, no selected account schema was obtained, and G1 through G4 remain open.
+
+## Model schema investigation verification
+
+AC-16 was ratified on October 5 after independent review and its corrected unknown path rule. The only new executed check is the synthetic SDK serialization described in `rationale.md`; the Go runner and its live plan are not implemented or approved for launch.
+
+| Acceptance case | Required result |
+|---|---|
+| Disabled entry point and ordinary checks | No settings initialization, account read, DNS, or network operation; an environment variable cannot enable live mode. |
+| Complete synthetic path | Temporary locked configuration and SQLite source, fake token/profile, local TLS fixture, exact request, selected schema report, and completed cleanup. No product destination policy change. |
+| Preflight and source failures | Wrong commit, dirty tree, wrong plan/source digest, absent or invalid configuration, held lock, expired or changed token, invalid profile, and unreviewed region stop before dispatch. |
+| Request limits | One snapshot read and at most one dispatch. 3xx, 401, 403, 429, 5xx, disconnect, DNS or TLS failure, and timeout never cause another request or relink. |
+| Response and schema validation | Exercise exact and exceeded header/body/depth/model/enum/report limits, duplicate keys, invalid UTF 8, wrong encoding, absent/duplicate selected model, malformed schema, optional next page token, unknown enum values, and references that are never resolved. Missing values remain unavailable rather than zero or inferred capability. |
+| Unknown versus absent paths | Empty object schema, missing or nonobject `properties` at root or intermediate nodes, and `$ref` at root, intermediate, or final nodes produce unknown paths. References with sibling properties remain unknown. A valid `properties` map missing the next key alone produces an absent explicit path. A reached final nonobject is present with `shape: other`. Valid object schemas with all paths unknown can yield `schema_observed` after successful validation and cleanup; missing or nonobject root schemas retain their failure outcomes. No capability or GA gate is inferred. |
+| Redaction | Inject distinctive credentials, ARNs, raw errors, descriptions, arbitrary schema keys, other model names, and pagination tokens. None may appear in output, retained evidence, logs, or failures. Only the fixed projection survives. |
+| Cancellation and cleanup | Work stops by 25 seconds and all owned resources close within the 30 second total. Incomplete cleanup cannot yield `schema_observed`. |
+| Eventual reviewed live case | Pin the exact clean code and plan before review. At most one catalogue request and zero inference. Record structural outcome or incomplete evidence; no GA gate closes automatically. |
 
 ## GA promotion verification
 

@@ -95,6 +95,8 @@ Connect an authenticated Kiro account to a local gateway and complete a small re
 
 **Spec:** [0004. Claude Code coding bridge and GA promotion](../specs/0004-claude-code-bridge/index.md). The completed preparation remains recorded in [0003. First Claude Code loop, protocol feasibility](../specs/0003-first-claude-code-loop/index.md).
 
+**Confirmed model schema investigation, October 5, 2026:** You accepted the [catalogue probe design](../specs/0004-claude-code-bridge/index.md#model-schema-investigation) after independent review and its corrected unknown path rule. Offline preparation is ready under AC-16. The eventual reviewed run permits one combined account snapshot and at most one catalogue request within 30 seconds, with zero inference and only a bounded structural report. Uninspectable schema paths are unknown, not absent. Implementation and synthetic checks must precede the concrete live plan and separate launch authorization. This research slice does not complete the GA wire design; G1 through G4 remain open and feature 4 stays in progress.
+
 **Confirmed GA wire investigation, October 4, 2026:** You accepted the [investigation disposition](../specs/0004-claude-code-bridge/index.md#wire-investigation-disposition-october-4-2026) after independent review and two wording corrections. The local repair findings are closed. The inspected sources still leave instruction semantics, completion, serving identity and usage, and model controls unproved. All four gates remain open with outcome `needs_evidence`. The GA wire design checkbox stays unchecked, the GA candidate remains blocked, and feature 4 stays in progress. The next useful input is new identifiable source evidence for native instruction priority and authoritative completion. This accepts the investigation record, not a buildable GA wire contract or another live run. Earlier notes below retain their recorded checkpoints.
 
 **Confirmed GA promotion amendment:** You accepted the revised spec on October 4, 2026, after independent review and its four approved corrections. The next buildable slice repairs stream accumulation, coding verdict evidence, and retry control assertions. It requires completed client turns, proof that the boundary test appears during the followup, a valid isolated mutation, and a fixed allocation budget. Instruction semantics, completion, serving model and usage, and model controls remain four open protocol gates. Their concrete wire contract needs another architecture amendment before GA implementation. Earlier design notes below retain the decisions and progress as recorded at their dates. Acceptance confirms this plan; feature 4 remains in progress and all prior live approvals remain consumed.
@@ -141,6 +143,16 @@ Connect an authenticated Kiro account to a local gateway and complete a small re
 - [x] Test the repairs: `/test first real Claude Code coding loop: review repair slice only`
 - [x] Review the repairs (fresh model): `/check review first real Claude Code coding loop: review repair slice only`
 - [x] Document the repairs: `/document changelog first real Claude Code coding loop: review repair slice only`
+- [x] Design the model schema investigation (spec): `/architect first real Claude Code coding loop: model schema investigation`
+- [ ] Build the model schema probe offline: `/develop first real Claude Code coding loop: model schema investigation, offline preparation only`
+  - [ ] Prove one complete synthetic settings, snapshot, TLS, selection, and structural report path (AC-16).
+  - [ ] Complete bounded failure, redaction, unknown path, cancellation, cleanup, and disabled entry point checks (AC-16).
+  - [ ] Prepare the exact clean code and concrete plan for separate live review after independent code review (AC-16).
+- [ ] Verify the probe offline: `/check verify first real Claude Code coding loop: model schema investigation, offline only`
+- [ ] Test the probe: `/test first real Claude Code coding loop: model schema investigation`
+- [ ] Review the probe (fresh model): `/check review first real Claude Code coding loop: model schema investigation`
+- [ ] Document the probe: `/document changelog first real Claude Code coding loop: model schema investigation`
+- [ ] After separate launch approval, run the bounded catalogue request and record its structural outcome (AC-16).
 - [ ] Resolve the evidenced GA wire contract (spec): `/architect first real Claude Code coding loop: GA wire contract`
 - [ ] Build the GA candidate after wire contract ratification: `/develop first real Claude Code coding loop: GA candidate`
   - [ ] Prove the evidenced contract through the complete synthetic coding path (AC-14).
