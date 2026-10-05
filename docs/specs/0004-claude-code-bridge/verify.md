@@ -203,7 +203,7 @@ You can run the following checks without a real account or management request. E
 * [x] You can run `rtk proxy env GOPROXY=off ./scripts/check`. Expected result: formatting, vet, build, ordinary tests, and the tagged schema tests pass. The script forces `-schema-probe-launch=false`.
 * [x] You can run `rtk proxy env GOTOOLCHAIN=local GOWORK=off CGO_ENABLED=1 GOPROXY=off go test -mod=readonly -race -tags=schemaprobe ./internal/kiro -run '^TestSchema' -count=1 -v -args -schema-probe-launch=false`. Expected result: synthetic account, TLS, decoder, failure, cancellation, cleanup, and report checks pass. The real entry point skips.
 * [x] You can run `rtk proxy env GOTOOLCHAIN=local GOWORK=off CGO_ENABLED=1 GOPROXY=off KIRO_GATEWAY_SCHEMA_PROBE_LAUNCH=1 KIRO_GATEWAY_LIVE_PROBE=1 go test -mod=readonly -tags=schemaprobe ./internal/kiro -run '^TestSchemaProbe$' -count=1 -v`. Expected result: the explicit launch flag is still false and the entry point skips before preflight, home lookup, or account access.
-* [ ] You can inspect `schema_launch_test.go` and its plan checks against the final proposed artifact after independent review. Expected result: the exact clean code, plan digest, native file hashes, successful synthetic checks, review reference, fixed contract, and proposed command agree. The live approval slot remains empty until that artifact receives its own review. This step does not launch it.
+* [x] You can inspect `schema_launch_test.go` and its plan checks against the final proposed artifact after independent review. Expected result: the exact clean code, plan digest, native file hashes, successful synthetic checks, review reference, fixed contract, and proposed command agree. The live approval slot remains empty until that artifact receives its own review. This step does not launch it.
 
 The value source checks below also belong to AC-16. You can inspect their fixtures and assertions while running the tagged suite.
 
@@ -216,3 +216,26 @@ The value source checks below also belong to AC-16. You can inspect their fixtur
 | Outcome from response validation and cleanup | `TestSchemaProbeCleanupAndTotalBudget`, `TestSchemaProbeParentCancellation`, `TestSchemaProbeConnectionCloseError`, and `TestSchemaProbeLockCleanupFailure` require completed cleanup before success. Work ends at 25 seconds and total cleanup at 30 seconds. Earlier failures survive a later cleanup failure. Unknown observations remain null, and no structural outcome closes a GA gate. |
 
 The complete synthetic path and bounded failure preparation boxes are checked in scope. The parent build box and concrete live plan remain open because spec 0004 places final artifact preparation after independent code review. No live account read, catalogue request, or inference was performed by this build.
+
+## Approved catalogue attempt stopped before dispatch, October 5, 2026
+
+The offline followup [review](../../reviews/2026-10-05-ac16-preflight-followup.md) closed the missing preflight coverage finding and approved the local software hash limit fix. The full repository checks, uncached schema race suite, and disabled launch check passed. The separate [artifact review](../../reviews/2026-10-05-ac16-launch-artifact.md) verified the clean code commit, software hashes, exact request contract, command, and proposed approval transition. This completed offline preparation; earlier open preparation statements above describe their original checkpoint.
+
+You then explicitly approved one invocation of the presented artifact. Only `live_approval` changed from null to `approved_for_one_catalogue_run`, producing the independently reviewed launch digest. The exact [approved plan](../../../internal/kiro/testdata/schema-plan-2026-10-05-01.json) is archived without changing its bytes. It is a consumed historical artifact, not authorization to launch again.
+
+| Recorded value | Outcome |
+|---|---|
+| Clean code commit at launch | `7d11dc1253038dcbb0656e85697c7bc0ff462e55` |
+| Approved plan SHA256 | `8c945a6fb7d477e23f4b5535a1e92c5a0f715a433172c19b41eefabd47295ac3` |
+| Run ID | `e467ceca-588c-4a87-9cf4-633f2e020b93` |
+| Requested model | `claude-opus-5.5` |
+| Runner outcome | `needs_evidence` |
+| Failure category | `source_changed` |
+| Elapsed time | 486 milliseconds |
+| Catalogue dispatches | 0 |
+| Cleanup | `complete` |
+| Region, model, schema, pagination, and fixed field observations | Unobserved, with nullable values retained as null |
+
+The [structural report](../../../internal/kiro/testdata/schema-run-2026-10-05-01.json) is the sole retained runtime payload. The entry point exited with failure after the linked token fingerprint comparison rejected changed source bytes. The source reader checks that fingerprint before reading the selected profile. No management request or inference occurred, and there was no retry, renewal, relink, or settings mutation. No raw source bytes, tokens, profile values, or upstream response were retained.
+
+The single launch approval is consumed. A later attempt needs the selected session linked again, the exact Opus mapping restored after relinking clears mappings, and a fresh concrete plan with separate review and approval. This record does not determine why the source bytes changed or establish model availability. The catalogue request scope box remains open, feature 4 stays in progress, and G1 through G4 remain open.
