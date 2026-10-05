@@ -1,6 +1,6 @@
 # Verification plan for the coding bridge and GA promotion
 
-This is the verification plan for [spec 0004](index.md), updated October 5, 2026. The retained offline client record and fourth live run establish an experimental coding loop. The later October 4 repair review closes the three local findings; the earlier review and verification entries below retain their original chronology. The wire investigation still records `needs_evidence`, with no GA gate verified. The AC-16 catalogue design was accepted on October 5; its offline preparation is ready, with implementation and live evidence still pending.
+This is the verification plan for [spec 0004](index.md), updated October 5, 2026. The retained offline client record and fourth live run establish an experimental coding loop. The later October 4 repair review closes the three local findings; the earlier review and verification entries below retain their original chronology. The wire investigation still records `needs_evidence`, with no GA gate verified. The separately authorized October 5 catalogue run completed AC-16 with `schema_observed`; its launch authorization is consumed.
 
 ## Deterministic verification
 
@@ -278,3 +278,18 @@ The [structural report](../../../internal/kiro/testdata/schema-run-2026-10-05-02
 The entry point passed after the single response and cleanup completed. No inference, retry, pagination, credential renewal, relinking, fallback, or settings mutation occurred during the probe. Only the bounded structural report was retained from runtime output; the raw catalogue, schema text, token, profile ARN, and upstream errors were not retained.
 
 This completes the AC-16 catalogue request and structural outcome milestone. It establishes the declared schema returned for this selected account and model, not service enforcement, instruction priority, authoritative completion, serving identity, or measured usage. Explicit property absence does not prove global service incapability. The production experimental bridge is unchanged. G1 through G4 remain open, feature 4 stays in progress, and any later live experiment needs a new concrete plan and separate approval.
+
+## GA wire assessment after catalogue evidence, October 5, 2026
+
+The confirmed assessment in `index.md` reconciles the retained catalogue result with AC-14. You accepted it after independent review and correction of this file's stale overview. It records no new runtime verification or live evidence. AC-16 is complete; AC-14 and the GA wire design milestone remain incomplete.
+
+| Gate | Verification disposition |
+|---|---|
+| G1 | `open`. Explicit property absence supplies no priority or positional replacement mechanism. Native prompt flattening remains the inspected behavior. |
+| G2 | `open`. No authoritative terminal grammar or equivalent completeness mechanism has been sourced. The request catalogue adds no completion evidence. |
+| G3 | `open`. The selected catalogue record is not an inference serving identity, and this run supplies no measured usage semantics. |
+| G4 | `open`. Declared control ranges and enums are observed. Inference acceptance, enforcement, counting basis, terminal reason, effort equivalence, and thinking dependencies remain unverified. |
+
+The existing promotion matrix remains required for a future candidate. The control cases must also settle requests below the declared minimum, above the supported client maximum, and valid effort and thinking combinations once their contract is known. An assertion that the encoder wrote a declared field cannot substitute for those service semantics. No positive or negative inference fixture is claimed from this catalogue result.
+
+The next handoff is evidence for an instruction and completion contract or a separately designed access path. There is no new live plan, reusable launch approval, or ready GA implementation task in this amendment. Historical source and schema reports keep their original candidate bindings.

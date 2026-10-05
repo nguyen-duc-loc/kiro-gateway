@@ -1,6 +1,6 @@
 # Reasoning for the experimental coding bridge
 
-The original decision and October 2 amendments below retain their historical context. The confirmed October 4 GA promotion amendment records the current evidence and next work.
+The original decision and earlier amendments below retain their historical context. The confirmed October 5 assessment after catalogue evidence records the latest GA investigation outcome and recommended next work.
 
 ## Context
 
@@ -376,6 +376,42 @@ Your acceptance makes offline preparation of the AC-16 slice ready. The final li
 ### Independent proposal review
 
 GPT-6 Sol checked the source evidence and proposed probe without account access, client execution, tests, network requests, or edits. It found one decision gap: the projection must specify whether missing or malformed `properties`, or an unresolved `$ref`, means an absent path or an unknown path. You selected the recommended unknown result on October 5, 2026. The revised rule reports absence only when a valid parent `properties` object lacks the next key. Uninspectable paths remain unknown and can coexist with a structural `schema_observed` outcome, without any capability claim. References are never followed, including when they have sibling properties. The reviewer found the account boundary, fixed operation and hosts, request budget, output projection, and separation between design acceptance and live authorization otherwise coherent. The same reviewer checked the revised rule and verification cases and confirmed the finding closed. You then accepted the complete AC-16 design on October 5, 2026. Offline preparation is ready; implementation, verification, and a separately authorized live run remain pending. The spec and feature stay in progress, and G1 through G4 remain open.
+
+## GA wire assessment after catalogue evidence, October 5, 2026
+
+### Context and source boundary
+
+You chose to update spec 0004 in place while preserving its experimental contract and evidence history. This assessment inspected the repository at `165647c27cb446424f36a2efd9350e04942ee953`, with no commits behind `origin/main` after fetching. It uses the retained report rather than repeating the account operation. No client or native agent was launched, no real account store was read, and no catalogue or inference request was made during this assessment.
+
+The premise requiring correction is that a declared request field completes a GA wire contract. The catalogue supplies candidate controls, while the accepted contract also requires instruction priority, authoritative completion, serving identity, and measured usage. Those facts cannot be manufactured by implementing a serializer.
+
+| Source | What this assessment uses |
+|---|---|
+| `internal/kiro/testdata/schema-run-2026-10-05-02.json` | `schema_observed`, one dispatch, complete cleanup, exact selected model and region, and the eight bounded field observations |
+| `internal/kiro/testdata/schema-plan-2026-10-05-02.json` and the retained verification entry | The report's code commit `7441f88922bb7fb827c52aaf83a346a0859da690`, plan digest `5cbe79883a122980d81cf4ff65fbd4750f4072155058705158440c59a9c50ccc`, and consumed launch provenance |
+| Bundled source and schema investigation above | Previously connected prompt flattening, stream exhaustion, candidate counters, and the native effort builder's adaptive thinking addition; these were not freshly inspected native artifacts in this pass |
+| `internal/kiro/request.go`, `encodeRequest` | Current production requests still flatten instructions and omit additional model controls |
+| `internal/kiro/events.go`, `observe` and `complete`; `internal/kiro/adapter.go`, `Generate` | Current production checks optional model equality and numeric usage shapes, then completes from clean EOF, semantic validation, and cleanup |
+| `internal/bridge/request.go` and `response.go` | Current client validation admits advisory limits and only ignored high effort; responses echo the requested model and estimate usage |
+
+The report declares integer `max_tokens` with minimum 1024 and maximum 128000. It retains no default for that field. `output_config.effort` declares `high`, `low`, `max`, `medium`, and `xhigh`, with default `medium`. `thinking.type` declares `adaptive`; `thinking.display` declares `omitted` and `summarized`. The explicit paths `system`, `system_prompt`, `messages`, and `reasoning.effort` are absent under the probe's traversal rule. These observations apply to the selected record in the retained run. They are not a service capability matrix or evidence for another model or region.
+
+The projection intentionally excludes required field lists and general schema constraints. It cannot settle effort without thinking, default application by inference, or valid combinations of controls. A display value named `omitted` does not establish that thinking is disabled. Likewise, the requested catalogue model name cannot supply the serving identity of a later response.
+
+### Options and recommendation
+
+| Option | Benefit | Cost and disposition |
+|---|---|---|
+| Preserve the current path and seek a source for G1 and G2 | Keeps the working experiment and accepted architecture while testing the prerequisites most likely to determine feasibility. | No buildable GA slice or completion date follows from this report. Recommended. |
+| Investigate a replacement adapter alongside the experiment | Could retain Kiro access and Claude Code tool ownership if another operation supplies the missing guarantees. | No qualifying operation is identified yet. Requires a separate access path decision and evidence before implementation. Runner up. |
+| Replace the adapter directly or wrap the native agent | Native software already integrates its own service path and model controls. | The inspected native path still flattens instructions and completes on exhaustion; wrapping its conversation and tools would also change the accepted ownership boundary. No evidenced GA benefit justifies that migration here. |
+| Implement catalogue controls as the GA candidate now | Provides concrete field names for a smaller control experiment. | Acceptance, enforcement, and field dependencies are unproved, and G1 through G3 remain unresolved. This cannot satisfy AC-14; a separate experimental enhancement would need its own design. |
+
+The recommended disposition remains `needs_evidence`, with every gate `open`. The next useful investigation needs a named source connecting instruction and terminal semantics to an operation, rather than another ordinary successful coding sample. The alternative adapter option becomes actionable only when such a source identifies a concrete candidate. No new provider, endpoint, account operation, or weaker GA requirement is selected.
+
+### Review and confirmation
+
+You accepted this assessment on October 5, 2026. Updating the evidence does not ratify a GA wire contract, change any acceptance criterion, or complete the GA design checkbox. At your request, GPT-6 Sol reviewed the amendment against the retained report, plan, and relevant production code. It found no material decision gap or accidental gate closure. It identified a stale verification overview that still called AC-16 pending; that summary now records completion and consumed authorization. The review performed no edits, tests, client execution, account access, or network requests. Your subsequent content confirmation accepts the assessment and recommended evidence work. The spec and feature remain in progress, with AC-14 incomplete and all four gates open. The existing reference section and historical evidence remain intact; no external reference was fetched for this amendment.
 
 ## References
 

@@ -6,7 +6,7 @@
 
 ## Summary
 
-The experimental bridge has completed a recorded Claude Code coding loop with its own tools and permissions. The local repair findings are now closed by independent review. All four GA protocol gates remain open, so a GA candidate cannot yet be built from an evidenced contract. The confirmed investigation records the missing sources; the accepted catalogue slice makes offline preparation ready to obtain model schema evidence.
+The experimental bridge has completed a recorded Claude Code coding loop with its own tools and permissions. The local repair findings are closed, and the catalogue probe has observed the selected model's declared control fields. Those declarations do not supply the missing instruction and completion guarantees or prove inference behavior. All four GA protocol gates remain open; the confirmed assessment below records why the GA candidate is still not ready to build.
 
 ## Requirements
 
@@ -38,6 +38,8 @@ The following confirmed criteria extend the feature. AC-1 through AC-10 remain t
 ## Decision
 
 **Chosen option**: Build an explicitly enabled experimental bridge on the existing Go stack, using the successful feasibility request as the upstream baseline.
+
+**Assessment after catalogue evidence, confirmed October 5, 2026:** You accepted this amendment after independent review and correction of the stale AC-16 verification overview. Preserve the experimental contract and record the completed AC-16 result as input to the GA investigation. The result narrows G4 candidates but supplies no complete GA wire mapping. Keep G1 through G4 `open` and the investigation outcome `needs_evidence`. Recommend a source or access path investigation that first identifies instruction priority and authoritative completion; another catalogue request or ordinary coding run does not resolve those prerequisites. Your acceptance confirms this evidence assessment and its recommendation. It introduces no runtime change or live launch authorization.
 
 **GA amendment, confirmed October 4, 2026**: You accepted this amendment after independent review and application of its four approved corrections. Repair the existing path first and keep its experimental boundary until the evidence gates below close. Prefer preserving the required protocol semantics over promoting today's weaker behavior under a new name. A separately accepted replacement contract remains an alternative architecture decision, not an exception a builder may infer. Content confirmation makes the review repair slice ready to build; the feature lifecycle remains `In Progress`, and all four protocol gates remain open. (basis: your confirmation, spec 0001's terminal and instruction contract, this spec's original GA followup, the October 4 branch review)
 
@@ -354,7 +356,7 @@ This pass used code reading, retained static evidence, a fresh binary digest, an
 
 ### Model schema investigation
 
-This slice is confirmed for offline preparation. It is a test only research entry point in `internal/kiro`, under a new explicit `schemaprobe` build tag, with a launch flag that defaults off. It does not alter the product binary or widen the production inference transport's destination policy. Use the existing Go stack and the consuming credential boundary; add no SDK dependency and do not execute the bundled agent. The SDK was used only for the already completed synthetic source characterization.
+This slice completed AC-16 with the separately authorized October 5 catalogue result recorded in [verify.md](verify.md#selected-model-schema-observed-october-5-2026). The following contract governed its preparation and launch; the consumed approvals permit no repeat. It is a test only research entry point in `internal/kiro`, under an explicit `schemaprobe` build tag, with a launch flag that defaults off. It does not alter the product binary or widen the production inference transport's destination policy. Use the existing Go stack and the consuming credential boundary; add no SDK dependency and do not execute the bundled agent. The SDK was used only for the already completed synthetic source characterization.
 
 AC-8 continues to govern the experimental product. AC-16 permits one narrow research evidence extension: the selected model's structural schema report may be retained after its reviewed run. Those flags describe the schema returned for the selected account. The raw catalogue, schema text, and account identifiers remain excluded.
 
@@ -398,6 +400,25 @@ Use outcome `schema_observed` only after the unique selected object, schema extr
 The concrete launch artifact is prepared after implementation. It binds this operation, both allowed destinations, the exact constants above, software digests, clean code commit, complete synthetic test results, and the proposed command. Its live approval slot stays empty until the operator reviews that final artifact. The runner's compiled default and ordinary repository checks must be incapable of account access or a management request without the explicit launch. No environment variable alone can enable it.
 
 Build the slice through one synthetic settings, snapshot, TLS, selection, and sanitized report path first. Then add source failure, every response bound, redaction, pagination, ambiguity, timeout, cleanup, and disabled gate cases. After independent review, prepare the exact clean commit and plan for one live run review. A later authorized run records the schema observation only. These steps satisfy **AC-16** and may inform **AC-14**; they do not satisfy a GA gate or remove the need for another wire amendment.
+
+### GA wire assessment after catalogue evidence, October 5, 2026
+
+**Confirmed disposition:** `needs_evidence`. This assessment uses the retained AC-16 report for `claude-opus-5.5` in `us-east-1`, bound to code commit `7441f88922bb7fb827c52aaf83a346a0859da690` and its reviewed plan. It is not a new inference candidate. The exact report and source chain are recorded in `rationale.md`; the earlier experimental and investigation records retain their original meaning.
+
+| Gate | New evidence and remaining prerequisite | State |
+|---|---|---|
+| G1, instructions | The inspected additional field paths `system`, `system_prompt`, and `messages` are absent. The previously inspected native path flattens instructions into user text. No evidenced representation supplies priority and positional replacement. Property absence does not prove global service incapability. | `open` |
+| G2, completion | The request schema supplies no response completion contract. The retained native evidence still ends on iterator exhaustion. A service terminal indication or equivalent completeness mechanism remains unidentified. | `open` |
+| G3, identity and usage | Catalogue selection identifies a requested model record, not the actual model serving an inference. The probe observes no inference counters. The meaning, availability, and ordering of response identity and usage remain unverified. | `open` |
+| G4, controls | The catalogue declares `max_tokens` and `output_config.effort`. Their candidate carrier remains `additionalModelRequestFields`. Field declarations do not prove inference acceptance, cap enforcement, counting basis, terminal reason, effort equivalence, or dependencies with thinking fields. | `open` |
+
+The report is a bounded projection, not a complete schema. It does not retain required field lists, cross field constraints, or arbitrary schema keywords. It cannot establish that either control can be sent alone or that all observed fields may be combined.
+
+The declared `max_tokens` range is 1024 through 128000. Its intersection with the experimental client's accepted 1 through 65536 range is 1024 through 65536; the pinned launch value 4096 lies in that intersection. This arithmetic is not a new validation or forwarding rule. A later control contract must explicitly settle values below 1024 and any proposed expansion above 65536. Silently raising, clamping, or dropping the client's limit cannot satisfy G4.
+
+The declared effort enum contains `high`, `low`, `max`, `medium`, and `xhigh`, with declared default `medium`. Only `high` is accepted by the existing client contract. The report also declares adaptive thinking and display values `omitted` and `summarized`. Neither the default nor the display name establishes disabled reasoning or safe reasoning continuation. The native effort builder's adaptive thinking addition remains outside the accepted baseline. No new effort value or thinking behavior is admitted by this assessment.
+
+**Handoff:** AC-16 is complete, but build milestone 6 and AC-14 remain incomplete. Before GA protocol implementation, identify a source connected to the selected service operation that establishes G1 and G2, then complete the identity, usage, and control mappings required by the promotion boundary. An alternative access path must retain Kiro model access and Claude Code's ownership of conversation, permissions, and tools, and receive its own design decision before adoption. No alternative is selected here. If no such source is available, the current path stays experimental with the existing contract. There is no new API, data entity, migration, dependency, activation flag, error mapping, or implementation slice in this assessment.
 
 ### Buildable review repair slice
 
@@ -452,9 +473,11 @@ Follow the Tracer Bullet approach. No layer is built as a disconnected framework
 The original four milestones above have experimental implementation and retained loop evidence. They are not GA completion. Continue the Tracer Bullet through the same working path:
 
 5. **Repair and reprove the existing loop offline.** Profile and fix fragmented accumulation, tighten the coding verdict and boundary mutation check, and require the retry control assertions. Exercise the real pinned client against the repaired synthetic production path, check both response modes and cancellation, run `scripts/check` with the required `rtk proxy` prefix, and close the review findings through an independent review. Satisfies **AC-11**, **AC-12**, **AC-13**, and the repair portion of **AC-15**, while preserving **AC-1** through **AC-10**.
-6. **Establish the promotion contract before new protocol code.** The October 4 investigation stops this milestone at `needs_evidence`, with G1 through G4 still open. Resume from a new identifiable source under the disposition above. Record supported, unsupported, and unknown outcomes in `rationale.md`. When the sources permit it, amend this spec with the exact wire mappings, errors, baseline, activation, disclosures, and value sources, then obtain content ratification. Satisfies the contract prerequisite of **AC-14** only when that concrete contract exists. The current evidence inventory does not complete this milestone.
+6. **Establish the promotion contract before new protocol code.** The October 4 investigation and October 5 catalogue evidence leave this milestone at `needs_evidence`, with G1 through G4 still open. Resume from a new identifiable source for instruction priority and authoritative completion, as described in the assessment above. Record supported, unsupported, and unknown outcomes in `rationale.md`. When the sources permit it, amend this spec with the exact wire mappings, errors, baseline, activation, disclosures, and value sources, then obtain content ratification. Satisfies the contract prerequisite of **AC-14** only when that concrete contract exists. The current evidence inventory does not complete this milestone.
 
    **Confirmed research step within milestone 6:** Build one complete synthetic catalogue probe path, then its failure and redaction cases, then independently review and prepare the exact clean code and plan for one live run review. Only after that separate authorization may it make the one catalogue request and retain its bounded report. Satisfies **AC-16** and supplies possible input to **AC-14**, without making milestone 7 ready.
+
+   **Completed October 5:** The retained `schema_observed` result completes this research step and **AC-16**. Its authorization is consumed. The assessment above supplies the resulting evidence boundary; it does not authorize repeating the probe or building milestone 7.
 
 7. **Conditional, implement and verify the evidenced contract through one whole loop.** Only after milestone 6 closes, implement its complete request, stream, tool, and continuation path with synthetic sources. Then prepare a new concrete plan, execute only its separately authorized live run, and complete behavior verification, tests, fresh model review, and documentation. Satisfies **AC-14** and **AC-15**, with regression coverage for **AC-1** through **AC-13**. The exact protocol tasks are deliberately blocked on milestone 6 and are not ready to build from this amendment alone.
 
