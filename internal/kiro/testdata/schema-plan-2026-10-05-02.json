@@ -1,0 +1,120 @@
+{
+  "version": 1,
+  "code_commit": "7441f88922bb7fb827c52aaf83a346a0859da690",
+  "contract": {
+    "operation": "POST /",
+    "target": "KiroControlPlaneBearerService.ListAvailableModels",
+    "destinations": [
+      "https://management.us-east-1.kiro.dev:443/",
+      "https://management.eu-central-1.kiro.dev:443/"
+    ],
+    "region_source": "combined_snapshot_profile_arn",
+    "body": {
+      "origin": "KIRO_CLI",
+      "maxResults": 100,
+      "profileArn": "combined_snapshot"
+    },
+    "headers": {
+      "Authorization": "Bearer combined_snapshot_access_token",
+      "Content-Type": "application/x-amz-json-1.0",
+      "Accept": "application/json",
+      "Accept-Encoding": "identity",
+      "User-Agent": "kiro-gateway-schema-probe/1",
+      "X-Amzn-Codewhisperer-Optout": "true"
+    },
+    "native_sdk_differences": [
+      "fixed_user_agent",
+      "no_machine_fingerprint",
+      "no_sdk_retry_metadata",
+      "no_account_type_guess",
+      "explicit_json_accept",
+      "identity_encoding"
+    ],
+    "model": "claude-opus-5.5",
+    "paths": [
+      "system",
+      "system_prompt",
+      "messages",
+      "max_tokens",
+      "output_config.effort",
+      "reasoning.effort",
+      "thinking.type",
+      "thinking.display"
+    ],
+    "allowed_values": [
+      "low",
+      "medium",
+      "high",
+      "max",
+      "minimal",
+      "none",
+      "xhigh",
+      "disabled",
+      "enabled",
+      "adaptive",
+      "summarized",
+      "omitted"
+    ],
+    "limits": {
+      "snapshots": 1,
+      "dispatches": 1,
+      "inference": 0,
+      "total_seconds": 30,
+      "work_seconds": 25,
+      "cleanup_seconds": 5,
+      "source_seconds": 5,
+      "headers_bytes": 16384,
+      "body_bytes": 1048576,
+      "depth": 64,
+      "models": 100,
+      "enum_entries": 32,
+      "report_bytes": 16384,
+      "safe_integer_max": 2147483647
+    },
+    "policy": "spec_0004_AC16_unknown_path_rule_2026_10_05",
+    "pagination": "never_follow",
+    "recovery": "no_retry_renewal_fallback_or_mutation",
+    "retention": "structural_report_only_no_raw_catalogue_schema_or_account_values",
+    "ga_gates": "G1_G2_G3_G4_remain_open"
+  },
+  "software": [
+    {
+      "role": "native_binary",
+      "path": "/Applications/Kiro CLI.app/Contents/MacOS/kiro-cli-chat",
+      "sha256": "2118bd89d96830a4f0e0884e4f4071fb94e4b6036c757126afe9e3f80c9d90c6"
+    },
+    {
+      "role": "bundled_source",
+      "path": "/Users/nguyenducloc/Library/Application Support/kiro-cli/kas/node_modules/@kiro/agent/dist/server/acp-server.js",
+      "sha256": "233e4dec77cd538e35b691d1fd0e12ca64a7c90d720c4dbf6979f21b4c45482f"
+    }
+  ],
+  "synthetic_checks": [
+    "scripts/check:pass",
+    "schema_probe_race:pass"
+  ],
+  "independent_review": "docs/reviews/2026-10-05-ac16-preflight-followup.md",
+  "command": [
+    "rtk",
+    "proxy",
+    "env",
+    "GOTOOLCHAIN=local",
+    "GOWORK=off",
+    "CGO_ENABLED=1",
+    "GOFLAGS=",
+    "go",
+    "test",
+    "-mod=readonly",
+    "-tags=schemaprobe",
+    "./internal/kiro",
+    "-run=^TestSchemaProbe$",
+    "-count=1",
+    "-v",
+    "-args",
+    "-schema-probe-launch",
+    "-schema-probe-plan=/private/tmp/kiro-ac16-review-02-pvf6tbxj/plan.json",
+    "-schema-probe-plan-sha256=<PLAN_SHA256>",
+    "-schema-probe-code-commit=7441f88922bb7fb827c52aaf83a346a0859da690"
+  ],
+  "live_approval": "approved_for_one_catalogue_run"
+}

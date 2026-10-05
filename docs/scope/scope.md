@@ -95,7 +95,9 @@ Connect an authenticated Kiro account to a local gateway and complete a small re
 
 **Spec:** [0004. Claude Code coding bridge and GA promotion](../specs/0004-claude-code-bridge/index.md). The completed preparation remains recorded in [0003. First Claude Code loop, protocol feasibility](../specs/0003-first-claude-code-loop/index.md).
 
-**Latest catalogue attempt, October 5, 2026:** The separately approved AC-16 launch at `7d11dc1` stopped with `source_changed` before dispatch. The [record](../specs/0004-claude-code-bridge/verify.md#approved-catalogue-attempt-stopped-before-dispatch-october-5-2026) reports `needs_evidence`, zero catalogue requests, and completed cleanup. That approval is consumed. Session relinking, restoring the exact model mapping, and a fresh reviewed plan with separate approval are needed before another attempt. The catalogue request checkbox and all four GA gates remain open.
+**Selected model schema observed, October 5, 2026:** After authorized session relinking and mapping restoration, the separately reviewed and approved launch at `7441f88` returned `schema_observed`, with one catalogue request and completed cleanup in 1676 milliseconds. The [record](../specs/0004-claude-code-bridge/verify.md#selected-model-schema-observed-october-5-2026) captures declared token limits, effort values, and thinking fields. This completes the AC-16 catalogue milestone. It does not verify inference controls or close any GA gate. Feature 4 stays in progress, and the approval is consumed.
+
+**First catalogue attempt, October 5, 2026:** The separately approved AC-16 launch at `7d11dc1` stopped with `source_changed` before dispatch. The [record](../specs/0004-claude-code-bridge/verify.md#approved-catalogue-attempt-stopped-before-dispatch-october-5-2026) reports `needs_evidence`, zero catalogue requests, and completed cleanup. That approval was consumed; the later attempt required session relinking, restoration of the exact model mapping, and a fresh reviewed plan with separate approval.
 
 **Confirmed model schema investigation, October 5, 2026:** You accepted the [catalogue probe design](../specs/0004-claude-code-bridge/index.md#model-schema-investigation) after independent review and its corrected unknown path rule. Offline preparation is ready under AC-16. The eventual reviewed run permits one combined account snapshot and at most one catalogue request within 30 seconds, with zero inference and only a bounded structural report. Uninspectable schema paths are unknown, not absent. Implementation and synthetic checks must precede the concrete live plan and separate launch authorization. This research slice does not complete the GA wire design; G1 through G4 remain open and feature 4 stays in progress.
 
@@ -154,7 +156,7 @@ Connect an authenticated Kiro account to a local gateway and complete a small re
 - [x] Test the probe: `/test first real Claude Code coding loop: model schema investigation`
 - [x] Review the probe (fresh model): `/check review first real Claude Code coding loop: model schema investigation`
 - [x] Document the probe: `/document changelog first real Claude Code coding loop: model schema investigation`
-- [ ] After separate launch approval, run the bounded catalogue request and record its structural outcome (AC-16).
+- [x] After separate launch approval, run the bounded catalogue request and record its structural outcome (AC-16).
 - [ ] Resolve the evidenced GA wire contract (spec): `/architect first real Claude Code coding loop: GA wire contract`
 - [ ] Build the GA candidate after wire contract ratification: `/develop first real Claude Code coding loop: GA candidate`
   - [ ] Prove the evidenced contract through the complete synthetic coding path (AC-14).

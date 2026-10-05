@@ -239,3 +239,42 @@ You then explicitly approved one invocation of the presented artifact. Only `liv
 The [structural report](../../../internal/kiro/testdata/schema-run-2026-10-05-01.json) is the sole retained runtime payload. The entry point exited with failure after the linked token fingerprint comparison rejected changed source bytes. The source reader checks that fingerprint before reading the selected profile. No management request or inference occurred, and there was no retry, renewal, relink, or settings mutation. No raw source bytes, tokens, profile values, or upstream response were retained.
 
 The single launch approval is consumed. A later attempt needs the selected session linked again, the exact Opus mapping restored after relinking clears mappings, and a fresh concrete plan with separate review and approval. This record does not determine why the source bytes changed or establish model availability. The catalogue request scope box remains open, feature 4 stays in progress, and G1 through G4 remain open.
+
+## Selected model schema observed, October 5, 2026
+
+After the first attempt stopped, you authorized local recovery. `account link` successfully captured the current unexpired token record and saved its reference. The exact `claude-opus-5.5` mapping was restored through the existing exclusive settings lock and atomic configuration store. `config check` passed. The temporary recovery helper was removed before preparation of the next clean candidate. No token or fingerprint was retained in the evidence.
+
+The fresh plan was pinned to `7441f88922bb7fb827c52aaf83a346a0859da690`. No Go source, module file, or check script changed from the previous verified candidate, so its passing offline tests and code review remained applicable. Both installed software hashes were checked again. The [second artifact review](../../reviews/2026-10-05-ac16-second-launch-artifact.md) approved presentation of the exact plan, command, and approval transition. You then explicitly approved one invocation. The [approved plan](../../../internal/kiro/testdata/schema-plan-2026-10-05-02.json) is archived with its exact launch bytes; that approval is now consumed.
+
+| Recorded value | Outcome |
+|---|---|
+| Clean code commit at launch | `7441f88922bb7fb827c52aaf83a346a0859da690` |
+| Approved plan SHA256 | `5cbe79883a122980d81cf4ff65fbd4750f4072155058705158440c59a9c50ccc` |
+| Run ID | `dec7b6dd-15c1-4e62-9c7d-5953f1380f94` |
+| Requested model | `claude-opus-5.5` |
+| Region | `us-east-1` |
+| Runner outcome | `schema_observed` |
+| Failure category | null |
+| Elapsed time | 1676 milliseconds |
+| Catalogue dispatches | 1 |
+| Cleanup | `complete` |
+| Selected model and schema present | true |
+| More pages | false |
+| Catalogue complete | true |
+
+The [structural report](../../../internal/kiro/testdata/schema-run-2026-10-05-02.json) retains these observations from the selected model's declared additional request field schema:
+
+| Fixed path | Structural observation |
+|---|---|
+| `system` | Absent from the inspected explicit property path |
+| `system_prompt` | Absent from the inspected explicit property path |
+| `messages` | Absent from the inspected explicit property path |
+| `max_tokens` | Integer, minimum 1024, maximum 128000; no default |
+| `output_config.effort` | String enum `high`, `low`, `max`, `medium`, `xhigh`; default `medium`; no omitted enum or default values |
+| `reasoning.effort` | Absent from the inspected explicit property path |
+| `thinking.type` | String enum `adaptive`; no default or omitted enum values |
+| `thinking.display` | String enum `omitted`, `summarized`; no default or omitted enum values |
+
+The entry point passed after the single response and cleanup completed. No inference, retry, pagination, credential renewal, relinking, fallback, or settings mutation occurred during the probe. Only the bounded structural report was retained from runtime output; the raw catalogue, schema text, token, profile ARN, and upstream errors were not retained.
+
+This completes the AC-16 catalogue request and structural outcome milestone. It establishes the declared schema returned for this selected account and model, not service enforcement, instruction priority, authoritative completion, serving identity, or measured usage. Explicit property absence does not prove global service incapability. The production experimental bridge is unchanged. G1 through G4 remain open, feature 4 stays in progress, and any later live experiment needs a new concrete plan and separate approval.
