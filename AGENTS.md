@@ -36,6 +36,8 @@ Selected: `scripts/check` checks formatting without changing files, runs `go vet
 
 `scripts/check` also vets the `schemaprobe` build and runs its synthetic schema tests with the race detector and `-schema-probe-launch=false`. This flag keeps the real catalogue entry point disabled during ordinary checks. See [the probe guide](internal/kiro/SCHEMA_PROBE.md) for the separate live review requirements.
 
+`scripts/check` also vets the `responsediscovery` build and runs its synthetic race suite with `-response-discovery-launch=false`, clearing inherited `GOFLAGS`. See [the discovery guide](internal/kiro/RESPONSE_DISCOVERY.md) for AC-17 and the separate implementation review and live authorization requirements.
+
 ## Git
 
 - integration: on

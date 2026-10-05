@@ -3,14 +3,10 @@
 package kiro
 
 import (
-	"bytes"
 	"encoding/json"
-	"errors"
-	"io"
 	"slices"
 	"strconv"
 	"strings"
-	"unicode/utf8"
 )
 
 const schemaBodyLimit = 1 << 20
@@ -68,81 +64,6 @@ func (r *schemaReport) fail(category string) {
 		r.FailureCategory = schemaPtr(category)
 	}
 	r.Outcome = "needs_evidence"
-}
-
-// schemaJSON checks every member, including discarded catalogue records. The
-// depth limit is checked before allocating a container at that depth.
-func schemaJSON(data []byte, limit int) (map[string]any, error) {
-	invalid := errors.New("invalid_response")
-	if len(data) > limit || !utf8.Valid(data) {
-		return nil, invalid
-	}
-	d := json.NewDecoder(bytes.NewReader(data))
-	d.UseNumber()
-	var read func(int) (any, error)
-	read = func(depth int) (any, error) {
-		tok, err := d.Token()
-		if err != nil {
-			return nil, invalid
-		}
-		delim, container := tok.(json.Delim)
-		if !container {
-			return tok, nil
-		}
-		if depth >= 64 {
-			return nil, invalid
-		}
-		switch delim {
-		case '{':
-			m := make(map[string]any)
-			for d.More() {
-				key, err := d.Token()
-				name, ok := key.(string)
-				if err != nil || !ok {
-					return nil, invalid
-				}
-				if _, exists := m[name]; exists {
-					return nil, invalid
-				}
-				value, err := read(depth + 1)
-				if err != nil {
-					return nil, err
-				}
-				m[name] = value
-			}
-			if end, err := d.Token(); err != nil || end != json.Delim('}') {
-				return nil, invalid
-			}
-			return m, nil
-		case '[':
-			a := []any{}
-			for d.More() {
-				value, err := read(depth + 1)
-				if err != nil {
-					return nil, err
-				}
-				a = append(a, value)
-			}
-			if end, err := d.Token(); err != nil || end != json.Delim(']') {
-				return nil, invalid
-			}
-			return a, nil
-		default:
-			return nil, invalid
-		}
-	}
-	v, err := read(0)
-	if err != nil {
-		return nil, invalid
-	}
-	if _, err := d.Token(); err != io.EOF {
-		return nil, invalid
-	}
-	root, ok := v.(map[string]any)
-	if !ok {
-		return nil, invalid
-	}
-	return root, nil
 }
 
 func extractSchema(data []byte, r *schemaReport) {

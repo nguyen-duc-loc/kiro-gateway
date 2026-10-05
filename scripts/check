@@ -6,6 +6,8 @@ cd "$(dirname "$0")/.."
 # Keep local checks and CI on the exact version recorded by the module.
 export GOTOOLCHAIN=local
 export GOWORK=off
+# Inherited test arguments and build tags cannot enable development probes.
+export GOFLAGS=
 required_version=$(awk '$1 == "go" { print $2; exit }' go.mod)
 actual_version=$(go env GOVERSION)
 if [ "$actual_version" != "go$required_version" ]; then
@@ -33,4 +35,7 @@ go test -mod=readonly -race ./...
 printf 'Checking the offline schema probe...\n'
 go vet -mod=readonly -tags=schemaprobe ./internal/kiro
 go test -mod=readonly -race -tags=schemaprobe ./internal/kiro -run '^TestSchema' -args -schema-probe-launch=false
+printf 'Checking offline response discovery...\n'
+go vet -mod=readonly -tags=responsediscovery ./internal/kiro
+go test -mod=readonly -race -tags=responsediscovery ./internal/kiro -run '^TestResponseDiscovery' -args -response-discovery-launch=false
 printf 'All checks passed.\n'

@@ -73,10 +73,6 @@ func schemaContract() map[string]any {
 	return m
 }
 
-func schemaHex(s string, length int) bool {
-	return len(s) == length && strings.Trim(s, "0123456789abcdef") == ""
-}
-
 func readSchemaPlan(data []byte, digest, commit string) (schemaPlan, error) {
 	var p schemaPlan
 	sum := sha256.Sum256(data)
@@ -102,49 +98,6 @@ func readSchemaPlan(data []byte, digest, commit string) (schemaPlan, error) {
 		}
 	}
 	return p, nil
-}
-
-// The pinned native binary exceeds 1 GiB. Keep hashing bounded while allowing
-// the complete installed artifact, with cancellation checked on every read.
-const schemaSoftwareLimit int64 = 2 << 30
-
-// schemaHashFile never executes the native binary or bundled source. Regular
-// file checks also prevent a named pipe from holding preflight indefinitely.
-func schemaHashFile(ctx context.Context, path string) (string, error) {
-	info, err := os.Lstat(path)
-	if err != nil || !info.Mode().IsRegular() || info.Size() > schemaSoftwareLimit {
-		return "", errPlanInvalid
-	}
-	f, err := os.Open(path)
-	if err != nil {
-		return "", errPlanInvalid
-	}
-	defer f.Close()
-	opened, err := f.Stat()
-	if err != nil || !os.SameFile(info, opened) || !opened.Mode().IsRegular() {
-		return "", errPlanInvalid
-	}
-	h := sha256.New()
-	buf := make([]byte, 32<<10)
-	var total int64
-	for {
-		if ctx.Err() != nil {
-			return "", errPlanInvalid
-		}
-		n, err := f.Read(buf)
-		total += int64(n)
-		if total > schemaSoftwareLimit {
-			return "", errPlanInvalid
-		}
-		_, _ = h.Write(buf[:n])
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return "", errPlanInvalid
-		}
-	}
-	return hex.EncodeToString(h.Sum(nil)), nil
 }
 
 func schemaLivePreflight(ctx context.Context) (string, string, error) {
