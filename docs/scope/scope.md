@@ -168,7 +168,7 @@ Connect an authenticated Kiro account to a local gateway and complete a small re
   - [x] Prove one complete synthetic plan, settings, snapshot, TLS, JSON observation, cleanup, and report path (AC-17).
   - [x] Complete framing, redaction, limits, cancellation, failed cleanup process exit, and disabled entry point checks (AC-17).
   - [ ] After independent code review, prepare the exact clean code and concrete plan for separate live review (AC-17).
-- [ ] Verify discovery offline: `/check verify first real Claude Code coding loop: CreateResponse discovery, offline only`
+- [x] Verify discovery offline: `/check verify first real Claude Code coding loop: CreateResponse discovery, offline only`
 - [ ] Test discovery: `/test first real Claude Code coding loop: CreateResponse discovery`
 - [ ] Review discovery (fresh model): `/check review first real Claude Code coding loop: CreateResponse discovery`
 - [ ] Document discovery: `/document changelog first real Claude Code coding loop: CreateResponse discovery`
