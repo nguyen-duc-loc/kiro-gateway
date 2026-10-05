@@ -104,11 +104,15 @@ func readSchemaPlan(data []byte, digest, commit string) (schemaPlan, error) {
 	return p, nil
 }
 
+// The pinned native binary exceeds 1 GiB. Keep hashing bounded while allowing
+// the complete installed artifact, with cancellation checked on every read.
+const schemaSoftwareLimit int64 = 2 << 30
+
 // schemaHashFile never executes the native binary or bundled source. Regular
 // file checks also prevent a named pipe from holding preflight indefinitely.
 func schemaHashFile(ctx context.Context, path string) (string, error) {
 	info, err := os.Lstat(path)
-	if err != nil || !info.Mode().IsRegular() || info.Size() > 1<<30 {
+	if err != nil || !info.Mode().IsRegular() || info.Size() > schemaSoftwareLimit {
 		return "", errPlanInvalid
 	}
 	f, err := os.Open(path)
@@ -129,7 +133,7 @@ func schemaHashFile(ctx context.Context, path string) (string, error) {
 		}
 		n, err := f.Read(buf)
 		total += int64(n)
-		if total > 1<<30 {
+		if total > schemaSoftwareLimit {
 			return "", errPlanInvalid
 		}
 		_, _ = h.Write(buf[:n])

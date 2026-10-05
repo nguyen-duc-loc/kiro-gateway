@@ -157,6 +157,7 @@ func TestSchemaProbeSyntheticPath(t *testing.T) {
 	}
 }
 
+// covers: AC-16. Only an inspected missing property establishes absence.
 func TestSchemaPathUnknownAndAbsent(t *testing.T) {
 	for _, tc := range []struct {
 		name, schema, path, shape string
@@ -169,10 +170,14 @@ func TestSchemaPathUnknownAndAbsent(t *testing.T) {
 		{"explicit absence", `{"properties":{}}`, "system", "absent", schemaPtr(false)},
 		{"intermediate absent", `{"properties":{}}`, "output_config.effort", "absent", schemaPtr(false)},
 		{"intermediate missing map", `{"properties":{"output_config":{}}}`, "output_config.effort", "other", nil},
+		{"intermediate null map", `{"properties":{"output_config":{"properties":null}}}`, "output_config.effort", "other", nil},
+		{"intermediate array map", `{"properties":{"output_config":{"properties":[]}}}`, "output_config.effort", "other", nil},
+		{"final absent", `{"properties":{"output_config":{"properties":{}}}}`, "output_config.effort", "absent", schemaPtr(false)},
 		{"intermediate boolean", `{"properties":{"output_config":true}}`, "output_config.effort", "other", nil},
 		{"intermediate ref", `{"properties":{"output_config":{"$ref":"sentinel","properties":{"effort":{}}}}}`, "output_config.effort", "other", nil},
 		{"final ref", `{"properties":{"system":{"$ref":false,"type":"string"}}}`, "system", "other", nil},
 		{"final boolean", `{"properties":{"system":false}}`, "system", "other", schemaPtr(true)},
+		{"final null", `{"properties":{"system":null}}`, "system", "other", schemaPtr(true)},
 		{"final object", `{"properties":{"system":{}}}`, "system", "object", schemaPtr(true)},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -184,10 +189,58 @@ func TestSchemaPathUnknownAndAbsent(t *testing.T) {
 			if !ok || got.Shape != tc.shape || !reflect.DeepEqual(got.Present, tc.present) {
 				t.Errorf("inspectSchemaPath(%s,%s) = %+v, want %s present=%v", tc.name, tc.path, got, tc.shape, tc.present)
 			}
-			if tc.shape != "object" && (got.Type != nil || got.EnumValues != nil || got.EnumState != nil || got.OtherDefaultValue != nil) {
-				t.Errorf("inspectSchemaPath(%s) derived fields = %+v, want null", tc.name, got)
+			if tc.shape != "object" {
+				want := schemaField{Path: tc.path, Shape: tc.shape, Present: tc.present}
+				if !reflect.DeepEqual(got, want) {
+					t.Errorf("inspectSchemaPath(%s) = %+v, want %+v with all derived fields null", tc.name, got, want)
+				}
 			}
 		})
+	}
+}
+
+// covers: AC-16. An object schema may be observed while every fixed path is
+// unknown. Success still requires the request and resource cleanup to finish.
+func TestSchemaProbeObservesUnknownPaths(t *testing.T) {
+	for _, schema := range []string{`{}`, `{"$ref":"sentinel-reference","properties":{"system":{"type":"string"}}}`} {
+		t.Run(schema, func(t *testing.T) {
+			d, store := schemaMemoryDependencies(t)
+			d.wire = schemaTLSFixture(t, func(w http.ResponseWriter, r *http.Request) {
+				_, _ = io.Copy(io.Discard, r.Body)
+				w.Header().Set("Content-Type", "application/json")
+				_, _ = io.WriteString(w, `{"models":[{"modelId":"claude-opus-5.5","additionalModelRequestFieldsSchema":`+schema+`}]}`)
+			})
+			r := runSchemaProbe(t.Context(), true, d)
+			if r.Outcome != "schema_observed" || r.FailureCategory != nil || r.CleanupOutcome != "complete" || !store.closed || r.DispatchCount != 1 {
+				t.Errorf("runSchemaProbe(%s) = %+v, closed=%t, want observed once after complete cleanup", schema, r, store.closed)
+			}
+			if r.ModelFound == nil || !*r.ModelFound || r.SchemaPresent == nil || !*r.SchemaPresent || r.CatalogueComplete == nil || !*r.CatalogueComplete || r.MorePages == nil || *r.MorePages {
+				t.Errorf("runSchemaProbe(%s) = %+v, want one selected object on a complete page", schema, r)
+			}
+			want := []schemaField{
+				{Path: "system", Shape: "other"}, {Path: "system_prompt", Shape: "other"},
+				{Path: "messages", Shape: "other"}, {Path: "max_tokens", Shape: "other"},
+				{Path: "output_config.effort", Shape: "other"}, {Path: "reasoning.effort", Shape: "other"},
+				{Path: "thinking.type", Shape: "other"}, {Path: "thinking.display", Shape: "other"},
+			}
+			if !reflect.DeepEqual(r.Fields, want) {
+				t.Errorf("runSchemaProbe(%s).Fields = %+v, want %+v", schema, r.Fields, want)
+			}
+		})
+	}
+}
+
+// covers: AC-16. A later unsupported field must not publish a partial schema.
+func TestSchemaExtractionDiscardsPartialFields(t *testing.T) {
+	body := `{"models":[{"modelId":"claude-opus-5.5","additionalModelRequestFieldsSchema":{"properties":{"system":{"type":"string"},"thinking":{"properties":{"display":{"enum":[` + strings.TrimSuffix(strings.Repeat(`"high",`, 33), ",") + `]}}}}}}]}`
+	r := newSchemaReport()
+	wantFields := append([]schemaField(nil), r.Fields...)
+	extractSchema([]byte(body), &r)
+	if r.FailureCategory == nil || *r.FailureCategory != "schema_unsupported" || r.Outcome != "needs_evidence" {
+		t.Errorf("extractSchema(late enum overflow) = %+v, want schema_unsupported and needs_evidence", r)
+	}
+	if !reflect.DeepEqual(r.Fields, wantFields) {
+		t.Errorf("extractSchema(late enum overflow).Fields = %+v, want %+v without partial observations", r.Fields, wantFields)
 	}
 }
 

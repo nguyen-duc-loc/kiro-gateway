@@ -184,6 +184,7 @@ func TestSchemaResponseBounds(t *testing.T) {
 	}
 }
 
+// covers: AC-16. HTTP failures never trigger retry, redirect, or proxy access.
 func TestSchemaProbeNoRedirectRetryProxyOrUntrustedTLS(t *testing.T) {
 	var accidental atomic.Int32
 	proxy := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { accidental.Add(1) }))
@@ -191,7 +192,7 @@ func TestSchemaProbeNoRedirectRetryProxyOrUntrustedTLS(t *testing.T) {
 	t.Setenv("HTTPS_PROXY", proxy.URL)
 	t.Setenv("HTTP_PROXY", proxy.URL)
 	t.Setenv("NO_PROXY", "")
-	for _, status := range []int{301, 307, 401, 429, 500, 503} {
+	for _, status := range []int{301, 307, 401, 403, 429, 500, 503} {
 		t.Run(fmt.Sprint(status), func(t *testing.T) {
 			home, _ := probeHome(t)
 			d := schemaFixtureDependencies(t, home)
@@ -401,6 +402,7 @@ func TestSchemaProbeParentCancellation(t *testing.T) {
 	}
 }
 
+// covers: AC-16. Plan approval, provenance, and the fixed contract are required.
 func TestSchemaPlanGate(t *testing.T) {
 	commit := strings.Repeat("a", 40)
 	base := schemaPlan{Version: 1, CodeCommit: commit, Contract: schemaContract(), Software: []schemaSoftware{{Role: "native_binary", Path: "/synthetic/native", SHA256: strings.Repeat("b", 64)}, {Role: "bundled_source", Path: "/synthetic/source", SHA256: strings.Repeat("c", 64)}}, SyntheticChecks: []string{"scripts/check:pass", "schema_probe_race:pass"}, IndependentReview: schemaPtr("synthetic review"), LiveApproval: schemaPtr("approved_for_one_catalogue_run")}
@@ -409,9 +411,18 @@ func TestSchemaPlanGate(t *testing.T) {
 		change func(*schemaPlan)
 	}{
 		{"valid", func(*schemaPlan) {}}, {"no approval", func(p *schemaPlan) { p.LiveApproval = nil }}, {"no review", func(p *schemaPlan) { p.IndependentReview = nil }}, {"wrong model", func(p *schemaPlan) { p.Contract["model"] = "other" }}, {"changed code", func(p *schemaPlan) { p.CodeCommit = strings.Repeat("b", 40) }}, {"missing check", func(p *schemaPlan) { p.SyntheticChecks = nil }}, {"missing source", func(p *schemaPlan) { p.Software = p.Software[:1] }},
+		{name: "blank review", change: func(p *schemaPlan) { p.IndependentReview = schemaPtr(" \n\t") }},
+		{name: "wrong approval", change: func(p *schemaPlan) { p.LiveApproval = schemaPtr("approved_for_inference") }},
+		{name: "wrong version", change: func(p *schemaPlan) { p.Version = 2 }},
+		{name: "relative source", change: func(p *schemaPlan) { p.Software[1].Path = "source" }},
+		{name: "invalid source digest", change: func(p *schemaPlan) { p.Software[1].SHA256 = strings.Repeat("z", 64) }},
+		{name: "wrong source role", change: func(p *schemaPlan) { p.Software[1].Role = "native_binary" }},
+		{name: "failed check", change: func(p *schemaPlan) { p.SyntheticChecks = []string{"scripts/check:pass", "schema_probe_race:fail"} }},
+		{name: "changed destination", change: func(p *schemaPlan) { p.Contract["destinations"] = []any{"https://example.invalid/"} }},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			p := base
+			p.Software = append([]schemaSoftware(nil), base.Software...)
 			p.Contract = schemaContract()
 			tc.change(&p)
 			b, _ := json.Marshal(p)
@@ -431,6 +442,159 @@ func TestSchemaPlanGate(t *testing.T) {
 	sum = sha256.Sum256(duplicate)
 	if _, err := readSchemaPlan(duplicate, hex.EncodeToString(sum[:]), commit); err == nil {
 		t.Error("readSchemaPlan(duplicate member) accepted ambiguous plan")
+	}
+}
+
+// covers: AC-16. The report has an exact byte ceiling and returns no partial
+// output when that ceiling is exceeded.
+func TestSchemaReportByteLimit(t *testing.T) {
+	r := newSchemaReport()
+	r.CodeCommit = schemaPtr("")
+	base, err := encodeSchemaReport(r)
+	if err != nil {
+		t.Fatalf("encodeSchemaReport(empty commit) error = %v, want nil", err)
+	}
+	// ASCII padding makes the encoded size exact without depending on field order.
+	r.CodeCommit = schemaPtr(strings.Repeat("a", (16<<10)-len(base)))
+	b, err := encodeSchemaReport(r)
+	if err != nil || len(b) != 16<<10 {
+		t.Errorf("encodeSchemaReport(16384 bytes) size=%d error=%v, want 16384 and nil", len(b), err)
+	}
+	r.CodeCommit = schemaPtr(*r.CodeCommit + "a")
+	b, err = encodeSchemaReport(r)
+	if err == nil || b != nil {
+		t.Errorf("encodeSchemaReport(16385 bytes) size=%d error=%v, want nil output and an error", len(b), err)
+	}
+}
+
+// covers: AC-16. Provenance hashes cover the complete bytes without executing
+// the file, including files larger than one read buffer.
+func TestSchemaHashFileReadsExactBytes(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "native")
+	for _, content := range []string{"", "not an executable\n" + strings.Repeat("synthetic", 8192)} {
+		if err := os.WriteFile(path, []byte(content), 0600); err != nil {
+			t.Fatalf("WriteFile(synthetic native) error = %v, want nil", err)
+		}
+		sum := sha256.Sum256([]byte(content))
+		want := hex.EncodeToString(sum[:])
+		got, err := schemaHashFile(t.Context(), path)
+		if err != nil || got != want {
+			t.Errorf("schemaHashFile(%d bytes) = %q, %v, want %q, nil", len(content), got, err, want)
+		}
+	}
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+	got, err := schemaHashFile(ctx, path)
+	if !errors.Is(err, errPlanInvalid) || got != "" {
+		t.Errorf("schemaHashFile(canceled) = %q, %v, want empty digest and errPlanInvalid", got, err)
+	}
+}
+
+// covers: AC-16. The pinned native software exceeds 1 GiB. A sparse synthetic
+// file checks the complete digest at that boundary without reading real software.
+func TestSchemaHashFileAboveOneGiB(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "native")
+	f, err := os.Create(path)
+	if err != nil {
+		t.Fatalf("Create(synthetic native) = %v, want file", err)
+	}
+	t.Cleanup(func() { _ = f.Close() })
+	const size int64 = (1 << 30) + 1
+	if err := f.Truncate(size); err != nil {
+		t.Fatalf("Truncate(synthetic native, %d) = %v, want nil", size, err)
+	}
+	// A final nonzero byte proves hashing does not stop at the old ceiling.
+	if _, err := f.WriteAt([]byte{1}, size-1); err != nil {
+		t.Fatalf("WriteAt(synthetic native, %d) = %v, want nil", size-1, err)
+	}
+	got, err := schemaHashFile(t.Context(), path)
+	if err != nil {
+		t.Fatalf("schemaHashFile(%d bytes) = %q, %v, want full digest and nil", size, got, err)
+	}
+	h := sha256.New()
+	zeros := make([]byte, 1<<20)
+	for remaining := size - 1; remaining > 0; remaining -= int64(len(zeros)) {
+		_, _ = h.Write(zeros)
+	}
+	_, _ = h.Write([]byte{1})
+	want := hex.EncodeToString(h.Sum(nil))
+	if got != want {
+		t.Errorf("schemaHashFile(%d bytes) = %q, want %q", size, got, want)
+	}
+}
+
+// covers: AC-16. Uninspectable or oversized software inputs cannot satisfy
+// the provenance check. All files are synthetic and remain in a temporary home.
+func TestSchemaHashFileRejectsInvalidInputs(t *testing.T) {
+	dir := t.TempDir()
+	target := filepath.Join(dir, "target")
+	if err := os.WriteFile(target, []byte("synthetic"), 0600); err != nil {
+		t.Fatalf("WriteFile(target) error = %v, want nil", err)
+	}
+	link := filepath.Join(dir, "link")
+	if err := os.Symlink(target, link); err != nil {
+		t.Fatalf("Symlink(target) error = %v, want nil", err)
+	}
+	oversized := filepath.Join(dir, "oversized")
+	f, err := os.Create(oversized)
+	if err != nil {
+		t.Fatalf("Create(oversized) error = %v, want nil", err)
+	}
+	t.Cleanup(func() { _ = f.Close() })
+	if err := f.Truncate((2 << 30) + 1); err != nil {
+		t.Fatalf("Truncate(oversized) error = %v, want nil", err)
+	}
+	for _, tc := range []struct{ name, path string }{
+		{name: "missing", path: filepath.Join(dir, "missing")},
+		{name: "directory", path: dir},
+		{name: "symlink", path: link},
+		{name: "oversized", path: oversized},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := schemaHashFile(t.Context(), tc.path)
+			if !errors.Is(err, errPlanInvalid) || got != "" {
+				t.Errorf("schemaHashFile(%s) = %q, %v, want empty digest and errPlanInvalid", tc.name, got, err)
+			}
+		})
+	}
+}
+
+// covers: AC-16. DNS failure stops before a connection and has no fallback.
+func TestSchemaDestinationStopsOnDNSFailure(t *testing.T) {
+	resolves, dials := 0, 0
+	dial := schemaDial(func(context.Context, string, string) ([]netip.Addr, error) {
+		resolves++
+		return []netip.Addr{netip.MustParseAddr("8.8.8.8")}, errors.New("sentinel resolver failure")
+	}, func(context.Context, string, string) (net.Conn, error) {
+		dials++
+		return nil, errors.New("unexpected connection")
+	})
+	conn, err := dial(t.Context(), "management.us-east-1.kiro.dev:443")
+	if conn != nil || !errors.Is(err, errPlanInvalid) || resolves != 1 || dials != 0 {
+		t.Errorf("schemaDial(DNS failure) = %v, %v, resolves=%d dials=%d, want nil, errPlanInvalid, 1 and 0", conn, err, resolves, dials)
+	}
+}
+
+// covers: AC-16. The header bound includes the status line and terminator;
+// a valid body is accepted only when the complete headers fit.
+func TestSchemaProbeExactHeaderLimit(t *testing.T) {
+	for _, size := range []int{16 << 10, (16 << 10) + 1} {
+		t.Run(fmt.Sprint(size), func(t *testing.T) {
+			d, _ := schemaMemoryDependencies(t)
+			prefix := fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: %d\r\nX-Padding: ", len(schemaFixture))
+			response := prefix + strings.Repeat("x", size-len(prefix)-4) + "\r\n\r\n" + schemaFixture
+			synctest.Test(t, func(t *testing.T) {
+				d.wire, _ = schemaPipe(t, 0, response)
+				r := runSchemaProbe(t.Context(), true, d)
+				wantOutcome, wantFailure := "schema_observed", (*string)(nil)
+				if size > 16<<10 {
+					wantOutcome, wantFailure = "needs_evidence", schemaPtr("transport")
+				}
+				if r.Outcome != wantOutcome || !reflect.DeepEqual(r.FailureCategory, wantFailure) || r.DispatchCount != 1 || r.CleanupOutcome != "complete" {
+					t.Errorf("runSchemaProbe(%d header bytes) = %+v, want %s with failure=%v, one dispatch and complete cleanup", size, r, wantOutcome, wantFailure)
+				}
+			})
+		})
 	}
 }
 
