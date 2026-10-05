@@ -413,6 +413,54 @@ The recommended disposition remains `needs_evidence`, with every gate `open`. Th
 
 You accepted this assessment on October 5, 2026. Updating the evidence does not ratify a GA wire contract, change any acceptance criterion, or complete the GA design checkbox. At your request, GPT-6 Sol reviewed the amendment against the retained report, plan, and relevant production code. It found no material decision gap or accidental gate closure. It identified a stale verification overview that still called AC-16 pending; that summary now records completion and consumed authorization. The review performed no edits, tests, client execution, account access, or network requests. Your subsequent content confirmation accepts the assessment and recommended evidence work. The spec and feature remain in progress, with AC-14 incomplete and all four gates open. The existing reference section and historical evidence remain intact; no external reference was fetched for this amendment.
 
+## CreateResponse source lead, October 5, 2026
+
+You asked to continue after accepting the catalogue assessment at `c3d44d6`. This pass inspected installed software and new public primary sources. It found a named alternative operation in the bundled SDK. No native agent was launched, no account store or settings were read, and no catalogue or inference request was sent. The only execution beyond source inspection was an isolated serializer exercise with invented values and no transport.
+
+### Artifact and connected source
+
+`@kiro/agent` remains version `0.3.234`. Its `dist/server/acp-server.js` SHA 256 was checked again and remains `233e4dec77cd538e35b691d1fd0e12ca64a7c90d720c4dbf6979f21b4c45482f`. The source root is `~/Library/Application Support/kiro-cli/kas/node_modules/`. All bundle line numbers below refer to this exact artifact.
+
+| Source location | Observation and limit |
+|---|---|
+| Bundle lines 143153 through 143169 | `CreateResponseRequest` models `model`, `input`, `origin`, `instructions`, `tools`, `toolChoice`, `stream`, `maxOutputTokens`, `temperature`, `topP`, `truncation`, `reasoning`, `previousResponseId`, and `profileArn`. The response structure models no members. A distinct instruction field exists, but its priority and replacement semantics are not specified. |
+| Bundle lines 143270 through 143278 and 143437 through 143444 | Function tools model type, name, description, generic parameters, and strictness. Reasoning models effort and summary. These shapes suggest a possible generation interface; they do not establish supported models, control semantics, or external tool ownership in the service. |
+| Bundle lines 143882 through 143888 and 144192 through 144209 | `CreateResponseCommand` binds the operation schema, whose HTTP annotation is `POST /v1/responses`. Its command middleware adds endpoint handling, without a protocol override. |
+| Bundle lines 133447 through 133482 and 143940 through 143965 | The shared bundled client selects bearer authentication and AWS JSON 1.0 with service target `KiroRuntimeService`. This is a client configuration, not evidence that the service exposes or authorizes this operation for the selected account. |
+| Bundle lines 127412 through 127462 and 137473 through 137510 | The selected RPC serializer builds root path POST. The AWS JSON codec disables JSON name aliases; its wrapper builds the operation target. HTTP binding annotations alone therefore cannot define this command's actual serialized request. |
+| Bundle lines 144305 through 144326 | The aggregated client registers `CreateResponse` beside assistant generation, code completion, and the two MCP operations. The neighboring standalone runtime package does not contain this command. |
+| Bundle lines 322453 through 322465 and 432418 through 432455 | The inspected model loader still creates `QDeveloperConverse`; its factory uses the regional Kiro runtime host and the bundled client. That adapter calls `GenerateAssistantResponse`. The new command was found in generated definitions and registration, with no application call site identified. |
+
+The neighboring standalone runtime SDK remains a different artifact with REST JSON and no authentication by default. Its operation inventory must not be substituted for the bundle's inventory. This distinction is why inspecting only that package would miss `CreateResponse`. No regional destination or authentication source is adopted for the new operation from analogy with the existing adapter.
+
+### Isolated serializer observation
+
+Node `v24.20.0` ran with permission mode and filesystem reads limited to the installed software tree. Only the bundle's schema module was extracted into an isolated VM; the agent entry point was not evaluated. Error constructor dependencies were inert substitutes. The extracted schema was supplied to installed `@aws-sdk/core 3.974.21` and `@smithy/core 3.25.0`, using the bundle's AWS JSON protocol selection and service target. This is a schema and protocol component exercise, not execution of the complete bundled client. An initial setup attempt stopped because the inspection helper used a nonexistent schema constructor method; the corrected setup below completed without transport.
+
+The installed protocol module SHA 256 values are `ef31229258fc5c1edf44b19fb47d61969c7b2099b84298f761660934910a6967` for `@aws-sdk/core/dist-cjs/submodules/protocols/index.js`, `1310195b5171e3697db5f1af2ae6e5abaded9cf097f88bba2543bdaa164eb172` for `@smithy/core/dist-cjs/submodules/protocols/index.js`, and `8040e5dfc82b9d191337283c3bd16ea4e3bab48ad22ad6bf242252a1cd382e5a` for its schema module. Reproducing this observation requires these artifacts, the extracted schema, and the same explicit protocol settings.
+
+An invented model, instruction, user input, function tool, profile, and previous response ID were serialized against `https://synthetic.invalid/`. No request handler, account provider, or signer was invoked. The result was `POST /`, content type `application/x-amz-json-1.0`, and target `KiroRuntimeService.CreateResponse`. The body retained camel case `toolChoice`, `maxOutputTokens`, and `previousResponseId`. It also contained `origin` and `profileArn`, despite their schema header annotations. It preserved the distinct `instructions` member. This agrees with the static serializer trace; it proves neither service acceptance nor a usable inference response.
+
+The `/v1/responses` annotation uses aliases such as `max_output_tokens` and profile and origin header bindings. Choosing those bindings instead would require evidence for a different protocol selection. Neither spelling is selected as a live request plan. The empty modeled response supplies no terminal event, stop reason, serving model, usage counter, or operation specific error grammar to implement. Shared RPC error handling exists, but does not establish this operation's response semantics. Similarity to another vendor's Responses API supplies none of those missing guarantees.
+
+### Other leads checked
+
+The bundle's `parseSseStream` at lines 144589 through 144617 ignores `[DONE]` and does not require it. The dispatcher at lines 144643 through 144682 uses the binary parser for assistant generation and the SSE parser only for the MCP path when appropriate. A marker in that parser is therefore not generation completion evidence. The bundle's Anthropic and Bedrock names at lines 93640 through 93667 belong to a message translation registry; the connected model loader still uses the Kiro adapter. Library presence is not an alternate authenticated provider path.
+
+A bounded public research pass used five searches and eight page opens. The [official ACP documentation](https://kiro.dev/docs/cli/acp/) describes a Kiro agent session, with CLI v2 `TurnEnd` and CLI v3 prompt response completion. These are agent turn boundaries, not a sourced terminal contract for this inference adapter. The [official headless documentation](https://kiro.dev/docs/cli/headless/) likewise describes complete agent runs. The [Bedrock inference documentation](https://docs.aws.amazon.com/bedrock/latest/userguide/inference-api.html) describes a separate model invocation surface; it does not establish Kiro account access. These pages did not supply a `CreateResponse` service contract. The search result is bounded absence of evidence, not proof that no such contract exists.
+
+### Confirmed next target and gate disposition
+
+Investigate `CreateResponse` first because it supplies a concrete operation and instruction carrier that the existing path lacks. The alternative is to keep waiting for a provider contract for `GenerateAssistantResponse`; that preserves the current path but adds no new source lead. Wrapping ACP is not selected because its local turn completion does not establish the required model completion contract or preserve the accepted ownership by itself.
+
+Before a probe or replacement adapter can be designed, resolve the operation's actual service binding and obtain an identifiable response grammar. Then settle instruction priority and history replacement, client supplied function results and continuation, generation terminal states, serving identity, usage, and control semantics. A schema field named `instructions`, a successful HTTP status, or a guessed `response.completed` event cannot close a gate. Generic input and the modeled previous response ID do not authorize persistent server conversation state.
+
+This supplement changes the next identifiable source target, not the accepted runtime contract. You accepted the supplement and next investigation target on October 5, 2026. G1 through G4 stay `open` and AC-14 stays incomplete. No new endpoint, product dependency, probe implementation, credential operation, or live run is authorized.
+
+### Independent source review
+
+At your request, GPT-6 Sol inspected the supplement and its connected installed source locations. It found no material unsupported claim, missing decision, accidental gate closure, or ownership and authorization gap. The author applied its two wording corrections: the observed root path depends on the supplied synthetic endpoint, and common RPC error handling is distinct from an evidenced operation response contract. The review used source inspection only, without code execution, tests, hash checks, account access, edits, or network requests. You then accepted the corrected supplement and next investigation target. The spec and feature remain in progress.
+
 ## References
 
 **Project sources**

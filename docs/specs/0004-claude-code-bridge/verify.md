@@ -293,3 +293,9 @@ The confirmed assessment in `index.md` reconciles the retained catalogue result 
 The existing promotion matrix remains required for a future candidate. The control cases must also settle requests below the declared minimum, above the supported client maximum, and valid effort and thinking combinations once their contract is known. An assertion that the encoder wrote a declared field cannot substitute for those service semantics. No positive or negative inference fixture is claimed from this catalogue result.
 
 The next handoff is evidence for an instruction and completion contract or a separately designed access path. There is no new live plan, reusable launch approval, or ready GA implementation task in this amendment. Historical source and schema reports keep their original candidate bindings.
+
+### Continued source investigation, October 5, 2026
+
+The `CreateResponse` source supplement in `rationale.md` identifies a separate operation in the pinned agent bundle. An isolated schema and serializer exercise produced root path POST with target `KiroRuntimeService.CreateResponse`, while the schema separately annotates `/v1/responses`. This exercise used invented values and no transport, signer, or account provider. It does not count as service or GA verification.
+
+The response schema has no modeled members and no application caller or terminal decoder was identified. No positive or negative live response fixture, supported model claim, instruction guarantee, or terminal mapping follows from this result. G1 through G4 remain open. Independent source review found no material gap, and its two wording clarifications are applied. You accepted the supplement and next investigation target; existing live approvals remain consumed.
