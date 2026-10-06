@@ -56,7 +56,15 @@ func TestResponseDiscoverySyntheticPath(t *testing.T) {
 					t.Error("request route or transport differs from fixed discovery hypothesis")
 				}
 				want := http.Header{}
-				for k, v := range responseHeaders("sentinel-token") {
+				// Pin the reviewed hypothesis independently of the request builder.
+				for k, v := range map[string]string{
+					"Authorization": "Bearer sentinel-token",
+					"Content-Type":  "application/x-amz-json-1.0",
+					"Accept":        "*/*", "Accept-Encoding": "identity",
+					"User-Agent":                  "kiro-gateway-response-discovery/1",
+					"X-Amzn-Codewhisperer-Optout": "true",
+					"X-Amz-Target":                "KiroRuntimeService.CreateResponse",
+				} {
 					want.Set(k, v)
 				}
 				want.Set("Connection", "close")
@@ -67,8 +75,13 @@ func TestResponseDiscoverySyntheticPath(t *testing.T) {
 				var body map[string]any
 				decoder := json.NewDecoder(r.Body)
 				decoder.UseNumber()
-				wantBody, _ := json.Marshal(responseBody("arn:aws:codewhisperer:" + region + ":000000000000:profile/sentinel-profile"))
-				expected, _ := schemaJSON(wantBody, responseBodyLimit)
+				expected := map[string]any{
+					"model": "claude-opus-5.5", "input": "Return exactly OK.",
+					"origin": "KIRO_CLI", "stream": true,
+					"instructions":    "This is a protocol discovery test. Reply with exactly OK.",
+					"maxOutputTokens": json.Number("1024"),
+					"profileArn":      "arn:aws:codewhisperer:" + region + ":000000000000:profile/sentinel-profile",
+				}
 				if decoder.Decode(&body) != nil || !reflect.DeepEqual(body, expected) {
 					t.Error("request body differs from fixed hypothesis and selected profile")
 				}
@@ -287,5 +300,118 @@ func TestResponseDiscoveryTailAggregatesAfterSequenceLimit(t *testing.T) {
 		if f != "" || s == nil || s.EventSequence[0].TransportLabel == nil || *s.EventSequence[0].TransportLabel != "other" {
 			t.Errorf("present empty event type(%s)=%+v,%s, want other", kind, s, f)
 		}
+	}
+}
+
+// covers: AC-17. Fragmented transport must preserve structural observations,
+// read past candidate completion, and release the settings lock before return.
+func TestResponseDiscoveryFragmentedStreams(t *testing.T) {
+	for _, tc := range []struct {
+		name, media, body string
+		sequence          []responseRecord
+		jsonRecords       int
+		errorLabels       []string
+	}{
+		{
+			name: "SSE continues after done", media: "text/event-stream",
+			body: "event: response.completed\r\ndata: {\"type\":\"response.completed\",\"text\":\"private-你好\"}\r\n\r\ndata: [DONE]\n\nevent: private-event\ndata: {\"type\":false,\"__type\":\"private-prefix#ValidationException\"}\n\n",
+			sequence: []responseRecord{
+				{Channel: "sse", TransportLabel: responsePtr("response.completed"), PayloadType: responsePtr("response.completed")},
+				{Channel: "sse", DoneMarker: true},
+				{Channel: "sse", TransportLabel: responsePtr("other"), PayloadType: responsePtr("invalid")},
+			},
+			jsonRecords: 2, errorLabels: []string{"ValidationException"},
+		},
+		{
+			name: "binary exception after completed", media: "application/vnd.amazon.eventstream",
+			body: string(append(probeFrame("response.completed", `{"type":"response.completed","text":"private-你好"}`), responseExceptionFrame(`{"__type":"private-prefix#ValidationException"}`)...)),
+			sequence: []responseRecord{
+				{Channel: "eventstream", MessageKind: responsePtr("event"), TransportLabel: responsePtr("response.completed"), PayloadType: responsePtr("response.completed")},
+				{Channel: "eventstream", MessageKind: responsePtr("exception")},
+			},
+			jsonRecords: 2, errorLabels: []string{"ValidationException"},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			home, _ := probeHome(t)
+			path := filepath.Join(home, ".config", "kiro-gateway", "config.json")
+			before, err := os.ReadFile(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			d := responseFixtureDependencies(t, home)
+			var requests atomic.Int32
+			d.wire = responseTLSFixture(t, func(w http.ResponseWriter, r *http.Request) {
+				requests.Add(1)
+				w.Header().Set("Content-Type", tc.media)
+				// Each byte is a separate HTTP chunk, including UTF 8 and frame headers.
+				for i := range len(tc.body) {
+					if _, err := io.WriteString(w, tc.body[i:i+1]); err != nil {
+						t.Errorf("fragmented response write(%s) = %v, want nil", tc.name, err)
+						return
+					}
+					w.(http.Flusher).Flush()
+				}
+			})
+			r := runResponseDiscovery(t.Context(), true, d)
+			if r.Outcome != "response_observed" || r.FailureCategory != nil || r.BodyFailure != nil || r.CleanupOutcome != "complete" || r.BodySummary == nil {
+				t.Fatalf("runResponseDiscovery(%s) = %+v, want a complete structural observation", tc.name, r)
+			}
+			if r.DispatchCount != 1 || requests.Load() != 1 || r.TransportComplete == nil || !*r.TransportComplete || r.DecodeComplete == nil || !*r.DecodeComplete {
+				t.Errorf("runResponseDiscovery(%s) = %+v, requests = %d, want one fully decoded dispatch", tc.name, r, requests.Load())
+			}
+			s := r.BodySummary
+			if !reflect.DeepEqual(s.EventSequence, tc.sequence) || s.RecordCount != len(tc.sequence) || s.JSONRecordCount != tc.jsonRecords || s.SequenceTruncated || !reflect.DeepEqual(s.ErrorLabels, tc.errorLabels) {
+				t.Errorf("runResponseDiscovery(%s) summary = %+v, want sequence %+v, JSON count %d, errors %v", tc.name, s, tc.sequence, tc.jsonRecords, tc.errorLabels)
+			}
+			if data := encodeResponseReport(&r); bytes.Contains(data, []byte("private-")) || bytes.Contains(data, []byte("sentinel")) {
+				t.Errorf("runResponseDiscovery(%s) retained private content, want finite labels only", tc.name)
+			}
+			after, err := os.ReadFile(path)
+			if err != nil || !bytes.Equal(before, after) {
+				t.Errorf("runResponseDiscovery(%s) settings error = %v, unchanged = %t, want nil and true", tc.name, err, bytes.Equal(before, after))
+			}
+			lock, err := configstore.OpenExisting(home)
+			if err != nil {
+				t.Fatalf("OpenExisting(after %s) = %v, want released lock", tc.name, err)
+			}
+			t.Cleanup(func() { _ = lock.Close() })
+		})
+	}
+}
+
+// covers: AC-17. Aggregation is ordered by the contract, independent of arrival
+// order, and distinguishes absent paths from parents that cannot be traversed.
+func TestResponseDiscoveryProjectionOrdersAndDeduplicatesKinds(t *testing.T) {
+	bodies := []string{
+		`{"usage":{"input_tokens":{}},"status":"private-status","model":"private-model"}`,
+		`{"usage":{"input_tokens":[]},"status":"cancelled"}`,
+		`{"usage":{"input_tokens":"private-tokens"},"status":"failed"}`,
+		`{"usage":{"input_tokens":900123456},"status":"incomplete"}`,
+		`{"usage":{"input_tokens":true},"status":"completed","model":"claude-opus-5.5"}`,
+		`{"usage":{"input_tokens":null},"status":"in_progress"}`,
+		`{"usage":[],"status":"queued"}`, `{}`,
+	}
+	var body strings.Builder
+	for range 2 {
+		for _, record := range bodies {
+			body.WriteString("data: " + record + "\n\n")
+		}
+	}
+	s, failure := observeResponse(t.Context(), []byte(body.String()), "sse")
+	if failure != "" || s == nil {
+		t.Fatalf("observeResponse(reversed kinds) = %v, %q, want complete summary", s, failure)
+	}
+	wantKinds := []string{"absent", "unreachable", "null", "boolean", "number", "string", "array", "object"}
+	if got := s.PathKinds["/usage/input_tokens"]; !reflect.DeepEqual(got, wantKinds) {
+		t.Errorf("observeResponse(reversed kinds) input token kinds = %v, want %v", got, wantKinds)
+	}
+	wantStatuses := []string{"queued", "in_progress", "completed", "incomplete", "failed", "cancelled", "other"}
+	if !reflect.DeepEqual(s.StatusLabels, wantStatuses) || !reflect.DeepEqual(s.ModelComparisons, []string{"match", "different"}) || s.RecordCount != 16 {
+		t.Errorf("observeResponse(repeated records) statuses = %v, models = %v, count = %d, want %v, [match different], 16", s.StatusLabels, s.ModelComparisons, s.RecordCount, wantStatuses)
+	}
+	data, err := json.Marshal(s)
+	if err != nil || bytes.Contains(data, []byte("private-")) || bytes.Contains(data, []byte("900123456")) {
+		t.Errorf("marshal(reversed kinds) error = %v, want no error or retained scalar values", err)
 	}
 }

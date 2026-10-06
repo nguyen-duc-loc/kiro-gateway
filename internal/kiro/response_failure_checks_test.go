@@ -127,6 +127,56 @@ func TestResponseDiscoveryTruncatedBodyDiscardsPrefix(t *testing.T) {
 	}
 }
 
+// covers: AC-17. A read may return bytes and EOF together. Only EOF grants a
+// complete transport, and the detection byte must still enforce the body cap.
+func TestResponseDiscoveryBodyReadBoundary(t *testing.T) {
+	for _, tc := range []struct {
+		name, body, failure string
+		readError           error
+		transportComplete   bool
+	}{
+		{name: "bytes with EOF", body: `{}`, readError: io.EOF, transportComplete: true},
+		{name: "exact body cap with EOF", body: `{}` + strings.Repeat(" ", (256<<10)-2), readError: io.EOF, transportComplete: true},
+		{name: "detection byte with EOF", body: `{}` + strings.Repeat(" ", (256<<10)-1), readError: io.EOF, failure: "limit"},
+		{name: "valid prefix with read error", body: `{}`, readError: errors.New("private-read-error"), failure: "transport"},
+		{name: "empty EOF", readError: io.EOF, failure: "empty_body", transportComplete: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			reads := 0
+			resp := &http.Response{
+				StatusCode: 200, Header: http.Header{"Content-Type": {"application/json"}}, ContentLength: -1,
+				Body: responseBrokenReader{read: func(b []byte) (int, error) {
+					reads++
+					if reads > 1 {
+						t.Errorf("consumeResponse(%s) reads = %d, want 1 after terminal read", tc.name, reads)
+						return 0, io.EOF
+					}
+					return copy(b, tc.body), tc.readError
+				}},
+			}
+			r := newResponseReport()
+			consumeResponse(t.Context(), resp, &r)
+			failure := ""
+			if r.BodyFailure != nil {
+				failure = *r.BodyFailure
+			}
+			if failure != tc.failure || reads != 1 || r.TransportComplete == nil || *r.TransportComplete != tc.transportComplete {
+				t.Errorf("consumeResponse(%s) = %+v, reads = %d, want body failure %q, transport complete %t, reads 1", tc.name, r, reads, tc.failure, tc.transportComplete)
+			}
+			if tc.failure == "" {
+				if r.BodySummary == nil || r.DecodeComplete == nil || !*r.DecodeComplete || r.FailureCategory != nil {
+					t.Errorf("consumeResponse(%s) = %+v, want complete JSON summary", tc.name, r)
+				}
+			} else if r.BodySummary != nil || !tc.transportComplete && r.DecodeComplete != nil {
+				t.Errorf("consumeResponse(%s) = %+v, want no summary or decoding after read failure", tc.name, r)
+			}
+			if bytes.Contains(encodeResponseReport(&r), []byte("private-read-error")) {
+				t.Errorf("consumeResponse(%s) retained reader error text, want a fixed failure label", tc.name)
+			}
+		})
+	}
+}
+
 type responseStoreHook struct {
 	responseStore
 	load  func() (config.Document, bool, error)

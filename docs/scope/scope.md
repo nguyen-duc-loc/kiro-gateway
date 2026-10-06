@@ -169,9 +169,9 @@ Connect an authenticated Kiro account to a local gateway and complete a small re
   - [x] Complete framing, redaction, limits, cancellation, failed cleanup process exit, and disabled entry point checks (AC-17).
   - [ ] After independent code review, prepare the exact clean code and concrete plan for separate live review (AC-17).
 - [x] Verify discovery offline: `/check verify first real Claude Code coding loop: CreateResponse discovery, offline only`
-- [ ] Test discovery: `/test first real Claude Code coding loop: CreateResponse discovery`
-- [ ] Review discovery (fresh model): `/check review first real Claude Code coding loop: CreateResponse discovery`
-- [ ] Document discovery: `/document changelog first real Claude Code coding loop: CreateResponse discovery`
+- [x] Test discovery: `/test first real Claude Code coding loop: CreateResponse discovery`
+- [x] Review discovery (fresh model): `/check review first real Claude Code coding loop: CreateResponse discovery`
+- [x] Document discovery: `/document changelog first real Claude Code coding loop: CreateResponse discovery`
 - [ ] After separate launch approval, run the bounded discovery request and record its structural outcome (AC-17).
 - [ ] Resolve the evidenced GA wire contract (spec): `/architect first real Claude Code coding loop: GA wire contract`
 - [ ] Build the GA candidate after wire contract ratification: `/develop first real Claude Code coding loop: GA candidate`
